@@ -1,0 +1,289 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:travelogue_mobile/core/blocs/app_bloc.dart';
+import 'package:travelogue_mobile/core/blocs/authenicate/authenicate_bloc.dart';
+import 'package:travelogue_mobile/core/blocs/home/home_bloc.dart';
+import 'package:travelogue_mobile/core/constants/dimension_constants.dart';
+import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
+import 'package:travelogue_mobile/core/helpers/image_helper.dart';
+import 'package:travelogue_mobile/core/helpers/string_helper.dart';
+import 'package:travelogue_mobile/model/event_model.dart';
+import 'package:travelogue_mobile/model/location_model.dart';
+import 'package:travelogue_mobile/model/place_category.dart';
+import 'package:travelogue_mobile/model/type_location_model.dart';
+
+import 'package:travelogue_mobile/representation/home/screens/search_screen.dart';
+import 'package:travelogue_mobile/representation/home/widgets/app_bar_container.dart';
+import 'package:travelogue_mobile/representation/home/widgets/upcoming_festivals.dart';
+import 'package:travelogue_mobile/representation/widgets/build_item_category.dart';
+import 'package:travelogue_mobile/representation/home/widgets/hot_location.dart';
+import 'package:weather/weather.dart';
+
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+  static const routeName = '/home_screen';
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  PlaceCategoryModel? selectedCategory;
+  Weather? _weather;
+
+  final String apiKey = '971b89c53f966b43dcea3ce43525c2f9';
+  late WeatherFactory wf;
+
+  final double lat = 11.3495;
+  final double lon = 106.1099;
+
+  int indexTypeLocation = -1;
+
+  @override
+  void initState() {
+    super.initState();
+    wf = WeatherFactory(apiKey, language: Language.VIETNAMESE);
+    _getWeather();
+  }
+
+  void _getWeather() async {
+    try {
+      Weather w = await wf.currentWeatherByLocation(lat, lon);
+      setState(() {
+        _weather = w;
+      });
+    } catch (e) {
+      debugPrint("Lỗi lấy thời tiết: $e");
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: AppBarContainerWidget(
+        title: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: kDefaultPadding,
+            vertical: kDefaultPadding,
+          ),
+          child: BlocBuilder<AuthenicateBloc, AuthenicateState>(
+            builder: (context, state) {
+              final String userName = state.props[0] as String;
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Chào ${userName.isEmpty ? 'Bạn' : StringHelper().formatUserName(userName) ?? 'Bạn'}!',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              fontSize: 30,
+                              fontFamily: "Pattaya",
+                            ),
+                          ),
+                          const SizedBox(height: kDefaultPadding),
+                          const Text(
+                            'Tây Ninh chờ bạn khám phá !',
+                            style:
+                                TextStyle(color: Colors.white70, fontSize: 14),
+                          ),
+                        ],
+                      ),
+                      const Spacer(),
+                      if (userName.isNotEmpty)
+                        Row(
+                          children: [
+                            const Icon(FontAwesomeIcons.bell,
+                                size: kDefaultIconSize, color: Colors.white),
+                            const SizedBox(width: 20),
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                              ),
+                              child: ClipOval(
+                                child: ImageHelper.loadFromAsset(
+                                  AssetHelper.img_avatar,
+                                  width: 40,
+                                  height: 40,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  if (_weather != null)
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 40,
+                          height: 40,
+                          child: Image.network(
+                            'https://openweathermap.org/img/wn/${_weather!.weatherIcon}@2x.png',
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Icon(
+                              Icons.cloud,
+                              color: Colors.white,
+                              size: 30,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              '${_weather!.temperature?.celsius?.toStringAsFixed(0)}°C',
+                              style: const TextStyle(
+                                  color: Colors.white, fontSize: 16),
+                            ),
+                            Text(
+                              '${_weather!.weatherDescription}',
+                              style: const TextStyle(
+                                  color: Colors.white70, fontSize: 15),
+                            ),
+                          ],
+                        )
+                      ],
+                    ),
+                ],
+              );
+            },
+          ),
+        ),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: kMediumPadding),
+              child: GestureDetector(
+                onTap: () =>
+                    Navigator.of(context).pushNamed(SearchScreen.routeName),
+                child: const AbsorbPointer(
+                  child: TextField(
+                    decoration: InputDecoration(
+                      hintText: 'Tìm kiếm địa điểm...',
+                      prefixIcon: Padding(
+                        padding: EdgeInsets.all(kTopPadding),
+                        child: Icon(FontAwesomeIcons.magnifyingGlass,
+                            color: Colors.black, size: kDefaultIconSize),
+                      ),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Color(0xFF5F99A9),
+                          width: 0.3,
+                        ),
+                        borderRadius:
+                            BorderRadius.all(Radius.circular(kItemPadding)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Color(0xFF5F99A9),
+                          width: 0.3,
+                        ),
+                        borderRadius:
+                            BorderRadius.all(Radius.circular(kItemPadding)),
+                      ),
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: kItemPadding),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: BlocBuilder<HomeBloc, HomeState>(
+                  builder: (context, state) {
+                    final List<TypeLocationModel> listTypes =
+                        state.props[0] as List<TypeLocationModel>;
+
+                    final List<LocationModel> listLocation =
+                        state.props[1] as List<LocationModel>;
+
+                    final List<EventModel> listEvents =
+                        state.props[2] as List<EventModel>;
+                    return Column(
+                      children: [
+                        const SizedBox(height: kDefaultPadding),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: kMediumPadding),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ...placeCategories
+                                  .asMap()
+                                  .map(
+                                    (index, category) => MapEntry(
+                                      index,
+                                      Expanded(
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: kDefaultPadding / 2),
+                                          child: BuildItemCategory(
+                                            isCLicked:
+                                                index == indexTypeLocation,
+                                            icon: ImageHelper.loadFromAsset(
+                                              category.image,
+                                              width: kBottomBarIconSize,
+                                              height: kBottomBarIconSize,
+                                            ),
+                                            color: category.color,
+                                            onTap: () {
+                                              AppBloc.homeBloc.add(
+                                                FilterLocationTypeEvent(
+                                                  locationTypeId:
+                                                      listTypes[index].id ?? '',
+                                                ),
+                                              );
+
+                                              setState(() {
+                                                indexTypeLocation = index;
+                                              });
+                                            },
+                                            title: listTypes[index].name ??
+                                                category.title,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                  .values,
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: kDefaultPadding),
+                        HotLocations(places: listLocation),
+                        const SizedBox(height: kDefaultPadding),
+                        UpcomingFestivals(festivals: listEvents),
+                        const SizedBox(height: kDefaultPadding),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}

@@ -1,0 +1,142 @@
+{
+  "project_info": {
+    "project_number": "1039660801087",
+    "project_id": "goyoung-tayninh",
+    "storage_bucket": "goyoung-tayninh.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1039660801087:android:ab4d7f40cfce173dffac8a",
+        "android_client_info": {
+          "package_name": "com.example.travelogue_mobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1039660801087-v5naphol05e7fuqvbjd7tefn3nsmus68.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.travelogue_mobile",
+            "certificate_hash": "438173eb19108d7f4ee4aaf7362cd360c88ba02a"
+          }
+        },
+        {
+          "client_id": "1039660801087-k7cne52tui5v8krrvrg5kh2q57299q8n.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCLOeIsiBTuRmVpWm_OHdOtj8Q09XYMIIU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1039660801087-k7cne52tui5v8krrvrg5kh2q57299q8n.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1039660801087-2go53ksom731oopf3al8toa11om5ik2j.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.travelogueMobile"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1039660801087:android:b3223c095fd92558ffac8a",
+        "android_client_info": {
+          "package_name": "com.travelogue_mobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1039660801087-lgano2qvpao106tnfam80tmajsrhuq53.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.travelogue_mobile",
+            "certificate_hash": "438173eb19108d7f4ee4aaf7362cd360c88ba02a"
+          }
+        },
+        {
+          "client_id": "1039660801087-k7cne52tui5v8krrvrg5kh2q57299q8n.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCLOeIsiBTuRmVpWm_OHdOtj8Q09XYMIIU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1039660801087-k7cne52tui5v8krrvrg5kh2q57299q8n.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1039660801087-2go53ksom731oopf3al8toa11om5ik2j.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.travelogueMobile"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1039660801087:android:142194e498a45265ffac8a",
+        "android_client_info": {
+          "package_name": "com.travelogue_mobile.tay_ninh"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1039660801087-55hk8bknc2uij2hbfjdu8ocle6pshahk.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.travelogue_mobile.tay_ninh",
+            "certificate_hash": "438173eb19108d7f4ee4aaf7362cd360c88ba02a"
+          }
+        },
+        {
+          "client_id": "1039660801087-k7cne52tui5v8krrvrg5kh2q57299q8n.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCLOeIsiBTuRmVpWm_OHdOtj8Q09XYMIIU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1039660801087-k7cne52tui5v8krrvrg5kh2q57299q8n.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1039660801087-2go53ksom731oopf3al8toa11om5ik2j.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.travelogueMobile"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
