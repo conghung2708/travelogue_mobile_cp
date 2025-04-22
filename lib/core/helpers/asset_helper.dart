@@ -5,6 +5,13 @@ class AssetHelper {
   static const String intro3 = 'assets/images/intro3.jpg';
   static const String avatar = 'assets/images/avatar.jpg';
 
+  //review avatar
+  static const String img_ava_1 = 'assets/images/img_ava_1.png';
+  static const String img_ava_2 = 'assets/images/img_ava_2.png';
+  static const String img_ava_3 = 'assets/images/img_ava_3.png';
+  static const String img_ava_4 = 'assets/images/img_ava_4.png';
+
+
   //Icon HomeScreen
 
   static const String iconAll = 'assets/icons/icon_all.png';
