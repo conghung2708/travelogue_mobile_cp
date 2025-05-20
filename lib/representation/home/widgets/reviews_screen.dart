@@ -22,8 +22,7 @@ class ReviewsScreen<T extends ReviewBase> extends StatefulWidget {
   State<ReviewsScreen<T>> createState() => _ReviewsScreenState<T>();
 }
 
-class _ReviewsScreenState<T extends ReviewBase>
-    extends State<ReviewsScreen<T>> {
+class _ReviewsScreenState<T extends ReviewBase> extends State<ReviewsScreen<T>> {
   late List<T> _localReviews;
   final Map<int, String> _userVoteMap = {};
   String _selectedFilter = 'popular'; // 'popular' | 'newest'
@@ -90,8 +89,6 @@ class _ReviewsScreenState<T extends ReviewBase>
                     onRatingUpdate: (rating) => tempRating = rating,
                   ),
                   SizedBox(height: 2.h),
-
-                  // 🔴 Hiện lỗi ngay bên trên ô nhập
                   if (_validationError != null)
                     Padding(
                       padding: EdgeInsets.only(bottom: 1.h),
@@ -107,7 +104,6 @@ class _ReviewsScreenState<T extends ReviewBase>
                         ),
                       ),
                     ),
-
                   TextField(
                     controller: commentController,
                     maxLines: 4,
@@ -129,8 +125,7 @@ class _ReviewsScreenState<T extends ReviewBase>
 
                         if (comment.isEmpty) {
                           setModalState(() {
-                            _validationError =
-                                "❗ Vui lòng nhập nội dung đánh giá.";
+                            _validationError = "❗ Vui lòng nhập nội dung đánh giá.";
                           });
                           return;
                         }
@@ -154,8 +149,7 @@ class _ReviewsScreenState<T extends ReviewBase>
 
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text(
-                                "🎉 Đánh giá của bạn đã được gửi. Cảm ơn bạn!"),
+                            content: Text("🎉 Đánh giá của bạn đã được gửi. Cảm ơn bạn!"),
                             behavior: SnackBarBehavior.floating,
                             backgroundColor: Color(0xFF00B4D8),
                             duration: Duration(seconds: 3),
@@ -181,6 +175,140 @@ class _ReviewsScreenState<T extends ReviewBase>
           },
         );
       },
+    );
+  }
+  void _showReportDialog(T review) {
+    final List<String> reasons = [
+      "Ngôn từ không phù hợp",
+      "Spam hoặc quảng cáo",
+      "Nội dung gây hiểu nhầm",
+      "Khác",
+    ];
+
+    final Set<String> selectedReasons = {};
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(25),
+              ),
+              elevation: 10,
+              insetPadding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 5.h),
+              backgroundColor: Colors.white,
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 3.h),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Column(
+                        children: [
+                          Icon(Icons.report_problem_rounded, size: 30.sp, color: Colors.redAccent),
+                          SizedBox(height: 1.h),
+                          Text(
+                            "Báo cáo bình luận",
+                            style: TextStyle(
+                              fontSize: 20.sp,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.redAccent,
+                              fontFamily: "Pattaya",
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 3.h),
+                    ...reasons.map(
+                      (reason) => Padding(
+                        padding: EdgeInsets.symmetric(vertical: 0.5.h),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            color: selectedReasons.contains(reason)
+                                ? Colors.redAccent.withOpacity(0.1)
+                                : Colors.grey.shade100,
+                          ),
+                          child: CheckboxListTile(
+                            title: Text(
+                              reason,
+                              style: TextStyle(
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            value: selectedReasons.contains(reason),
+                            onChanged: (checked) {
+                              setState(() {
+                                if (checked == true) {
+                                  selectedReasons.add(reason);
+                                } else {
+                                  selectedReasons.remove(reason);
+                                }
+                              });
+                            },
+                            activeColor: Colors.blue[300],
+                            controlAffinity: ListTileControlAffinity.leading,
+                            contentPadding: EdgeInsets.symmetric(horizontal: 3.w),
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 3.h),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text("Hủy", style: TextStyle(fontSize: 12.5.sp)),
+                        ),
+                        ElevatedButton(
+                          onPressed: selectedReasons.isEmpty
+                              ? null
+                              : () {
+                                  Navigator.pop(context);
+                                  _handleReport(
+                                    review,
+                                    selectedReasons.join(", "),
+                                  );
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue[300],
+                            padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 1.2.h),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                          ),
+                          child: Text("Gửi báo cáo", style: TextStyle(fontSize: 13.sp)),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _handleReport(T review, String reason) {
+
+    // debugPrint("📩 Reported review: ${review.id} - Reason: $reason");
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("📩 Cảm ơn bạn đã báo cáo! Chúng tôi sẽ xem xét."),
+        backgroundColor: Colors.blueAccent,
+        behavior: SnackBarBehavior.floating,
+        duration: Duration(seconds: 3),
+      ),
     );
   }
 
@@ -308,8 +436,7 @@ class _ReviewsScreenState<T extends ReviewBase>
                 _getTimeAgo(review.createdAt),
                 style: TextStyle(fontSize: 13.sp, color: Colors.grey),
               ),
-              trailing:
-                  Icon(Icons.location_on, color: Colors.redAccent, size: 20.sp),
+              trailing: Icon(Icons.location_on, color: Colors.redAccent, size: 20.sp),
             ),
             SizedBox(height: 1.h),
             RatingBarIndicator(
@@ -352,18 +479,14 @@ class _ReviewsScreenState<T extends ReviewBase>
                       Icon(
                         Icons.thumb_up_alt_outlined,
                         size: 18.sp,
-                        color: vote == 'like'
-                            ? Colors.green
-                            : const Color(0xFF00B4D8),
+                        color: vote == 'like' ? Colors.green : const Color(0xFF00B4D8),
                       ),
                       SizedBox(width: 1.w),
                       Text(
                         "Hữu ích (${_localReviews[index].likes})",
                         style: TextStyle(
                           fontSize: 13.sp,
-                          color: vote == 'like'
-                              ? Colors.green
-                              : const Color(0xFF00B4D8),
+                          color: vote == 'like' ? Colors.green : const Color(0xFF00B4D8),
                         ),
                       ),
                     ],
@@ -400,6 +523,20 @@ class _ReviewsScreenState<T extends ReviewBase>
                           fontSize: 13.sp,
                           color: vote == 'dislike' ? Colors.red : Colors.grey,
                         ),
+                      ),
+                    ],
+                  ),
+                ),
+                Spacer(),
+                GestureDetector(
+                  onTap: () => _showReportDialog(review),
+                  child: Row(
+                    children: [
+                      Icon(Icons.flag_outlined, size: 18.sp, color: Colors.redAccent),
+                      SizedBox(width: 1.w),
+                      Text(
+                        "Báo cáo",
+                        style: TextStyle(fontSize: 13.sp, color: Colors.redAccent),
                       ),
                     ],
                   ),

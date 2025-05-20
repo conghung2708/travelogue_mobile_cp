@@ -8,6 +8,7 @@ import 'package:travelogue_mobile/core/constants/color_constants.dart';
 import 'package:travelogue_mobile/representation/home/screens/home_screen.dart';
 import 'package:travelogue_mobile/representation/event/screens/event_screen.dart';
 import 'package:travelogue_mobile/representation/map/screens/viet_map_navigation_screen.dart';
+import 'package:travelogue_mobile/representation/tour/screens/tour_screen.dart';
 import 'package:travelogue_mobile/representation/user/screens/user_profile_screen.dart';
 
 class MainScreen extends StatefulWidget {
@@ -23,6 +24,7 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _screens = [
     const HomeScreen(),
     const EventScreen(),
+    const TourScreen(), 
     const VietMapNavigationScreen(),
     const UserProfileScreen(),
   ];
@@ -50,6 +52,7 @@ class _MainScreenState extends State<MainScreen> {
             items: [
               _buildNavItem(FontAwesomeIcons.house, "Trang chủ"),
               _buildNavItem(FontAwesomeIcons.solidCalendarDays, "Thông tin"),
+              _buildNavItem(FontAwesomeIcons.mountainSun, "Tour khám phá"),
               _buildNavItem(FontAwesomeIcons.solidMap, "Bản đồ"),
               _buildNavItem(FontAwesomeIcons.solidUser, "Cài đặt"),
             ],
@@ -61,7 +64,7 @@ class _MainScreenState extends State<MainScreen> {
 
   SalomonBottomBarItem _buildNavItem(IconData icon, String title) {
     return SalomonBottomBarItem(
-      icon: Icon(icon, size: 20), // Removed unnecessary constant
+      icon: Icon(icon, size: 20),
       title: Text(title),
     );
   }

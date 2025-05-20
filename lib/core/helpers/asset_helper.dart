@@ -3,14 +3,13 @@ class AssetHelper {
   static const String intro1 = 'assets/images/intro1.jpg';
   static const String intro2 = 'assets/images/intro2.jpg';
   static const String intro3 = 'assets/images/intro3.jpg';
-  static const String avatar = 'assets/images/avatar.jpg';
+  static const String avatar = 'assets/images/avatar.png';
 
   //review avatar
   static const String img_ava_1 = 'assets/images/img_ava_1.png';
   static const String img_ava_2 = 'assets/images/img_ava_2.png';
   static const String img_ava_3 = 'assets/images/img_ava_3.png';
   static const String img_ava_4 = 'assets/images/img_ava_4.png';
-
 
   //Icon HomeScreen
 
@@ -128,4 +127,28 @@ class AssetHelper {
   static const String img_ex_ba_den_4 = 'assets/images/img_ex_ba_den_4.jpg';
   static const String img_ex_ba_den_5 = 'assets/images/img_ex_ba_den_5.jpg';
   static const String img_ex_ba_den_6 = 'assets/images/img_ex_ba_den_6.jpg';
+
+  static const String img_thap_01 = 'assets/images/img_thap_01.jpg';
+  static const String img_thap_02 = 'assets/images/img_thap_02.jpg';
+
+  static const String img_chua_01 = 'assets/images/img_chua_01.jpg';
+  static const String img_chua_02 = 'assets/images/img_chua_02.jpg';
+
+  static const String img_lac_vien_01 = 'assets/images/img_lac_vien_01.jpg';
+  static const String img_lac_vien_02 = 'assets/images/img_lac_vien_02.jpg';
+
+  static const String img_ut_khuong_01 = 'assets/images/img_ut_khuong_01.jpg';
+  static const String img_ut_khuong_02 = 'assets/images/img_ut_khuong_02.jpg';
+
+  static const String img_song_que_01 = 'assets/images/img_song_que_01.jpg';
+  static const String img_song_que_02 = 'assets/images/img_song_que_02.jpg';
+
+  static const String img_bo_ke_01 = 'assets/images/img_bo_ke_01.jpg';
+  static const String img_bo_ke_02 = 'assets/images/img_bo_ke_02.jpg';
+
+  static const String img_suoi_da_01 = 'assets/images/img_suoi_da_01.jpg';
+  static const String img_suoi_da_02 = 'assets/images/img_suoi_da_02.jpg';
+
+  static const String img_dien_son_01 = 'assets/images/img_dien_son_01.jpg';
+  static const String img_dien_son_02 = 'assets/images/img_dien_son_02.jpg';
 }
