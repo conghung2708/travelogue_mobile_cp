@@ -8,6 +8,7 @@ import 'package:travelogue_mobile/core/utils/image_network_card.dart';
 import 'package:travelogue_mobile/model/args/reviews_screen_args.dart';
 import 'package:travelogue_mobile/model/location_model.dart';
 import 'package:travelogue_mobile/model/review_test_model.dart';
+import 'package:travelogue_mobile/representation/craft_village/screens/craft_village.dart';
 import 'package:travelogue_mobile/representation/home/widgets/rating_button_widget.dart';
 import 'package:travelogue_mobile/representation/home/widgets/reviews_screen.dart';
 import 'package:travelogue_mobile/representation/hotel/widgets/hotels.dart';
@@ -180,7 +181,7 @@ class _PlaceBottomBarState extends State<PlaceBottomBar> {
                       },
                     ),
                   ),
-                const Hotels(),
+                const CraftVillages(),
                 const Restaurents(),
                 SizedBox(height: 20.sp),
                 Container(

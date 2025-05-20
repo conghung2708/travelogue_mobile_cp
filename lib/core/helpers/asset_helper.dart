@@ -151,4 +151,33 @@ class AssetHelper {
 
   static const String img_dien_son_01 = 'assets/images/img_dien_son_01.jpg';
   static const String img_dien_son_02 = 'assets/images/img_dien_son_02.jpg';
+
+
+  //Craft Village
+  static const String img_lang_nghe_01_01 = 'assets/images/img_lang_nghe_01_01.jpg';
+  static const String img_lang_nghe_01_02 = 'assets/images/img_lang_nghe_01_02.jpg';
+  static const String img_lang_nghe_01_03 = 'assets/images/img_lang_nghe_01_03.jpg';
+  static const String img_lang_nghe_01_04 = 'assets/images/img_lang_nghe_01_04.jpg';
+
+  static const String img_lang_nghe_02_01 = 'assets/images/img_lang_nghe_02_01.jpg';
+  static const String img_lang_nghe_02_02 = 'assets/images/img_lang_nghe_02_02.jpg';
+  static const String img_lang_nghe_02_03 = 'assets/images/img_lang_nghe_02_03.jpg';
+  static const String img_lang_nghe_02_04 = 'assets/images/img_lang_nghe_02_04.jpg';
+
+  static const String img_lang_nghe_03_01 = 'assets/images/img_lang_nghe_03_01.jpg';
+  static const String img_lang_nghe_03_02 = 'assets/images/img_lang_nghe_03_02.jpg';
+  static const String img_lang_nghe_03_03 = 'assets/images/img_lang_nghe_03_03.jpg';
+  static const String img_lang_nghe_03_04 = 'assets/images/img_lang_nghe_03_04.jpg';
+
+  static const String img_lang_nghe_04_01 = 'assets/images/img_lang_nghe_04_01.jpg';
+  static const String img_lang_nghe_04_02 = 'assets/images/img_lang_nghe_04_02.jpg';
+  static const String img_lang_nghe_04_03 = 'assets/images/img_lang_nghe_04_03.jpg';
+  static const String img_lang_nghe_04_04 = 'assets/images/img_lang_nghe_04_04.jpg';
+
+  static const String img_lang_nghe_05_01 = 'assets/images/img_lang_nghe_05_01.jpg';
+  static const String img_lang_nghe_05_02 = 'assets/images/img_lang_nghe_05_02.jpg';
+  static const String img_lang_nghe_05_03 = 'assets/images/img_lang_nghe_05_03.jpg';
+  static const String img_lang_nghe_05_04 = 'assets/images/img_lang_nghe_05_04.jpg';
+
+
 }

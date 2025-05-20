@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:travelogue_mobile/model/args/reviews_screen_args.dart';
+import 'package:travelogue_mobile/model/craft_village_model.dart';
 import 'package:travelogue_mobile/model/event_model.dart';
 import 'package:travelogue_mobile/model/experience_model.dart';
 import 'package:travelogue_mobile/model/location_model.dart';
 import 'package:travelogue_mobile/model/review_test_model.dart';
 import 'package:travelogue_mobile/representation/auth/screens/forgot_password_screen.dart';
 import 'package:travelogue_mobile/representation/auth/screens/login_screen.dart';
+import 'package:travelogue_mobile/representation/craft_village/screens/craft_village_detail_screen.dart';
 import 'package:travelogue_mobile/representation/event/screens/event_detail.dart';
 import 'package:travelogue_mobile/representation/event/screens/event_screen.dart';
 import 'package:travelogue_mobile/representation/experience/screens/experience_detail_screen.dart';
@@ -90,5 +92,10 @@ final Map<String, WidgetBuilder> routes = {
       reviews: args.reviews,
       averageRating: args.averageRating,
     );
+  },
+  CraftVillageDetailScreen.routeName: (context) {
+    final args =
+        ModalRoute.of(context)!.settings.arguments as CraftVillageModel;
+    return CraftVillageDetailScreen();
   },
 };

@@ -59,7 +59,7 @@ class _UpcomingFestivalsState extends State<UpcomingFestivals> {
               setState(() {
                 _currentIndex = index;
               });
-            },
+            },  
           ),
         ),
         SizedBox(height: 1.5.h),

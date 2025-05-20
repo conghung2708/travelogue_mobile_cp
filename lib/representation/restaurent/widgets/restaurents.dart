@@ -25,7 +25,7 @@ class Restaurents extends StatelessWidget {
                   const SizedBox(height: 20),
                   _buildSectionTitle(
                     Icons.restaurant,
-                    "Quán ăn gợi ý",
+                    "Ẩm thực địa phương",
                     Colors.orange,
                   ),
                   const SizedBox(height: 10),

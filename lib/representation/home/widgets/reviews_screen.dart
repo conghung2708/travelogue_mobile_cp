@@ -211,7 +211,7 @@ class _ReviewsScreenState<T extends ReviewBase> extends State<ReviewsScreen<T>> 
                           Icon(Icons.report_problem_rounded, size: 30.sp, color: Colors.redAccent),
                           SizedBox(height: 1.h),
                           Text(
-                            "Báo cáo bình luận",
+                            "Báo cáo đánh giá",
                             style: TextStyle(
                               fontSize: 20.sp,
                               fontWeight: FontWeight.bold,
