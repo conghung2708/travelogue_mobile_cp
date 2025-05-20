@@ -5,7 +5,12 @@ import 'package:photo_view/photo_view_gallery.dart';
 import 'package:sizer/sizer.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
 import 'package:travelogue_mobile/core/utils/image_network_card.dart';
+import 'package:travelogue_mobile/model/args/reviews_screen_args.dart';
 import 'package:travelogue_mobile/model/location_model.dart';
+import 'package:travelogue_mobile/model/review_test_model.dart';
+import 'package:travelogue_mobile/representation/craft_village/screens/craft_village.dart';
+import 'package:travelogue_mobile/representation/home/widgets/rating_button_widget.dart';
+import 'package:travelogue_mobile/representation/home/widgets/reviews_screen.dart';
 import 'package:travelogue_mobile/representation/hotel/widgets/hotels.dart';
 import 'package:travelogue_mobile/representation/map/screens/viet_map_location_screen.dart';
 import 'package:travelogue_mobile/representation/restaurent/widgets/restaurents.dart';
@@ -89,45 +94,52 @@ class _PlaceBottomBarState extends State<PlaceBottomBar> {
                       ),
                       const SizedBox(height: 10),
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Row(
-                            children: [
-                              CircleAvatar(
-                                radius: 20,
-                                backgroundImage:
-                                    AssetImage(AssetHelper.img_logo_tay_ninh),
-                              ),
-                              SizedBox(width: 8),
-                              Text(
-                                'Tỉnh đoàn Tây Ninh',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
+                          Expanded(
+                            flex: 3,
+                            child: Row(
+                              children: [
+                                const CircleAvatar(
+                                  radius: 20,
+                                  backgroundImage:
+                                      AssetImage(AssetHelper.img_logo_tay_ninh),
                                 ),
-                              ),
-                              SizedBox(width: 4),
-                              Icon(
-                                Icons.verified,
-                                color: Colors.blue,
-                                size: 18,
-                              ),
-                            ],
+                                SizedBox(width: 2.w),
+                                const Text(
+                                  'Tỉnh đoàn Tây Ninh',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                SizedBox(width: 1.w),
+                                const Icon(
+                                  Icons.verified,
+                                  color: Colors.blue,
+                                  size: 18,
+                                ),
+                              ],
+                            ),
                           ),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.star,
-                                color: Colors.amber,
-                                size: 20,
+                          Expanded(
+                            flex: 2,
+                            child: Align(
+                              alignment: Alignment.centerRight,
+                              child: RatingButtonWidget(
+                                rating: widget.place.rating?.toDouble() ?? 0.0,
+                                onTap: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    ReviewsScreen.routeName,
+                                    arguments:
+                                        ReviewsScreenArgs<ReviewTestModel>(
+                                      reviews: mockReviews,
+                                      averageRating: widget.place.rating?.toDouble() ?? 0,
+                                    ),
+                                  );
+                                },
                               ),
-                              const SizedBox(width: 4),
-                              Text(
-                                widget.place.rating?.toString() ?? '',
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.w600),
-                              ),
-                            ],
+                            ),
                           ),
                         ],
                       ),
@@ -169,7 +181,7 @@ class _PlaceBottomBarState extends State<PlaceBottomBar> {
                       },
                     ),
                   ),
-                const Hotels(),
+                const CraftVillages(),
                 const Restaurents(),
                 SizedBox(height: 20.sp),
                 Container(

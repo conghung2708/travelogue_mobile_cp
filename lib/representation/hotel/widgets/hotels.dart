@@ -22,7 +22,7 @@ class Hotels extends StatelessWidget {
                   const SizedBox(height: 20),
                   _buildSectionTitle(
                     Icons.hotel,
-                    "Khách sạn gợi ý",
+                    "Làng nghề truyền thống",
                     Colors.blue,
                   ),
                   Container(

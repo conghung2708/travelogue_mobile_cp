@@ -1,7 +1,6 @@
 plugins {
     id "com.android.application"
     id "kotlin-android"
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id "dev.flutter.flutter-gradle-plugin"
     id 'com.google.gms.google-services'
 }
@@ -15,9 +14,8 @@ dependencies {
 def keystoreProperties = new Properties()
 def keystorePropertiesFile = rootProject.file('key.properties')
 if (keystorePropertiesFile.exists()) {
-   keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
-
 
 android {
     namespace = "com.travelogue_mobile"
@@ -37,45 +35,36 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.travelogue_mobile"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 24
         targetSdk = 35
         versionCode = 3
         versionName = '3.0.0'
     }
 
-    signingConfigs { 
-        debug {
+    signingConfigs {
+        // Release vẫn giữ lại, bạn có thể dùng khi muốn xuất APK/AAB
+        release {
             keyAlias keystoreProperties['keyAlias']
             keyPassword keystoreProperties['keyPassword']
             storeFile file("upload.jks")
             storePassword keystoreProperties['storePassword']
-       }
-       release {
-           keyAlias keystoreProperties['keyAlias']
-           keyPassword keystoreProperties['keyPassword']
-           storeFile file("upload.jks")
-           storePassword keystoreProperties['storePassword']
-       }
-   }
+        }
+    }
 
     buildTypes {
         release {
             signingConfig signingConfigs.release
-            shrinkResources true            // shrink and remove unused resources
+            shrinkResources true
             multiDexEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
-            signingConfig signingConfigs.debug
+
             minifyEnabled false
             shrinkResources false
-        }    // shrink and remove unused resources
+        }
     }
-
 }
 
 flutter {

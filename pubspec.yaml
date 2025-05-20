@@ -54,7 +54,8 @@ dependencies:
   flutter_svg: ^2.0.17
   weather: ^3.1.1
   vietmap_flutter_plugin: ^0.4.0
-
+  flutter_rating_bar: ^4.0.1
+  flutter_markdown: ^0.7.7
   url_launcher: ^6.3.1
 
   # Caching
