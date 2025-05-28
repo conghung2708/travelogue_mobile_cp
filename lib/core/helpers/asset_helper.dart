@@ -179,5 +179,7 @@ class AssetHelper {
   static const String img_lang_nghe_05_03 = 'assets/images/img_lang_nghe_05_03.jpg';
   static const String img_lang_nghe_05_04 = 'assets/images/img_lang_nghe_05_04.jpg';
 
+  static const String img_hobby = 'assets/images/img_hobby.png';
+
 
 }

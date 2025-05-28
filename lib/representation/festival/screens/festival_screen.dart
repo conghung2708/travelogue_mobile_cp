@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:sizer/sizer.dart';
+
 import 'package:travelogue_mobile/core/blocs/festival/festival_bloc.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
 import 'package:travelogue_mobile/core/helpers/image_helper.dart';
@@ -29,33 +31,30 @@ class FestivalScreen extends StatelessWidget {
             children: [
               Container(color: Colors.white),
               FestivalScreenBackground(
-                screenHeight: MediaQuery.of(context).size.height,
+                screenHeight: 100.h,
               ),
               SafeArea(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
+                      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
                       child: Row(
                         children: [
-                          /// Nút Back
                           ArrowBackButton(onPressed: () {
                             Navigator.of(context).pop();
                           }),
-
-                          const Expanded(
+                          Expanded(
                             child: Text(
                               "Lễ hội & Sự kiện",
                               style: TextStyle(
                                 fontFamily: "Pattaya",
-                                fontSize: 20,
+                                fontSize: 20.sp,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
                                 decoration: TextDecoration.none,
                                 shadows: [
-                                  Shadow(
+                                  const Shadow(
                                     color: Colors.black54,
                                     blurRadius: 4,
                                     offset: Offset(2, 2),
@@ -66,8 +65,6 @@ class FestivalScreen extends StatelessWidget {
                             ),
                           ),
                           if (UserLocal().getAccessToken.isNotEmpty)
-
-                            /// Avatar người dùng
                             DecoratedBox(
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
@@ -82,8 +79,8 @@ class FestivalScreen extends StatelessWidget {
                               child: ClipOval(
                                 child: ImageHelper.loadFromAsset(
                                   AssetHelper.img_avatar,
-                                  width: 42,
-                                  height: 42,
+                                  width: 10.w,
+                                  height: 10.w,
                                   fit: BoxFit.cover,
                                 ),
                               ),
@@ -91,7 +88,7 @@ class FestivalScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 1.5.h),
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
@@ -107,7 +104,7 @@ class FestivalScreen extends StatelessWidget {
                       child: festivals.isEmpty
                           ? _pageEmpty(context, monthCurrent)
                           : ListView.builder(
-                              padding: const EdgeInsets.only(top: 10),
+                              padding: EdgeInsets.only(top: 1.h),
                               itemCount: festivals.length,
                               itemBuilder: (context, index) {
                                 final festival = festivals[index];
@@ -141,15 +138,15 @@ class FestivalScreen extends StatelessWidget {
         children: [
           ImageHelper.loadFromAsset(
             AssetHelper.img_search_not_found,
-            width: MediaQuery.of(context).size.width * 0.6,
-            height: MediaQuery.of(context).size.width * 0.6,
+            width: 60.w,
+            height: 60.w,
             fit: BoxFit.contain,
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 2.h),
           Text(
             "Không tìm thấy sự kiện lễ hội trong tháng $monthCurrent",
-            style: const TextStyle(
-              fontSize: 18,
+            style: TextStyle(
+              fontSize: 13.sp,
               color: Colors.grey,
               fontWeight: FontWeight.bold,
             ),
@@ -167,95 +164,116 @@ class FestivalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final start = festival.startDate ?? now;
+    final end = festival.endDate ?? now;
+    String statusLabel;
+    Color statusColor;
+
+    if (now.isBefore(start)) {
+      final daysLeft = start.difference(now).inDays;
+      statusLabel = '$daysLeft ngày nữa';
+      statusColor = Colors.orangeAccent;
+    } else if (now.isAfter(end)) {
+      statusLabel = 'Đã qua';
+      statusColor = Colors.grey;
+    } else {
+      statusLabel = 'Đang diễn ra';
+      statusColor = Colors.green;
+    }
+
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+      margin: EdgeInsets.symmetric(vertical: 2.h, horizontal: 4.w),
       elevation: 6,
       shadowColor: Colors.grey.withOpacity(0.3),
       color: Colors.white,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(4.w),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(4.w),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            // Ảnh sự kiện
             ClipRRect(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(4.w),
               child: ImageNetworkCard(
                 url: festival.imgUrlFirst,
-                height: 160,
+                height: 18.h,
                 width: double.infinity,
                 fit: BoxFit.cover,
               ),
             ),
-            const SizedBox(height: 12),
-
-            // Tiêu đề
-            Text(
-              festival.name ?? '',
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF2C3E50), // Xanh đậm sang trọng
-              ),
+            SizedBox(height: 1.5.h),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    festival.name ?? '',
+                    style: TextStyle(
+                      fontSize: 17.sp,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2C3E50),
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 0.5.h),
+                  decoration: BoxDecoration(
+                    color: statusColor,
+                    borderRadius: BorderRadius.circular(3.w),
+                  ),
+                  child: Text(
+                    statusLabel,
+                    style: TextStyle(color: Colors.white, fontSize: 12.sp, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 6),
-
-            // Mô tả ngắn gọn
+            SizedBox(height: 1.h),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.info_outline, color: Colors.orange, size: 18),
-                const SizedBox(width: 6),
+                Icon(Icons.info_outline, color: Colors.orange, size: 18.sp),
+                SizedBox(width: 2.w),
                 Expanded(
                   child: Text(
                     festival.description ?? '',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Colors.black87,
-                    ),
+                    style: TextStyle(fontSize: 14.sp, color: Colors.black87),
                     overflow: TextOverflow.ellipsis,
                     maxLines: 2,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-
-            // Ngày diễn ra lễ hội
+            SizedBox(height: 1.h),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.date_range,
-                        color: Colors.blueAccent, size: 18),
-                    const SizedBox(width: 6),
+                    Icon(Icons.date_range, color: Colors.blueAccent, size: 18.sp),
+                    SizedBox(width: 2.w),
                     Text(
-                      _formatDate(festival.startDate ?? DateTime.now()),
-                      style: const TextStyle(
-                        fontSize: 14,
+                      _formatDate(start),
+                      style: TextStyle(
+                        fontSize: 13.sp,
                         fontWeight: FontWeight.bold,
                         color: Colors.blueAccent,
                       ),
                     ),
                   ],
                 ),
-                const Text(
-                  "đến",
-                  style: TextStyle(fontSize: 14, color: Colors.black54),
-                ),
+                Text("đến", style: TextStyle(fontSize: 13.sp, color: Colors.black54)),
                 Row(
                   children: [
-                    const Icon(Icons.event_available,
-                        color: Colors.green, size: 18),
-                    const SizedBox(width: 6),
+                    Icon(Icons.event_available, color: Colors.green, size: 18.sp),
+                    SizedBox(width: 2.w),
                     Text(
-                      _formatDate(festival.endDate ?? DateTime.now()),
-                      style: const TextStyle(
-                        fontSize: 14,
+                      _formatDate(end),
+                      style: TextStyle(
+                        fontSize: 13.sp,
                         fontWeight: FontWeight.bold,
                         color: Colors.green,
                       ),

@@ -7,12 +7,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:travelogue_mobile/core/blocs/app_bloc.dart';
+import 'package:travelogue_mobile/core/blocs/main/main_bloc.dart';
 import 'package:travelogue_mobile/core/constants/color_constants.dart';
 import 'package:travelogue_mobile/data/data_local/base_local_data.dart';
+import 'package:travelogue_mobile/representation/hobby/screens/hobby_screen.dart';
 import 'package:travelogue_mobile/representation/home/screens/home_screen.dart';
 import 'package:travelogue_mobile/representation/home/screens/place_detail_screen.dart';
 import 'package:travelogue_mobile/representation/intro/screens/splash_screen.dart';
 import 'package:sizer/sizer.dart';
+import 'package:travelogue_mobile/representation/main_screen.dart';
 import 'package:travelogue_mobile/routes.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator/geolocator.dart';
@@ -106,7 +109,7 @@ class _MyAppState extends State<MyApp> {
             ),
             debugShowCheckedModeBanner: false,
             routes: routes,
-            home: const HomeScreen(),
+            home: const MainScreen(),
             // home: const ExperienceScreen(),
             // home: const FestivalScreen(),
           );

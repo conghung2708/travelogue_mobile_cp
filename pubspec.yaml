@@ -57,6 +57,10 @@ dependencies:
   flutter_rating_bar: ^4.0.1
   flutter_markdown: ^0.7.7
   url_launcher: ^6.3.1
+  shimmer: ^3.0.0
+  confetti: ^0.8.0
+  flutter_countdown_timer: ^4.1.0
+  animated_text_kit: ^4.2.3
 
   # Caching
   hive: ^2.2.3
