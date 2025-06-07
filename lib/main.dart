@@ -19,12 +19,14 @@ import 'package:travelogue_mobile/representation/main_screen.dart';
 import 'package:travelogue_mobile/routes.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {
   await runZonedGuarded(
     () async {
       final WidgetsBinding widgetsBinding =
           WidgetsFlutterBinding.ensureInitialized();
+            await initializeDateFormatting('vi', null);
       // Keep native splash screen up until app is finished bootstrapping
       // FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
@@ -94,7 +96,7 @@ class _MyAppState extends State<MyApp> {
       child: Sizer(
         builder: (context, orientation, deviceType) {
           return MaterialApp(
-            title: 'Go Young',
+            title: 'Travelogue',
             theme: ThemeData(
               fontFamily: 'Roboto',
               primaryColor: ColorPalette.primaryColor,

@@ -5,6 +5,7 @@ import 'package:travelogue_mobile/model/event_model.dart';
 import 'package:travelogue_mobile/model/experience_model.dart';
 import 'package:travelogue_mobile/model/location_model.dart';
 import 'package:travelogue_mobile/model/review_test_model.dart';
+import 'package:travelogue_mobile/model/trip_plan.dart';
 import 'package:travelogue_mobile/representation/auth/screens/forgot_password_screen.dart';
 import 'package:travelogue_mobile/representation/auth/screens/login_screen.dart';
 import 'package:travelogue_mobile/representation/craft_village/screens/craft_village_detail_screen.dart';
@@ -26,6 +27,8 @@ import 'package:travelogue_mobile/representation/news/screens/news_screen.dart';
 import 'package:travelogue_mobile/representation/restaurent/screens/restaurent_detail_screen.dart';
 import 'package:travelogue_mobile/representation/home/screens/search_screen.dart';
 import 'package:travelogue_mobile/representation/intro/screens/splash_screen.dart';
+import 'package:travelogue_mobile/representation/trip_plan/screens/trip_detail_screen.dart';
+import 'package:travelogue_mobile/representation/trip_plan/screens/my_trip_plan_screen.dart';
 import 'package:travelogue_mobile/representation/user/screens/contact_support_screen.dart';
 import 'package:travelogue_mobile/representation/user/screens/edit_profile_screen.dart';
 import 'package:travelogue_mobile/representation/user/screens/faq_screen.dart';
@@ -97,5 +100,10 @@ final Map<String, WidgetBuilder> routes = {
     final args =
         ModalRoute.of(context)!.settings.arguments as CraftVillageModel;
     return CraftVillageDetailScreen();
+  },
+  MyTripPlansScreen.routeName: (_) => const MyTripPlansScreen(),
+  TripDetailScreen.routeName: (context) {
+    final trip = ModalRoute.of(context)!.settings.arguments as TripPlan;
+    return TripDetailScreen(trip: trip);
   },
 };
