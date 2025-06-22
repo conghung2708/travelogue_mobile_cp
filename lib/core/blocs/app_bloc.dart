@@ -7,6 +7,7 @@ import 'package:travelogue_mobile/core/blocs/hotel_restaurent/hotel_restaurant_b
 import 'package:travelogue_mobile/core/blocs/main/main_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/news/news_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/search/search_bloc.dart';
+import 'package:travelogue_mobile/core/trip_plan/bloc/trip_plan_bloc.dart';
 import 'package:travelogue_mobile/data/data_local/user_local.dart';
 
 class AppBloc {
@@ -18,6 +19,7 @@ class AppBloc {
   static final NewsBloc newsBloc = NewsBloc();
   static final FestivalBloc festivalBloc = FestivalBloc();
   static final ExperienceBloc experienceBloc = ExperienceBloc();
+  static final TripPlanBloc tripPlanBloc = TripPlanBloc();
 
   List<BlocProvider> providers = [
     BlocProvider<MainBloc>(
@@ -44,6 +46,9 @@ class AppBloc {
     BlocProvider<ExperienceBloc>(
       create: (context) => experienceBloc,
     ),
+    BlocProvider<TripPlanBloc>(
+  create: (context) => tripPlanBloc,
+),
   ];
 
   void initial() {
@@ -77,6 +82,7 @@ class AppBloc {
     newsBloc.close();
     festivalBloc.close();
     experienceBloc.close();
+    tripPlanBloc.close();
   }
 
   ///Singleton factory

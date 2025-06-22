@@ -6,6 +6,7 @@ class TripPlanVersion {
   final String description;
   final String notes;
   final String status;
+  
 
   TripPlanVersion({
     required this.id,

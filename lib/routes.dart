@@ -27,6 +27,10 @@ import 'package:travelogue_mobile/representation/news/screens/news_screen.dart';
 import 'package:travelogue_mobile/representation/restaurent/screens/restaurent_detail_screen.dart';
 import 'package:travelogue_mobile/representation/home/screens/search_screen.dart';
 import 'package:travelogue_mobile/representation/intro/screens/splash_screen.dart';
+import 'package:travelogue_mobile/representation/trip_plan/screens/create_trip_screen.dart';
+import 'package:travelogue_mobile/representation/trip_plan/screens/select_place_for_day_screen.dart';
+import 'package:travelogue_mobile/representation/trip_plan/screens/select_tour_guide_screen.dart';
+import 'package:travelogue_mobile/representation/trip_plan/screens/select_trip_day_screen.dart';
 import 'package:travelogue_mobile/representation/trip_plan/screens/trip_detail_screen.dart';
 import 'package:travelogue_mobile/representation/trip_plan/screens/my_trip_plan_screen.dart';
 import 'package:travelogue_mobile/representation/user/screens/contact_support_screen.dart';
@@ -102,8 +106,19 @@ final Map<String, WidgetBuilder> routes = {
     return CraftVillageDetailScreen();
   },
   MyTripPlansScreen.routeName: (_) => const MyTripPlansScreen(),
-  TripDetailScreen.routeName: (context) {
-    final trip = ModalRoute.of(context)!.settings.arguments as TripPlan;
-    return TripDetailScreen(trip: trip);
-  },
+TripDetailScreen.routeName: (context) => const TripDetailScreen(),
+  CreateTripScreen.routeName: (_) => const CreateTripScreen(),
+  
+SelectTripDayScreen.routeName: (context) {
+  return const SelectTripDayScreen(); //
+},
+SelectPlaceForDayScreen.routeName: (context) {
+  final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+  return SelectPlaceForDayScreen(
+    trip: args['trip'],
+    day: args['day'], 
+  );
+},
+
+SelectTourGuideScreen.routeName: (_) => const SelectTourGuideScreen(),
 };

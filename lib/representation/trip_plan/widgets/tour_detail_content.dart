@@ -8,8 +8,8 @@ import 'package:travelogue_mobile/model/tour_guide_test_model.dart';
 import 'package:travelogue_mobile/model/trip_craft_village.dart';
 import 'package:travelogue_mobile/model/trip_plan_cuisine.dart';
 import 'package:travelogue_mobile/model/trip_plan_location.dart';
-import 'package:travelogue_mobile/representation/trip_plan/widgets/tour_guide_profile_card.dart';
 
+import 'package:travelogue_mobile/representation/trip_plan/widgets/tour_guide_profile_card.dart';
 import 'package:travelogue_mobile/representation/trip_plan/widgets/trip_overview_header.dart';
 import 'package:travelogue_mobile/representation/trip_plan/widgets/timeline_card_item.dart';
 
@@ -95,24 +95,12 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
               SizedBox(
                 height: 60.h,
                 child: TabBarView(
-  children: [
-    _buildTimeline(),
-    SingleChildScrollView(
-      padding: EdgeInsets.all(3.w),
-      child: MarkdownBody(
-        data: _travelogueNoticeMarkdown,
-        styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
-          p: TextStyle(fontSize: 14.sp),
-          h2: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.bold),
-          h3: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: Colors.blueAccent),
-          listBullet: TextStyle(fontSize: 12.sp),
-        ),
-      ),
-    ),
-    TourGuideProfileCard(guide: mockTourGuides[0]),
-  ],
-),
-
+                  children: [
+                    _buildTimeline(),
+                    _buildMarkdownNotice(context),
+                    _buildTourGuideInfo(),
+                  ],
+                ),
               )
             ],
           ),
@@ -141,47 +129,103 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
           timeGroups.putIfAbsent(label, () => []).add(item);
         }
 
-        return Card(
-          margin: EdgeInsets.symmetric(vertical: 1.h),
-          color: Colors.blue.shade50,
-          child: ExpansionTile(
-            maintainState: true,
-            title: Column(
+  final allWithoutTime = items.every((item) => item.startTime.hour == 0);
+
+return Card(
+  margin: EdgeInsets.symmetric(vertical: 1.h),
+  color: Colors.blue.shade50,
+  child: ExpansionTile(
+    maintainState: true,
+    title: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Ngày ${index + 1}',
+            style: TextStyle(
+                color: Colors.blue,
+                fontWeight: FontWeight.bold,
+                fontSize: 14.sp)),
+        Text(DateFormat('EEEE, dd MMM yyyy', 'vi').format(day),
+            style: TextStyle(fontSize: 13.sp, color: Colors.grey)),
+      ],
+    ),
+    children: [
+      if (allWithoutTime)
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: items.map((item) => TimelineCardItem(item: item)).toList(),
+          ),
+        )
+      else
+        ..._groupByTimeLabel(items).entries.map((entry) {
+          return Padding(
+            padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Ngày ${index + 1}',
+                Text(entry.key,
                     style: TextStyle(
-                        color: Colors.blue,
+                        fontSize: 20.sp,
                         fontWeight: FontWeight.bold,
-                        fontSize: 14.sp)),
-                Text(DateFormat('EEEE, dd MMM yyyy', 'vi').format(day),
-                    style: TextStyle(fontSize: 13.sp, color: Colors.grey)),
+                        color: Colors.blueAccent,
+                        fontFamily: "Pattaya")),
+                ...entry.value
+                    .map((item) => TimelineCardItem(item: item))
+                    .toList(),
               ],
             ),
-            children: timeGroups.entries.map((entry) {
-              return Padding(
-                padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(entry.key,
-                        style: TextStyle(
-                            fontSize: 20.sp,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blueAccent,
-                            fontFamily: "Pattaya")),
-                    ...entry.value
-                        .map((item) => TimelineCardItem(item: item))
-                        .toList(),
-                  ],
-                ),
-              );
-            }).toList(),
-          ),
-        );
+          );
+        }),
+    ],
+  ),
+);
       },
     );
   }
+
+  Widget _buildMarkdownNotice(BuildContext context) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(3.w),
+      child: MarkdownBody(
+        data: _travelogueNoticeMarkdown,
+        styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+          p: TextStyle(fontSize: 14.sp),
+          h2: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.bold),
+          h3: TextStyle(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w600,
+              color: Colors.blueAccent),
+          listBullet: TextStyle(fontSize: 12.sp),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTourGuideInfo() {
+    if (trip.tourGuide != null) {
+      return TourGuideProfileCard(guide: trip.tourGuide!);
+    } else {
+      return Padding(
+        padding: EdgeInsets.all(4.w),
+        child: Text(
+          '⚠️ Chưa có trưởng đoàn được chọn cho hành trình này.',
+          style: TextStyle(fontSize: 13.sp, color: Colors.grey),
+        ),
+      );
+    }
+  }
+
+Map<String, List<dynamic>> _groupByTimeLabel(List<dynamic> items) {
+  items.sort((a, b) => a.startTime.compareTo(b.startTime));
+  final Map<String, List<dynamic>> grouped = {};
+  for (var item in items) {
+    final label = _getTimeLabel(item.startTime);
+    grouped.putIfAbsent(label, () => []).add(item);
+  }
+  return grouped;
+}
+
 
   String _getTimeLabel(DateTime time) {
     final hour = time.hour;

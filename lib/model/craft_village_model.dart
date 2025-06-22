@@ -2,6 +2,7 @@ import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
 import 'package:travelogue_mobile/model/image_model.dart';
 
 class CraftVillageModel {
+  final String id;
   final String name;
   final String description;
   final String content;
@@ -15,6 +16,7 @@ class CraftVillageModel {
   final List<String> imageList;
 
   CraftVillageModel({
+    required this.id,
     required this.name,
     required this.description,
     required this.content,
@@ -31,6 +33,7 @@ class CraftVillageModel {
 
 final List<CraftVillageModel> craftVillages = [
   CraftVillageModel(
+    id: "craft01",
     name: "Làng nghề bánh tráng phơi sương Trảng Bàng",
     description: "**Nghề làm bánh tráng phơi sương truyền thống**, nổi tiếng khắp cả nước.",
     content: """**Làng nghề bánh tráng phơi sương Trảng Bàng** đã tồn tại hơn 100 năm và là nét văn hóa ẩm thực đặc trưng của Tây Ninh.
@@ -54,6 +57,7 @@ Người dân thường **dậy từ 2 giờ sáng** để kịp phơi sương b
     ],
   ),
   CraftVillageModel(
+     id: "craft02",
     name: "Làng nghề làm nhang Long Thành Bắc",
     description: "**Làng nghề làm nhang truyền thống với mùi hương dịu nhẹ.**",
     content: """Nghề làm nhang là một phần quan trọng trong văn hóa dân gian Việt Nam, đặc biệt tại tỉnh Tây Ninh.
@@ -78,6 +82,7 @@ Mùi nhang dịu nhẹ, quá trình làm thủ công tỉ mỉ là nét đặc t
     ],
   ),
   CraftVillageModel(
+     id: "craft03",
     name: "Làng nghề mây tre đan Long Thành Trung",
     description: "**Làng nghề sản xuất các sản phẩm từ mây tre đan thủ công.**",
     content: """Thăm làng nghề mây tre nứa Long Thành Trung:
@@ -104,6 +109,7 @@ Mỗi cơ sở tạo việc làm cho nhiều thợ, thu nhập ổn định mỗ
     ],
   ),
   CraftVillageModel(
+     id: "craft04",
     name: "Làng nghề chằm nón lá An Hòa",
     description: "**Làng nghề chằm nón lá truyền thống với kỹ thuật tinh xảo.**",
     content: """Nghề chằm nón lá ăn sâu vào đời sống người dân tại An Hòa – Tây Ninh.
@@ -127,6 +133,7 @@ Mỗi cơ sở tạo việc làm cho nhiều thợ, thu nhập ổn định mỗ
     ],
   ),
   CraftVillageModel(
+     id: "craft05",
     name: "Làng nghề làm muối ớt Gò Dầu",
     description: "**Làng nghề sản xuất muối ớt truyền thống, đặc sản Tây Ninh.**",
     content: """Nghề làm muối ớt ra đời trong thời kỳ kháng chiến, tiếp tế cho chiến sĩ nơi tiền tuyến.

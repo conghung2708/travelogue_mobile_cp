@@ -1,24 +1,135 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sizer/sizer.dart';
+import 'package:travelogue_mobile/model/args/trip_detail_args.dart';
+import 'package:travelogue_mobile/model/trip_craft_village.dart';
 import 'package:travelogue_mobile/model/trip_plan.dart';
+import 'package:travelogue_mobile/model/trip_plan_cuisine.dart';
+import 'package:travelogue_mobile/model/trip_plan_location.dart';
+import 'package:travelogue_mobile/model/trip_status.dart';
 import 'package:travelogue_mobile/representation/trip_plan/screens/trip_detail_screen.dart';
+import 'package:travelogue_mobile/representation/trip_plan/screens/select_trip_day_screen.dart';
 
 class TripPlanCard extends StatelessWidget {
   final TripPlan trip;
   final double height;
+  final void Function(TripPlan updatedTrip)? onUpdated;
 
-  const TripPlanCard({super.key, required this.trip, required this.height});
+  const TripPlanCard({
+    super.key,
+    required this.trip,
+    required this.height,
+    this.onUpdated,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final TripStatus status = trip.statusEnum;
+    print('📣 Trip "${trip.name}" có trạng thái: ${status.name}');
+    final Color statusColor = _getStatusColor(status);
+    final String statusLabel = status.label;
+
     return GestureDetector(
-      onTap: () {
-        Navigator.pushNamed(
-          context,
-          TripDetailScreen.routeName,
-          arguments: trip,
-        );
+      onTap: () async {
+        if (trip.tourGuide == null || trip.statusEnum == TripStatus.noGuide) {
+          final versionId = trip.versionId;
+
+          // Nếu chưa có versionId thì không thể khôi phục dữ liệu
+          if (versionId == null) {
+            final result = await Navigator.pushNamed(
+              context,
+              SelectTripDayScreen.routeName,
+              arguments: {
+                'trip': trip,
+                'days': List.generate(
+                  trip.endDate.difference(trip.startDate).inDays + 1,
+                  (i) => trip.startDate.add(Duration(days: i)),
+                ),
+              },
+            );
+            if (result is TripPlan) {
+              onUpdated?.call(result);
+            }
+            return;
+          }
+
+          final selectedPerDay = <DateTime, List<dynamic>>{};
+
+          final locations = tripLocations
+              .where((e) => e.tripPlanVersionId == versionId)
+              .toList();
+          final cuisines = tripCuisines
+              .where((e) => e.tripPlanVersionId == versionId)
+              .toList();
+          final crafts = tripCraftVillages
+              .where((e) => e.tripPlanVersionId == versionId)
+              .toList();
+          for (final item in [...locations, ...cuisines, ...crafts]) {
+            DateTime? day;
+
+            if (item is TripPlanLocation) {
+              day = DateTime(item.startTime.year, item.startTime.month,
+                  item.startTime.day);
+            } else if (item is TripPlanCuisine) {
+              day = DateTime(item.startTime.year, item.startTime.month,
+                  item.startTime.day);
+            } else if (item is TripPlanCraftVillage) {
+              day = DateTime(item.startTime.year, item.startTime.month,
+                  item.startTime.day);
+            }
+
+            if (day != null) {
+              selectedPerDay.putIfAbsent(day, () => []).add(item);
+            }
+          }
+
+          final result = await Navigator.pushNamed(
+            context,
+            SelectTripDayScreen.routeName,
+            arguments: {
+              'trip': trip,
+              'days': List.generate(
+                trip.endDate.difference(trip.startDate).inDays + 1,
+                (i) => trip.startDate.add(Duration(days: i)),
+              ),
+              'selectedPerDay': selectedPerDay,
+            },
+          );
+
+          if (result is TripPlan) {
+            onUpdated?.call(result);
+          }
+        } else {
+          final versionId = trip.versionId;
+
+          final locations = tripLocations
+              .where((e) => e.tripPlanVersionId == versionId)
+              .toList();
+          final cuisines = tripCuisines
+              .where((e) => e.tripPlanVersionId == versionId)
+              .toList();
+          final villages = tripCraftVillages
+              .where((e) => e.tripPlanVersionId == versionId)
+              .toList();
+
+          final days = List.generate(
+            trip.endDate.difference(trip.startDate).inDays + 1,
+            (i) => trip.startDate.add(Duration(days: i)),
+          );
+
+          Navigator.pushNamed(
+            context,
+            TripDetailScreen.routeName,
+            arguments: TripDetailArgs(
+              trip: trip,
+              guide: trip.tourGuide,
+              locations: locations,
+              cuisines: cuisines,
+              villages: villages,
+              days: days,
+            ),
+          );
+        }
       },
       onLongPress: () {
         showModalBottomSheet(
@@ -39,9 +150,16 @@ class TripPlanCard extends StatelessWidget {
                 Text(trip.description),
                 SizedBox(height: 1.h),
                 ElevatedButton.icon(
-                  onPressed: () {},
-                  icon: Icon(Icons.info),
-                  label: Text('Xem chi tiết'),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.pushNamed(
+                      context,
+                      TripDetailScreen.routeName,
+                      arguments: trip,
+                    );
+                  },
+                  icon: const Icon(Icons.info),
+                  label: const Text('Xem chi tiết'),
                 )
               ],
             ),
@@ -72,12 +190,16 @@ class TripPlanCard extends StatelessWidget {
               child: Container(
                 padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 0.5.h),
                 decoration: BoxDecoration(
-                  color: Colors.blueAccent.withOpacity(0.8),
+                  color: statusColor,
                   borderRadius: BorderRadius.circular(2.w),
                 ),
                 child: Text(
-                  trip.status.isNotEmpty ? trip.status : 'Chưa xác định',
-                  style: TextStyle(color: Colors.white, fontSize: 11.5.sp),
+                  statusLabel,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 11.5.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
@@ -139,5 +261,16 @@ class TripPlanCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Color _getStatusColor(TripStatus status) {
+    switch (status) {
+      case TripStatus.planning:
+        return Colors.blueAccent.withOpacity(0.85);
+      case TripStatus.noGuide:
+        return Colors.grey.withOpacity(0.85);
+      case TripStatus.finalized:
+        return Colors.orange.withOpacity(0.85);
+    }
   }
 }

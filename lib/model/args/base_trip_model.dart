@@ -1,3 +1,5 @@
+import 'package:travelogue_mobile/model/tour_guide_test_model.dart';
+
 abstract class BaseTrip {
   String get id;
   String get name;
@@ -5,7 +7,11 @@ abstract class BaseTrip {
   DateTime get startDate;
   DateTime get endDate;
   String get coverImage;
-  String get status;
+  int get status;
   double? get rating;
   double? get price;
+  TourGuideTestModel? get tourGuide;
+
+  /// ⚠️ Thêm dòng này
+  String? get versionId;
 }

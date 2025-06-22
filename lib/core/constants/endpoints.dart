@@ -25,4 +25,7 @@ class Endpoints {
 
   // Experience
   static const experiences = 'api/experience';
+
+  //Restaurant
+  static const restaurant = 'api/restaurant';
 }

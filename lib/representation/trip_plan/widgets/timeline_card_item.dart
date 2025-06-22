@@ -23,14 +23,18 @@ class TimelineCardItem extends StatelessWidget {
     if (item is TripPlanLocation) {
       name = item.location.name!;
       note = item.note;
-      images =
-          item.location.medias?.map((e) => e.mediaUrl ?? '').toList() ?? [];
+      images = (item.location.medias ?? [])
+          .map((e) => e.mediaUrl ?? '')
+          .cast<String>()
+          .toList();
       icon = const Icon(Icons.place, color: Colors.deepPurple);
     } else if (item is TripPlanCuisine) {
       name = item.restaurant.name!;
       note = item.note;
-      images =
-          item.restaurant.medias?.map((e) => e.mediaUrl ?? '').toList() ?? [];
+      images = (item.restaurant.medias ?? [])
+          .map((e) => e.mediaUrl ?? '')
+          .cast<String>()
+          .toList();
       icon = const Icon(Icons.restaurant, color: Colors.redAccent);
     } else if (item is TripPlanCraftVillage) {
       name = item.craftVillage.name;
@@ -38,6 +42,9 @@ class TimelineCardItem extends StatelessWidget {
       images = item.craftVillage.imageList;
       icon = const Icon(Icons.handyman, color: Colors.orange);
     }
+
+    // 🕘 Kiểm tra xem có cần hiển thị giờ không
+    final bool showTime = start.hour != 0 || end.hour != 0;
 
     return Padding(
       padding: EdgeInsets.only(top: 1.h, bottom: 1.h),
@@ -47,17 +54,21 @@ class TimelineCardItem extends StatelessWidget {
           ListTile(
             contentPadding: EdgeInsets.zero,
             leading: icon,
-            title: Text(name,
-                style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600)),
-            subtitle: Text(
-                '🕘 ${DateFormat.Hm().format(start)} - ${DateFormat.Hm().format(end)}'),
+            title: Text(
+              name,
+              style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
+            ),
+            subtitle: showTime
+                ? Text('🕘 ${DateFormat.Hm().format(start)} - ${DateFormat.Hm().format(end)}')
+                : null,
           ),
           if (note.isNotEmpty)
             Padding(
               padding: EdgeInsets.only(left: 4.w, bottom: 1.h),
-              child: Text('📝 $note',
-                  style:
-                      TextStyle(fontSize: 13.sp, fontStyle: FontStyle.italic)),
+              child: Text(
+                '📝 $note',
+                style: TextStyle(fontSize: 13.sp, fontStyle: FontStyle.italic),
+              ),
             ),
           if (images.isNotEmpty)
             Padding(

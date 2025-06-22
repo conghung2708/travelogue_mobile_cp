@@ -33,7 +33,7 @@ class TripOverviewHeader extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            trip.rating != null
+            trip.rating == null
                 ? _buildIconInfo(Icons.star, '${trip.rating} sao', 'Chất lượng')
                 : _buildIconInfo(Icons.explore, 'Tự thiết kế', 'Hành trình'),
             _buildIconInfo(Icons.calendar_month,
