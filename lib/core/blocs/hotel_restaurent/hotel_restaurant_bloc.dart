@@ -33,6 +33,31 @@ class HotelRestaurantBloc
         await _getHotelRestaurent(event);
         emit(_getSuccess);
       }
+
+        if (event is GetOnlyRestaurantEvent) {
+    listRestaurant.clear();
+
+    listRestaurant.addAll(
+      HotelRestaurantLocal().getListRestaurantLocal(event.locationId) ?? [],
+    );
+
+    if (listRestaurant.isNotEmpty) {
+      emit(HotelRestaurantSuccess(listHotel: [], listRestaurant: listRestaurant));
+    }
+
+    final List<RestaurantModel> restaurants = await HotelRestaurantRepository()
+        .getRestaurantsByLocation(locationId: event.locationId);
+
+    if (listRestaurant.isEmpty) {
+      listRestaurant.addAll(restaurants);
+      HotelRestaurantLocal().saveRestaurantsByLocation(
+        locationId: event.locationId,
+        restaurants: restaurants,
+      );
+    }
+
+    emit(HotelRestaurantSuccess(listHotel: [], listRestaurant: listRestaurant));
+  }
     });
   }
 

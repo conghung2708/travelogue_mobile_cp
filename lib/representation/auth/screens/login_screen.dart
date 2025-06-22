@@ -123,7 +123,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                 ),
                 Text(
-                  "Cùng Go Young khám phá Tây Ninh – vùng đất của những trải nghiệm tuyệt vời!",
+                  "Cùng Travelogue khám phá Tây Ninh – vùng đất của những trải nghiệm tuyệt vời!",
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Colors.white,

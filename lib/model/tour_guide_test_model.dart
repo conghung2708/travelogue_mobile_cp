@@ -1,6 +1,10 @@
+
+
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
+import 'package:travelogue_mobile/model/enums/tour_guide_status_enum.dart';
 
 enum Gender { male, female, other }
+
 
 class TourGuideTestModel {
   final int id;
@@ -12,7 +16,8 @@ class TourGuideTestModel {
   final List<String> tags;
   final double rating;
   final int reviewsCount;
-  final bool isAvailable;
+  final TourGuideStatus status;
+  final String? declineReason;
 
   TourGuideTestModel({
     required this.id,
@@ -24,7 +29,8 @@ class TourGuideTestModel {
     required this.tags,
     required this.rating,
     required this.reviewsCount,
-    required this.isAvailable,
+    required this.status,
+    this.declineReason,
   });
 }
 
@@ -39,7 +45,7 @@ final List<TourGuideTestModel> mockTourGuides = [
     tags: ["Nhiệt tình", "Am hiểu lịch sử", "Lịch sự"],
     rating: 5,
     reviewsCount: 87,
-    isAvailable: true,
+    status: TourGuideStatus.available,
   ),
   TourGuideTestModel(
     id: 2,
@@ -51,30 +57,31 @@ final List<TourGuideTestModel> mockTourGuides = [
     tags: ["Thân thiện", "Trekking", "Nói tiếng Anh"],
     rating: 3,
     reviewsCount: 65,
-    isAvailable: true,
+    status: TourGuideStatus.pending,
   ),
   TourGuideTestModel(
     id: 3,
     name: "Đoàn Mỹ Hảo",
     age: 35,
     gender: Gender.female,
-    avatarUrl: AssetHelper.img_ava_3,
+    avatarUrl: AssetHelper.img_ava_4,
     bio: "Hướng dẫn viên sinh ra ở Tây Ninh, hiểu rõ từng con đường và văn hóa bản địa.",
     tags: ["Địa phương", "Kinh nghiệm", "Lịch sử"],
     rating: 5,
     reviewsCount: 112,
-    isAvailable: true,
+    status: TourGuideStatus.declined,
+    declineReason: "Lịch cá nhân bận",
   ),
   TourGuideTestModel(
     id: 4,
     name: "Nguyễn Hương Giang",
     age: 29,
     gender: Gender.female,
-    avatarUrl: AssetHelper.img_ava_4,
+    avatarUrl: AssetHelper.img_ava_3,
     bio: "Nhiệt huyết và chuyên nghiệp, từng dẫn tour cho khách quốc tế.",
     tags: ["Trẻ trung", "Ngoại ngữ", "Chụp ảnh đẹp"],
     rating: 5,
     reviewsCount: 74,
-    isAvailable: true,
+    status: TourGuideStatus.unavailable,
   ),
 ];

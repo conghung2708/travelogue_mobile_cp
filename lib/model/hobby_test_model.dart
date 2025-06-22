@@ -85,4 +85,52 @@ final List<HobbyTestModel> mockHobbies = [
     description: 'Gặp gỡ người bản địa, trò chuyện, học hỏi văn hóa.',
     iconAsset: 'assets/icons/community.png',
   ),
+    HobbyTestModel(
+    id: 13,
+    name: 'Thiền định',
+    description: 'Tìm lại sự bình yên qua thiền định tại không gian yên tĩnh.',
+    iconAsset: 'assets/icons/meditation.png',
+  ),
+  HobbyTestModel(
+    id: 14,
+    name: 'Khám phá hang động',
+    description: 'Thám hiểm hang động, hệ thống đá tự nhiên và bí ẩn địa chất.',
+    iconAsset: 'assets/icons/cave.png',
+  ),
+  HobbyTestModel(
+    id: 15,
+    name: 'Lễ hội',
+    description: 'Tham gia các sự kiện văn hóa, lễ hội truyền thống địa phương.',
+    iconAsset: 'assets/icons/festival.png',
+  ),
+  HobbyTestModel(
+    id: 16,
+    name: 'Thể thao',
+    description: 'Chạy bộ, đạp xe, hoặc các hoạt động vận động ngoài trời.',
+    iconAsset: 'assets/icons/sport.png',
+  ),
+  HobbyTestModel(
+    id: 17,
+    name: 'Khảo cổ học',
+    description: 'Khám phá di chỉ cổ, tượng đá, và dấu tích lịch sử lâu đời.',
+    iconAsset: 'assets/icons/archaeology.png',
+  ),
+  HobbyTestModel(
+    id: 18,
+    name: 'Sinh thái',
+    description: 'Tham quan rừng nguyên sinh, khu bảo tồn và hệ sinh thái đa dạng.',
+    iconAsset: 'assets/icons/ecology.png',
+  ),
+  HobbyTestModel(
+    id: 19,
+    name: 'Hành hương',
+    description: 'Chuyến đi tâm linh kết hợp với khám phá văn hóa tôn giáo.',
+    iconAsset: 'assets/icons/pilgrimage.png',
+  ),
+  HobbyTestModel(
+    id: 20,
+    name: 'Nông nghiệp',
+    description: 'Trải nghiệm làm nông dân, tham quan trang trại hữu cơ.',
+    iconAsset: 'assets/icons/farm.png',
+  ),
 ];

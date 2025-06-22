@@ -52,7 +52,7 @@ class _MainScreenState extends State<MainScreen> {
             items: [
               _buildNavItem(FontAwesomeIcons.house, "Trang chủ"),
               _buildNavItem(FontAwesomeIcons.solidCalendarDays, "Thông tin"),
-              _buildNavItem(FontAwesomeIcons.mountainSun, "Tour khám phá"),
+              _buildNavItem(FontAwesomeIcons.squarePen, "Tour khám phá"),
               _buildNavItem(FontAwesomeIcons.solidMap, "Bản đồ"),
               _buildNavItem(FontAwesomeIcons.solidUser, "Cài đặt"),
             ],

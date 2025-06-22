@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
-import 'package:travelogue_mobile/core/utils/image_network_card.dart';
 import 'package:travelogue_mobile/representation/widgets/photo_gallery_viewer.dart';
 
 class ImageGridPreview extends StatelessWidget {
@@ -47,7 +46,7 @@ class ImageGridPreview extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: ImageNetworkCard(url: images[index], fit: BoxFit.cover),
+                child: buildImage(images[index]),
               ),
               if (index == maxImages - 1 && remaining > 0)
                 Container(
@@ -70,5 +69,13 @@ class ImageGridPreview extends StatelessWidget {
         );
       },
     );
+  }
+
+  Widget buildImage(String path) {
+    if (path.startsWith('http')) {
+      return Image.network(path, fit: BoxFit.cover);
+    } else {
+      return Image.asset(path.replaceFirst('file://', ''), fit: BoxFit.cover);
+    }
   }
 }

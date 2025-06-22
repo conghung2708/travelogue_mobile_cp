@@ -9,19 +9,22 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:travelogue_mobile/core/blocs/app_bloc.dart';
 import 'package:travelogue_mobile/core/constants/color_constants.dart';
 import 'package:travelogue_mobile/data/data_local/base_local_data.dart';
-import 'package:travelogue_mobile/representation/home/screens/home_screen.dart';
-import 'package:travelogue_mobile/representation/home/screens/place_detail_screen.dart';
-import 'package:travelogue_mobile/representation/intro/screens/splash_screen.dart';
 import 'package:sizer/sizer.dart';
+import 'package:travelogue_mobile/representation/main_screen.dart';
+import 'package:travelogue_mobile/representation/trip_plan/screens/create_trip_screen.dart';
+import 'package:travelogue_mobile/representation/trip_plan/screens/my_trip_plan_screen.dart';
 import 'package:travelogue_mobile/routes.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() async {
   await runZonedGuarded(
     () async {
       final WidgetsBinding widgetsBinding =
           WidgetsFlutterBinding.ensureInitialized();
+      await initializeDateFormatting('vi', null);
       // Keep native splash screen up until app is finished bootstrapping
       // FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
@@ -91,7 +94,7 @@ class _MyAppState extends State<MyApp> {
       child: Sizer(
         builder: (context, orientation, deviceType) {
           return MaterialApp(
-            title: 'Go Young',
+            title: 'Travelogue',
             theme: ThemeData(
               fontFamily: 'Roboto',
               primaryColor: ColorPalette.primaryColor,
@@ -105,8 +108,19 @@ class _MyAppState extends State<MyApp> {
                   ),
             ),
             debugShowCheckedModeBanner: false,
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [
+              Locale('vi', 'VN'),
+              Locale('en', 'US'),
+            ],
+            locale: const Locale('vi', 'VN'),
+
             routes: routes,
-            home: const HomeScreen(),
+            home: const MyTripPlansScreen(),
             // home: const ExperienceScreen(),
             // home: const FestivalScreen(),
           );

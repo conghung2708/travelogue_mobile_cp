@@ -8,3 +8,11 @@ class GetHotelRestaurantEvent extends HotelRestaurentEvent {
 }
 
 class CleanHotelRestaurentEvent extends HotelRestaurentEvent {}
+
+
+class GetOnlyRestaurantEvent extends HotelRestaurentEvent {
+  final String locationId;
+  GetOnlyRestaurantEvent({required this.locationId});
+}
+
+class GetAllRestaurantsEvent extends HotelRestaurentEvent {}
