@@ -16,7 +16,7 @@ import 'package:travelogue_mobile/representation/experience/screens/experience_s
 import 'package:travelogue_mobile/representation/festival/screens/festival_detail_screen.dart';
 import 'package:travelogue_mobile/representation/festival/screens/festival_screen.dart';
 import 'package:travelogue_mobile/representation/home/screens/home_screen.dart';
-import 'package:travelogue_mobile/representation/home/widgets/reviews_screen.dart';
+import 'package:travelogue_mobile/representation/review/screens/reviews_screen.dart';
 import 'package:travelogue_mobile/representation/hotel/screens/hotel_detail_screen.dart';
 
 import 'package:travelogue_mobile/representation/intro/screens/intro_screen.dart';

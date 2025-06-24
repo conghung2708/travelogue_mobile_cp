@@ -32,7 +32,6 @@ class AppBarContainerWidget extends StatelessWidget {
             automaticallyImplyLeading: false,
             elevation: 0,
             toolbarHeight: 150,
-            // backgroundColor: ColorPalette.backgroundScaffoldColor,
             title: title ??
                 Row(
                   children: [
