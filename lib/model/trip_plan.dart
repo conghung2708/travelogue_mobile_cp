@@ -1,10 +1,9 @@
-  import 'package:travelogue_mobile/model/args/base_trip_model.dart';
+import 'package:travelogue_mobile/model/args/base_trip_model.dart';
 import 'package:travelogue_mobile/model/tour_guide_test_model.dart';
-  import 'package:travelogue_mobile/model/trip_plan_cuisine.dart';
-  import 'package:travelogue_mobile/model/trip_plan_location.dart';
-import 'package:travelogue_mobile/model/trip_status.dart';
-
-
+import 'package:travelogue_mobile/model/trip_plan_cuisine.dart';
+import 'package:travelogue_mobile/model/trip_plan_location.dart';
+import 'package:travelogue_mobile/model/trip_plan_version.dart';
+import 'package:travelogue_mobile/model/enums/trip_status.dart';
 
 class TripPlan implements BaseTrip {
   @override
@@ -37,7 +36,7 @@ class TripPlan implements BaseTrip {
   @override
   TourGuideTestModel? tourGuide;
 
-    String? versionId;
+  String? versionId;
 
   TripPlan({
     required this.id,
@@ -50,7 +49,7 @@ class TripPlan implements BaseTrip {
     required this.rating,
     required this.price,
     this.tourGuide,
-       this.versionId,
+    this.versionId,
   });
 
   TripStatus get statusEnum => TripStatus.values[status];
@@ -59,9 +58,34 @@ class TripPlan implements BaseTrip {
     status = newStatus.index;
   }
 
-  
+  TripPlan copyWith({
+    String? id,
+    String? name,
+    String? description,
+    DateTime? startDate,
+    DateTime? endDate,
+    String? coverImage,
+    int? status,
+    double? rating,
+    double? price,
+    TourGuideTestModel? tourGuide,
+    String? versionId,
+  }) {
+    return TripPlan(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      startDate: startDate ?? this.startDate,
+      endDate: endDate ?? this.endDate,
+      coverImage: coverImage ?? this.coverImage,
+      status: status ?? this.status,
+      rating: rating ?? this.rating,
+      price: price ?? this.price,
+      tourGuide: tourGuide ?? this.tourGuide,
+      versionId: versionId ?? this.versionId,
+    );
+  }
 }
-
 
 final List<TripPlan> tripPlans = [
   TripPlan(
@@ -76,25 +100,24 @@ final List<TripPlan> tripPlans = [
     price: 9999999,
     rating: 4.7,
     tourGuide: mockTourGuides[0],
+    versionId: tripVersion.id,
   ),
 ];
-  String getTripPlanCoverImage(String tripPlanVersionId) {
-    final allImages = <String>[];
+String getTripPlanCoverImage(String tripPlanVersionId) {
+  final allImages = <String>[];
 
-    allImages.addAll(tripLocations
-        .where((e) => e.tripPlanVersionId == tripPlanVersionId)
-        .expand((e) => e.location.medias?.map((m) => m.mediaUrl ?? '') ?? []));
+  allImages.addAll(tripLocations
+      .where((e) => e.tripPlanVersionId == tripPlanVersionId)
+      .expand((e) => e.location.medias?.map((m) => m.mediaUrl ?? '') ?? []));
 
-    allImages.addAll(tripCuisines
-        .where((e) => e.tripPlanVersionId == tripPlanVersionId)
-        .expand((e) => e.restaurant.medias?.map((m) => m.mediaUrl ?? '') ?? []));
+  allImages.addAll(tripCuisines
+      .where((e) => e.tripPlanVersionId == tripPlanVersionId)
+      .expand((e) => e.restaurant.medias?.map((m) => m.mediaUrl ?? '') ?? []));
 
-    allImages.removeWhere((url) => url.isEmpty);
+  allImages.removeWhere((url) => url.isEmpty);
 
-    allImages.shuffle();
-    return allImages.isNotEmpty
-        ? allImages.first
-        : 'https://via.placeholder.com/400x200?text=No+Image';
-  }
-
-  
+  allImages.shuffle();
+  return allImages.isNotEmpty
+      ? allImages.first
+      : 'https://via.placeholder.com/400x200?text=No+Image';
+}

@@ -16,7 +16,7 @@ class TourGuideTestModel {
   final List<String> tags;
   final double rating;
   final int reviewsCount;
-  final TourGuideStatus status;
+   TourGuideStatus status;
   final String? declineReason;
 
   TourGuideTestModel({

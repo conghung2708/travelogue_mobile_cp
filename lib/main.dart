@@ -120,7 +120,7 @@ class _MyAppState extends State<MyApp> {
             locale: const Locale('vi', 'VN'),
 
             routes: routes,
-            home: const MyTripPlansScreen(),
+            home: const MainScreen(),
             // home: const ExperienceScreen(),
             // home: const FestivalScreen(),
           );
