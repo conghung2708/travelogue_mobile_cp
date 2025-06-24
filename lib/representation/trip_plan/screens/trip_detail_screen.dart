@@ -22,7 +22,6 @@ class TripDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 🧩 Nhận dữ liệu truyền vào
     final Object? rawArgs = ModalRoute.of(context)?.settings.arguments;
     late final BaseTrip trip;
     TourGuideTestModel? guide;
@@ -89,6 +88,7 @@ class TripDetailScreen extends StatelessWidget {
               child: SingleChildScrollView(
                 padding: EdgeInsets.all(4.w),
                 child: TourDetailContent(
+                  guide: guide,
                   trip: trip,
                   days: days,
                   currencyFormat: currencyFormat,

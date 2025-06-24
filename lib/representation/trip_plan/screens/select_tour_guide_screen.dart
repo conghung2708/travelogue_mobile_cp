@@ -5,7 +5,7 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:travelogue_mobile/model/enums/tour_guide_status_enum.dart';
 import 'package:travelogue_mobile/model/tour_guide_test_model.dart';
 import 'package:travelogue_mobile/model/trip_plan.dart';
-import 'package:travelogue_mobile/model/trip_status.dart';
+import 'package:travelogue_mobile/model/enums/trip_status.dart';
 
 class SelectTourGuideScreen extends StatefulWidget {
   static const String routeName = '/select-tour-guide';

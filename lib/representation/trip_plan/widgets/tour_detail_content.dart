@@ -20,6 +20,10 @@ class TourDetailContent extends StatelessWidget {
   final List locations;
   final List cuisines;
   final List villages;
+  final TourGuideTestModel? guide;
+  final void Function(BaseTrip updatedTrip)? onUpdated;
+
+  
 
   const TourDetailContent({
     super.key,
@@ -29,6 +33,8 @@ class TourDetailContent extends StatelessWidget {
     required this.locations,
     required this.cuisines,
     required this.villages,
+      this.guide,
+        this.onUpdated,
   });
 
   final String _travelogueNoticeMarkdown = """
@@ -77,6 +83,8 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
           trip: trip,
           days: days,
           currencyFormat: currencyFormat,
+           guideStatus: guide?.status,
+            onUpdated: onUpdated, 
         ),
         DefaultTabController(
           length: 3,

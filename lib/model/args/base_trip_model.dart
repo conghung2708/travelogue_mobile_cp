@@ -11,7 +11,5 @@ abstract class BaseTrip {
   double? get rating;
   double? get price;
   TourGuideTestModel? get tourGuide;
-
-  /// ⚠️ Thêm dòng này
   String? get versionId;
 }

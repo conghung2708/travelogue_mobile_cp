@@ -10,7 +10,7 @@ import 'package:travelogue_mobile/model/trip_craft_village.dart';
 import 'package:travelogue_mobile/model/trip_plan.dart';
 import 'package:travelogue_mobile/model/trip_plan_cuisine.dart';
 import 'package:travelogue_mobile/model/trip_plan_location.dart';
-import 'package:travelogue_mobile/model/trip_status.dart';
+import 'package:travelogue_mobile/model/enums/trip_status.dart';
 import 'package:travelogue_mobile/representation/trip_plan/screens/my_trip_plan_screen.dart';
 import 'package:travelogue_mobile/representation/trip_plan/screens/select_tour_guide_screen.dart';
 import 'package:travelogue_mobile/representation/trip_plan/widgets/trip_day_card.dart';

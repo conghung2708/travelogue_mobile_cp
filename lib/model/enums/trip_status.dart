@@ -1,8 +1,11 @@
 enum TripStatus {
-  noGuide,        // 0
-  planning,       // 1
-  finalized       // 2 (nếu cần sau này)
+  noGuide,       
+  planning,       
+  finalized,     
+  booked,
+  deleted         
 }
+
 
 extension TripStatusExtension on TripStatus {
   String get label {
@@ -12,10 +15,14 @@ extension TripStatusExtension on TripStatus {
       case TripStatus.planning:
         return 'Đang lên kế hoạch';
       case TripStatus.finalized:
-        return 'Đã hoàn tất';
+        return 'Đã hoàn tất lịch trình';
+      case TripStatus.booked:
+        return 'Đã đặt tour thành công';
+          case TripStatus.deleted:
+        return 'Đã xoá tour thành công';  
     }
   }
-  
+
   static TripStatus fromIndex(int index) {
     return TripStatus.values[index];
   }
