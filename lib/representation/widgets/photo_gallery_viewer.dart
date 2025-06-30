@@ -23,8 +23,12 @@ class PhotoGalleryViewer extends StatelessWidget {
       body: PhotoViewGallery.builder(
         itemCount: images.length,
         builder: (context, index) {
+          final path = images[index];
+          final isNetwork = path.startsWith('http');
           return PhotoViewGalleryPageOptions(
-            imageProvider: NetworkImage(images[index]),
+            imageProvider: isNetwork
+                ? NetworkImage(path)
+                : AssetImage(path.replaceFirst('file://', '')) as ImageProvider,
             minScale: PhotoViewComputedScale.contained * 0.8,
             maxScale: PhotoViewComputedScale.covered * 2,
           );

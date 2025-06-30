@@ -1,23 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:photo_view/photo_view.dart';
-import 'package:photo_view/photo_view_gallery.dart';
 import 'package:sizer/sizer.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:travelogue_mobile/core/constants/dimension_constants.dart';
 import 'package:travelogue_mobile/model/craft_village_model.dart';
+import 'package:travelogue_mobile/model/review_craft_village_test.dart';
+import 'package:travelogue_mobile/model/args/reviews_screen_args.dart';
+import 'package:travelogue_mobile/representation/home/widgets/rating_button_widget.dart';
+import 'package:travelogue_mobile/representation/review/screens/reviews_screen.dart';
+import 'package:travelogue_mobile/representation/widgets/image_grid_preview.dart';
 
 class CraftVillageDetailScreen extends StatefulWidget {
   const CraftVillageDetailScreen({super.key});
   static const String routeName = '/craft_village_detail_screen';
 
   @override
-  State<CraftVillageDetailScreen> createState() =>
-      _CraftVillageDetailScreenState();
+  State<CraftVillageDetailScreen> createState() => _CraftVillageDetailScreenState();
 }
 
 class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen> {
   CraftVillageModel? village;
+  double currentRating = 4.5;
 
   @override
   void didChangeDependencies() {
@@ -32,32 +35,22 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen> {
     }
   }
 
-  void _openPhotoGallery(List<String> images, int initialIndex) {
-    Navigator.push(
+  void _openReviewsScreen() async {
+    final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => Scaffold(
-          backgroundColor: Colors.black,
-          appBar: AppBar(
-            backgroundColor: Colors.black,
-            iconTheme: const IconThemeData(color: Colors.white),
-          ),
-          body: PhotoViewGallery.builder(
-            itemCount: images.length,
-            builder: (context, index) {
-              return PhotoViewGalleryPageOptions(
-                imageProvider: AssetImage(images[index]),
-                minScale: PhotoViewComputedScale.contained * 0.8,
-                maxScale: PhotoViewComputedScale.covered * 2,
-              );
-            },
-            pageController: PageController(initialPage: initialIndex),
-            scrollPhysics: const BouncingScrollPhysics(),
-            backgroundDecoration: const BoxDecoration(color: Colors.black),
-          ),
+        builder: (context) => ReviewsScreen<ReviewCraftVillageTestModel>(
+          reviews: mockCraftVillageReviews,
+          averageRating: currentRating,
         ),
       ),
     );
+
+    if (result is double) {
+      setState(() {
+        currentRating = result;
+      });
+    }
   }
 
   @override
@@ -127,28 +120,44 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen> {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        village!.name,
-                        style: TextStyle(
-                          fontSize: 20.sp,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: "Pattaya",
-                        ),
-                      ),
-                      const SizedBox(height: 10),
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.location_on,
-                              color: Colors.redAccent, size: 22),
-                          const SizedBox(width: 6),
                           Expanded(
-                            child: Text(
-                              village!.address,
-                              style: TextStyle(
-                                fontSize: 14.sp,
-                                color: Colors.grey[800],
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  village!.name,
+                                  style: TextStyle(
+                                    fontSize: 20.sp,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: "Pattaya",
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.location_on,
+                                        color: Colors.redAccent, size: 22),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        village!.address,
+                                        style: TextStyle(
+                                          fontSize: 14.sp,
+                                          color: Colors.grey[800],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
+                          ),
+                          RatingButtonWidget(
+                            rating: currentRating,
+                            onTap: _openReviewsScreen,
                           ),
                         ],
                       ),
@@ -194,7 +203,7 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen> {
                         ],
                       ),
                       const SizedBox(height: 12),
-                      _buildImagePreview(village!.imageList),
+                      ImageGridPreview(images: village!.imageList),
                       const SizedBox(height: 24),
                       Row(
                         children: [
@@ -231,47 +240,6 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildImagePreview(List<String> images) {
-    int showCount = images.length > 3 ? 3 : images.length;
-    int remaining = images.length - showCount;
-
-    return Row(
-      children: List.generate(showCount, (index) {
-        return Expanded(
-          child: GestureDetector(
-            onTap: () => _openPhotoGallery(images, index),
-            child: Container(
-              height: 13.h,
-              margin: EdgeInsets.only(right: index < showCount - 1 ? 8 : 0),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Image.asset(images[index], fit: BoxFit.cover),
-                    if (index == showCount - 1 && remaining > 0)
-                      Container(
-                        color: Colors.black.withOpacity(0.6),
-                        alignment: Alignment.center,
-                        child: Text(
-                          '+$remaining',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      }),
     );
   }
 }
