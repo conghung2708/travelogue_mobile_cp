@@ -7,7 +7,7 @@ import 'package:travelogue_mobile/model/tour_guide_test_model.dart';
 import 'package:travelogue_mobile/model/trip_plan_location.dart';
 import 'package:travelogue_mobile/model/trip_plan_cuisine.dart';
 import 'package:travelogue_mobile/model/trip_craft_village.dart';
-import 'package:travelogue_mobile/representation/trip_plan/widgets/tour_detail_content.dart';
+import 'package:travelogue_mobile/representation/trip_plan/widgets/trip_detail_content.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class TripDetailScreen extends StatelessWidget {
@@ -19,6 +19,9 @@ class TripDetailScreen extends StatelessWidget {
         end.difference(start).inDays + 1,
         (i) => start.add(Duration(days: i)),
       );
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -87,7 +90,7 @@ class TripDetailScreen extends StatelessWidget {
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.all(4.w),
-                child: TourDetailContent(
+                child: TripDetailContent(
                   guide: guide,
                   trip: trip,
                   days: days,

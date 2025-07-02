@@ -61,7 +61,7 @@ class _SelectTourGuideScreenState extends State<SelectTourGuideScreen> {
                           Align(
                             alignment: Alignment.centerLeft,
                             child: IconButton(
-                              icon: Icon(Icons.arrow_back_ios_new,
+                              icon: const Icon(Icons.arrow_back_ios_new,
                                   color: Colors.white),
                               onPressed: () => Navigator.pop(context),
                             ),
@@ -107,9 +107,6 @@ class _SelectTourGuideScreenState extends State<SelectTourGuideScreen> {
 
                                   trip.tourGuide = updatedGuide;
                                   trip.statusEnum = TripStatus.planning;
-
-                                  print(
-                                      '✅ Tour Guide "${updatedGuide.name}" đang chờ xác nhận');
                                   Navigator.pop(context, trip);
                                 },
                               ),
@@ -152,7 +149,7 @@ class _SelectTourGuideScreenState extends State<SelectTourGuideScreen> {
             color: Colors.white.withOpacity(0.85),
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
-              BoxShadow(
+              const BoxShadow(
                 color: Colors.black26,
                 offset: Offset(0, 4),
                 blurRadius: 10,

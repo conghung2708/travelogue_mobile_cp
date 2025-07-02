@@ -127,7 +127,7 @@ class TripConfirmedActionCard extends StatelessWidget {
               SizedBox(width: 2.w),
               Expanded(
                 child: OutlinedButton.icon(
-                  icon: Icon(Icons.edit_location_alt_outlined,
+                  icon: const Icon(Icons.edit_location_alt_outlined,
                       size: 17, color: Colors.blueAccent),
                   onPressed: () => showCreativeRequestChangeSheet(
                     context,

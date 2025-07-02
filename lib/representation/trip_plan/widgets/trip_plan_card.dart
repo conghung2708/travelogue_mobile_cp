@@ -255,6 +255,7 @@ class TripPlanCard extends StatelessWidget {
         return Colors.grey.withOpacity(0.85);
       case TripStatus.booked:
         return Colors.green.withOpacity(0.85);
+      // ignore: no_default_cases
       default:
         return Colors.black26;
     }
@@ -320,10 +321,10 @@ class TripPlanCard extends StatelessWidget {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(5.w),
                   boxShadow: [
-                    BoxShadow(
+                    const BoxShadow(
                       color: Colors.black26,
                       blurRadius: 20,
-                      offset: const Offset(0, 10),
+                      offset: Offset(0, 10),
                     )
                   ],
                 ),

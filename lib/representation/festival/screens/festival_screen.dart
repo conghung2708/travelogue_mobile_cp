@@ -214,7 +214,7 @@ class FestivalCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 17.sp,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF2C3E50),
+                      color: const Color(0xFF2C3E50),
                     ),
                   ),
                 ),

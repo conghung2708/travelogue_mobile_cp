@@ -1,7 +1,6 @@
 import 'package:travelogue_mobile/model/args/base_trip_model.dart';
 import 'package:travelogue_mobile/model/tour_guide_test_model.dart';
 import 'package:travelogue_mobile/model/trip_craft_village.dart';
-import 'package:travelogue_mobile/model/trip_plan.dart';
 import 'package:travelogue_mobile/model/trip_plan_cuisine.dart';
 import 'package:travelogue_mobile/model/trip_plan_location.dart';
 

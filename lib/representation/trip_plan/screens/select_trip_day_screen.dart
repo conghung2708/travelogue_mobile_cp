@@ -1,17 +1,12 @@
-import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sizer/sizer.dart';
-import 'package:travelogue_mobile/model/craft_village_model.dart';
-import 'package:travelogue_mobile/model/location_model.dart';
-import 'package:travelogue_mobile/model/restaurant_model.dart';
-import 'package:travelogue_mobile/model/tour_guide_test_model.dart';
 import 'package:travelogue_mobile/model/trip_craft_village.dart';
 import 'package:travelogue_mobile/model/trip_plan.dart';
 import 'package:travelogue_mobile/model/trip_plan_cuisine.dart';
 import 'package:travelogue_mobile/model/trip_plan_location.dart';
 import 'package:travelogue_mobile/model/enums/trip_status.dart';
-import 'package:travelogue_mobile/representation/trip_plan/screens/my_trip_plan_screen.dart';
 import 'package:travelogue_mobile/representation/trip_plan/screens/select_tour_guide_screen.dart';
 import 'package:travelogue_mobile/representation/trip_plan/widgets/trip_day_card.dart';
 import 'package:travelogue_mobile/representation/trip_plan/widgets/trip_tab_button.dart';
@@ -53,7 +48,9 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_isInitialized) return;
+    if (_isInitialized) {
+      return;
+    }
 
     final args =
         ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
@@ -96,8 +93,6 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
     _nameController = TextEditingController(text: trip.name);
     _isInitialized = true;
 
-    print(
-        '📣 trip.tourGuide trong didChangeDependencies: ${trip.tourGuide?.name}');
   }
 
   @override
@@ -141,7 +136,6 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
 
   @override
   Widget build(BuildContext context) {
-    print('📣 trip.tourGuide trong build: ${trip.tourGuide?.name}');
     return Scaffold(
       backgroundColor: const Color(0xFFF1F7FF),
       body: Column(
@@ -202,11 +196,6 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
                 ) as TripPlan?;
 
                 if (updatedTrip != null) {
-                  print('✅ Đã chọn tour guide: ${updatedTrip.tourGuide?.name}');
-                  print('🧬 Tuổi: ${updatedTrip.tourGuide?.age}');
-                  print('📄 Mô tả: ${updatedTrip.tourGuide?.bio}');
-                  print('🏷️ Tags: ${updatedTrip.tourGuide?.tags}');
-                  print('⭐ Rating: ${updatedTrip.tourGuide?.rating}');
                   setState(() {
                     trip = TripPlan(
                       id: updatedTrip.id,
@@ -378,7 +367,9 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
                               ),
                             );
 
-                            if (decision == null) return;
+                            if (decision == null) {
+                              return;
+                            }
 
                             if (decision == true) {
                               final updatedTrip = await Navigator.pushNamed(
@@ -410,10 +401,9 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
 
                           int order = 0;
 
-                          print('🟡 Tổng số ngày: ${selectedPerDay.length}');
+                        
                           selectedPerDay.forEach((day, items) {
-                            print(
-                                '📅 Ngày ${day.toIso8601String()} có ${items.length} mục');
+                           
                             for (var item in items) {
                           final start = DateTime(day.year, day.month, day.day);
 final end = DateTime(day.year, day.month, day.day);
@@ -423,7 +413,7 @@ final end = DateTime(day.year, day.month, day.day);
                                   tripPlanVersionId: tripPlanVersionId,
                                   startTime: start,
                                   endTime: end,
-                                  note: item.note ?? "Tham quan",
+                                  note: item.note,
                                   order: order++,
                                   location: item.location,
                                 ));
@@ -432,7 +422,7 @@ final end = DateTime(day.year, day.month, day.day);
                                   tripPlanVersionId: tripPlanVersionId,
                                   startTime: start,
                                   endTime: end,
-                                  note: item.note ?? "Ăn uống",
+                                  note: item.note,
                                   order: order++,
                                   restaurant: item.restaurant,
                                 ));
@@ -441,7 +431,7 @@ final end = DateTime(day.year, day.month, day.day);
                                   tripPlanVersionId: tripPlanVersionId,
                                   startTime: start,
                                   endTime: end,
-                                  note: item.note ?? "Tham quan làng nghề",
+                                  note: item.note,
                                   order: order++,
                                   craftVillage: item.craftVillage,
                                 ));
@@ -455,12 +445,6 @@ final end = DateTime(day.year, day.month, day.day);
 
                           trip.coverImage =
                               getTripPlanCoverImage(tripPlanVersionId);
-
-                          print('✅ Cover image: ${trip.coverImage}');
-                          print('📍 Tổng location: ${newLocations.length}');
-                          print('🍽️ Tổng món ăn: ${newCuisines.length}');
-                          print('🏺 Tổng làng nghề: ${newCrafts.length}');
-
                           Navigator.pop(context, trip);
                         },
                         child: Container(

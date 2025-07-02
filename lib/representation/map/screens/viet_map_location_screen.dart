@@ -104,7 +104,9 @@ class _VietMapLocationScreenState extends State<VietMapLocationScreen> {
   }
 
   Future<void> _buildRoute() async {
-    if (currentLocation == null) return;
+    if (currentLocation == null) {
+      return;
+    }
 
     try {
       setState(() => _isLoading = true);

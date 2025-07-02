@@ -1,11 +1,12 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:sizer/sizer.dart';
-import 'package:travelogue_mobile/model/tour_suggestion_test_model.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
+import 'package:travelogue_mobile/model/tour/tour_media_test_model.dart';
+import 'package:travelogue_mobile/model/tour/tour_plan_version_test_model.dart';
+import 'package:travelogue_mobile/model/tour/tour_test_model.dart';
+import 'package:travelogue_mobile/model/tour_guide_test_model.dart';
 import 'package:travelogue_mobile/representation/home/widgets/title_widget.dart';
+import 'package:travelogue_mobile/representation/tour/widgets/tour_mansory_grid.dart';
 import 'package:travelogue_mobile/representation/trip_plan/screens/my_trip_plan_screen.dart';
 
 class TourScreen extends StatefulWidget {
@@ -77,12 +78,12 @@ class _TourScreenState extends State<TourScreen>
                 ],
               ),
               SizedBox(height: 2.5.h),
-              Container(
+              DecoratedBox(
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(3.w),
                   boxShadow: [
-                    BoxShadow(
+                    const BoxShadow(
                       color: Colors.black12,
                       blurRadius: 6,
                       offset: Offset(0, 2),
@@ -110,12 +111,12 @@ class _TourScreenState extends State<TourScreen>
                 width: double.infinity,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(5.w),
-                  image: DecorationImage(
+                  image: const DecorationImage(
                     image: AssetImage(AssetHelper.img_ex_ba_den),
                     fit: BoxFit.cover,
                   ),
                   boxShadow: [
-                    BoxShadow(
+                    const BoxShadow(
                       color: Colors.black12,
                       blurRadius: 12,
                       offset: Offset(0, 6),
@@ -253,95 +254,17 @@ class _TourScreenState extends State<TourScreen>
                 text2: "gợi ý",
               ),
               SizedBox(height: 2.h),
-              Expanded(child: TourMasonryGrid(tours: mockTours)),
+              Expanded(
+                child: TourMasonryGrid(
+                  tours: mockTourTests,
+                  medias: mockTourMedia,
+                  versions: mockTourPlanVersions,
+                  guides: mockTourGuides,
+                ),
+              ),
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class TourMasonryGrid extends StatelessWidget {
-  final List<TourSuggestionTestModel> tours;
-  const TourMasonryGrid({super.key, required this.tours});
-
-  @override
-  Widget build(BuildContext context) {
-    final random = Random();
-    return MasonryGridView.count(
-      crossAxisCount: 2,
-      mainAxisSpacing: 2.h,
-      crossAxisSpacing: 4.w,
-      itemCount: tours.length,
-      itemBuilder: (context, index) {
-        final height = (20 + random.nextInt(10)).h;
-        return SizedBox(
-          height: height,
-          child: TourCard(tour: tours[index]),
-        );
-      },
-    );
-  }
-}
-
-class TourCard extends StatelessWidget {
-  final TourSuggestionTestModel tour;
-  const TourCard({super.key, required this.tour});
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(4.w),
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: Image.asset(
-              tour.imageUrl,
-              fit: BoxFit.cover,
-            ),
-          ),
-          Positioned.fill(
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.center,
-                  colors: [Colors.black54, Colors.transparent],
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            left: 3.w,
-            bottom: 3.h,
-            right: 3.w,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  tour.name,
-                  style: TextStyle(
-                    fontSize: 12.5.sp,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 0.6.h),
-                Row(
-                  children: [
-                    Icon(Icons.location_on, color: Colors.white, size: 4.w),
-                    SizedBox(width: 1.w),
-                    Text(
-                      "${tour.destinations.length} địa điểm",
-                      style: TextStyle(color: Colors.white, fontSize: 10.sp),
-                    )
-                  ],
-                )
-              ],
-            ),
-          )
-        ],
       ),
     );
   }

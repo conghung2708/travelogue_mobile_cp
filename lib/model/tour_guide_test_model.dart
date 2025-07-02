@@ -7,7 +7,7 @@ enum Gender { male, female, other }
 
 
 class TourGuideTestModel {
-  final int id;
+  final String id; 
   final String name;
   final int age;
   final Gender gender;
@@ -16,7 +16,7 @@ class TourGuideTestModel {
   final List<String> tags;
   final double rating;
   final int reviewsCount;
-   TourGuideStatus status;
+  TourGuideStatus status;
   final String? declineReason;
 
   TourGuideTestModel({
@@ -36,7 +36,7 @@ class TourGuideTestModel {
 
 final List<TourGuideTestModel> mockTourGuides = [
   TourGuideTestModel(
-    id: 1,
+    id: "guide1",
     name: "Đặng Công Hưng",
     age: 18,
     gender: Gender.male,
@@ -48,7 +48,7 @@ final List<TourGuideTestModel> mockTourGuides = [
     status: TourGuideStatus.available,
   ),
   TourGuideTestModel(
-    id: 2,
+    id: "guide2",
     name: "Nguyễn Tấn Hưng",
     age: 27,
     gender: Gender.male,
@@ -60,7 +60,7 @@ final List<TourGuideTestModel> mockTourGuides = [
     status: TourGuideStatus.pending,
   ),
   TourGuideTestModel(
-    id: 3,
+    id: "guide3",
     name: "Đoàn Mỹ Hảo",
     age: 35,
     gender: Gender.female,
@@ -73,7 +73,7 @@ final List<TourGuideTestModel> mockTourGuides = [
     declineReason: "Lịch cá nhân bận",
   ),
   TourGuideTestModel(
-    id: 4,
+    id: "guide4",
     name: "Nguyễn Hương Giang",
     age: 29,
     gender: Gender.female,

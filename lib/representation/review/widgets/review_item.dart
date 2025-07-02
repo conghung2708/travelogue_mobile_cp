@@ -25,9 +25,15 @@ class ReviewItem<T extends ReviewBase> extends StatelessWidget {
   String _getTimeAgo(DateTime dateTime) {
     final now = DateTime.now();
     final diff = now.difference(dateTime);
-    if (diff.inMinutes < 60) return '${diff.inMinutes} phút trước';
-    if (diff.inHours < 24) return '${diff.inHours} giờ trước';
-    if (diff.inDays < 7) return '${diff.inDays} ngày trước';
+    if (diff.inMinutes < 60) {
+      return '${diff.inMinutes} phút trước';
+    }
+    if (diff.inHours < 24) {
+      return '${diff.inHours} giờ trước';
+    }
+    if (diff.inDays < 7) {
+      return '${diff.inDays} ngày trước';
+    }
     return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
   }
 
@@ -81,14 +87,14 @@ class ReviewItem<T extends ReviewBase> extends StatelessWidget {
                       GradientIcon(
                         icon: Icons.thumb_up_alt_outlined,
                         size: 18.sp,
-                        gradient: LinearGradient(colors: [Color(0xFF00B4D8), Color(0xFF0077B6)]),
+                        gradient: const LinearGradient(colors: [Color(0xFF00B4D8), Color(0xFF0077B6)]),
                       ),
                       SizedBox(width: 1.w),
                       ShaderMask(
                         blendMode: BlendMode.srcIn,
-                        shaderCallback: (bounds) => LinearGradient(
+                        shaderCallback: (bounds) => const LinearGradient(
                           colors: [Color(0xFF00B4D8), Color(0xFF0077B6)],
-                        ).createShader(Rect.fromLTWH(0, 0, 100, 20)),
+                        ).createShader(const Rect.fromLTWH(0, 0, 100, 20)),
                         child: Text(
                           "Hữu ích (${review.likes})",
                           style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w500),

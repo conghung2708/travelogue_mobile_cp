@@ -5,15 +5,12 @@ import 'package:intl/intl.dart';
 
 import 'package:travelogue_mobile/model/args/base_trip_model.dart';
 import 'package:travelogue_mobile/model/tour_guide_test_model.dart';
-import 'package:travelogue_mobile/model/trip_craft_village.dart';
-import 'package:travelogue_mobile/model/trip_plan_cuisine.dart';
-import 'package:travelogue_mobile/model/trip_plan_location.dart';
 
 import 'package:travelogue_mobile/representation/trip_plan/widgets/tour_guide_profile_card.dart';
 import 'package:travelogue_mobile/representation/trip_plan/widgets/trip_overview_header.dart';
 import 'package:travelogue_mobile/representation/trip_plan/widgets/timeline_card_item.dart';
 
-class TourDetailContent extends StatelessWidget {
+class TripDetailContent extends StatelessWidget {
   final BaseTrip trip;
   final List<DateTime> days;
   final NumberFormat currencyFormat;
@@ -25,7 +22,7 @@ class TourDetailContent extends StatelessWidget {
 
   
 
-  const TourDetailContent({
+  const TripDetailContent({
     super.key,
     required this.trip,
     required this.days,
@@ -237,9 +234,15 @@ Map<String, List<dynamic>> _groupByTimeLabel(List<dynamic> items) {
 
   String _getTimeLabel(DateTime time) {
     final hour = time.hour;
-    if (hour < 11) return '🌅 Buổi sáng';
-    if (hour < 13) return '🌞 Buổi trưa';
-    if (hour < 18) return '🌇 Buổi chiều';
+    if (hour < 11) {
+      return '🌅 Buổi sáng';
+    }
+    if (hour < 13) {
+      return '🌞 Buổi trưa';
+    }
+    if (hour < 18) {
+      return '🌇 Buổi chiều';
+    }
     return '🌃 Buổi tối';
   }
 

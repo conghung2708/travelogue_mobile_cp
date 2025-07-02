@@ -50,7 +50,7 @@ class _TagSelectorState extends State<TagSelector> {
                   BoxShadow(
                     color: Colors.blueAccent.withOpacity(0.3),
                     blurRadius: 6,
-                    offset: Offset(0, 2),
+                    offset: const Offset(0, 2),
                   )
               ],
             ),

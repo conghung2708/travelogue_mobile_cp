@@ -6,7 +6,7 @@ import 'package:travelogue_mobile/representation/review/widgets/review_list.dart
 import 'package:travelogue_mobile/representation/review/widgets/rating_summary.dart';
 import 'package:travelogue_mobile/representation/review/widgets/tab_filters.dart';
 import 'package:travelogue_mobile/representation/review/widgets/write_review_modal.dart';
-import 'package:travelogue_mobile/representation/review/widgets/report_dialog.dart';
+
 
 class ReviewsScreen<T extends ReviewBase> extends StatefulWidget {
   final List<T> reviews;
@@ -107,7 +107,7 @@ class _ReviewsScreenState<T extends ReviewBase> extends State<ReviewsScreen<T>> 
         content: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            gradient: LinearGradient(colors: [Color(0xFF00B4D8), Color(0xFF0077B6)]),
+            gradient: const LinearGradient(colors: [Color(0xFF00B4D8), Color(0xFF0077B6)]),
             borderRadius: BorderRadius.circular(10),
           ),
           child: const Row(

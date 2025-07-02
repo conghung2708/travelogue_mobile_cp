@@ -50,11 +50,11 @@ void didChangeDependencies() {
   blockedIds.clear();
   for (var item in blockedItems) {
     if (item is TripPlanLocation) {
-      blockedIds.add(item.location?.id ?? '');
+      blockedIds.add(item.location.id ?? '');
     } else if (item is TripPlanCuisine) {
-      blockedIds.add(item.restaurant?.id ?? '');
+      blockedIds.add(item.restaurant.id ?? '');
     } else if (item is TripPlanCraftVillage) {
-      blockedIds.add(item.craftVillage?.id ?? '');
+      blockedIds.add(item.craftVillage.id);
     }
   }
 
@@ -63,25 +63,25 @@ void didChangeDependencies() {
     for (var item in initialSelected) {
       if (item is TripPlanLocation) {
         selectedPlaces.add({
-          'id': item.location?.id ?? '',
-          'name': item.location?.name ?? '',
-          'imageUrl': item.location?.imgUrlFirst ?? '',
+          'id': item.location.id ?? '',
+          'name': item.location.name ?? '',
+          'imageUrl': item.location.imgUrlFirst,
           'type': 'location',
           'object': item.location,
         });
       } else if (item is TripPlanCuisine) {
         selectedPlaces.add({
-          'id': item.restaurant?.id ?? '',
-          'name': item.restaurant?.name ?? '',
-          'imageUrl': item.restaurant?.imgUrlFirst ?? '',
+          'id': item.restaurant.id ?? '',
+          'name': item.restaurant.name ?? '',
+          'imageUrl': item.restaurant.imgUrlFirst,
           'type': 'restaurant',
           'object': item.restaurant,
         });
       } else if (item is TripPlanCraftVillage) {
         selectedPlaces.add({
-          'id': item.craftVillage?.id ?? '',
-          'name': item.craftVillage?.name ?? '',
-          'imageUrl': item.craftVillage?.imageList.first ?? '',
+          'id': item.craftVillage.id,
+          'name': item.craftVillage.name,
+          'imageUrl': item.craftVillage.imageList.first,
           'type': 'craft',
           'object': item.craftVillage,
         });
@@ -306,14 +306,14 @@ void didChangeDependencies() {
             right: 0,
             top: 0,
             child: Container(
-              padding: EdgeInsets.all(4),
-              decoration: BoxDecoration(
+              padding: const EdgeInsets.all(4),
+              decoration: const BoxDecoration(
                 color: Colors.red,
                 shape: BoxShape.circle,
               ),
               child: Text(
                 '${selectedPlaces.length}',
-                style: TextStyle(fontSize: 10, color: Colors.white),
+                style: const TextStyle(fontSize: 10, color: Colors.white),
               ),
             ),
           ),
@@ -324,7 +324,7 @@ void didChangeDependencies() {
  void _showSelectedList() {
   showModalBottomSheet(
     context: context,
-    isScrollControlled: true, // ✅ Cho phép bottom sheet cao hơn mặc định
+    isScrollControlled: true, 
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
     ),
@@ -385,7 +385,7 @@ void didChangeDependencies() {
 
  
 Widget _buildGradientCompleteButton() {
-  return Container(
+  return DecoratedBox(
     decoration: BoxDecoration(
       gradient: const LinearGradient(
         colors: [Color(0xFF2196F3), Color(0xFF64B5F6)],
@@ -416,7 +416,7 @@ Widget _buildGradientCompleteButton() {
             return TripPlanLocation(
               tripPlanVersionId: '',
               startTime: widget.day,
-              endTime: widget.day.add(Duration(hours: 1)),
+              endTime: widget.day.add(const Duration(hours: 1)),
               note: '',
               order: 0,
               location: place['object'],
@@ -426,7 +426,7 @@ Widget _buildGradientCompleteButton() {
               tripPlanVersionId: '',
               restaurant: place['object'],
               startTime: widget.day,
-              endTime: widget.day.add(Duration(hours: 1)),
+              endTime: widget.day.add(const Duration(hours: 1)),
               note: '',
               order: 0,
             );
@@ -435,7 +435,7 @@ Widget _buildGradientCompleteButton() {
               tripPlanVersionId: '',
               craftVillage: place['object'],
               startTime: widget.day,
-              endTime: widget.day.add(Duration(hours: 1)),
+              endTime: widget.day.add(const Duration(hours: 1)),
               note: '',
               order: 0,
             );

@@ -20,7 +20,7 @@ class WriteReviewModal<T> extends StatelessWidget {
         gradient: Gradients.defaultGradientBackground,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
-          BoxShadow(
+          const BoxShadow(
             color: Colors.black26,
             blurRadius: 6,
             offset: Offset(0, 2),
@@ -49,7 +49,7 @@ class WriteReviewModal<T> extends StatelessWidget {
 
   void _showReviewModal(BuildContext context) {
     String? _validationError;
-    double tempRating = 5.0;
+    double tempRating = 5;
     final TextEditingController commentController = TextEditingController();
 
     showModalBottomSheet(

@@ -1,6 +1,5 @@
 // 📁 lib/representation/review/widgets/review_list.dart
 import 'package:flutter/material.dart';
-import 'package:sizer/sizer.dart';
 import 'package:travelogue_mobile/model/review_base_model.dart';
 import 'package:travelogue_mobile/representation/review/widgets/review_item.dart';
 import 'package:travelogue_mobile/representation/review/widgets/report_dialog.dart';
@@ -38,7 +37,9 @@ class ReviewList<T extends ReviewBase> extends StatelessWidget {
             likes--;
             currentVote = null;
           } else {
-            if (currentVote == 'dislike') dislikes--;
+            if (currentVote == 'dislike') {
+              dislikes--;
+            }
             likes++;
             currentVote = 'like';
           }
@@ -57,7 +58,9 @@ class ReviewList<T extends ReviewBase> extends StatelessWidget {
             dislikes--;
             currentVote = null;
           } else {
-            if (currentVote == 'like') likes--;
+            if (currentVote == 'like') {
+              likes--;
+            }
             dislikes++;
             currentVote = 'dislike';
           }

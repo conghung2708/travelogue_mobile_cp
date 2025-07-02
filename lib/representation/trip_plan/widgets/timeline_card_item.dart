@@ -43,7 +43,7 @@ class TimelineCardItem extends StatelessWidget {
       icon = const Icon(Icons.handyman, color: Colors.orange);
     }
 
-    // 🕘 Kiểm tra xem có cần hiển thị giờ không
+   
     final bool showTime = start.hour != 0 || end.hour != 0;
 
     return Padding(

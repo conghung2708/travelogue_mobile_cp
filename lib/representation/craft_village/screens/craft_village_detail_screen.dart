@@ -5,7 +5,6 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:travelogue_mobile/core/constants/dimension_constants.dart';
 import 'package:travelogue_mobile/model/craft_village_model.dart';
 import 'package:travelogue_mobile/model/review_craft_village_test.dart';
-import 'package:travelogue_mobile/model/args/reviews_screen_args.dart';
 import 'package:travelogue_mobile/representation/home/widgets/rating_button_widget.dart';
 import 'package:travelogue_mobile/representation/review/screens/reviews_screen.dart';
 import 'package:travelogue_mobile/representation/widgets/image_grid_preview.dart';

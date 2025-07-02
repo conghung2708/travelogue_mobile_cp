@@ -43,10 +43,10 @@ class _MyTripPlansScreenState extends State<MyTripPlansScreen> {
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: Colors.blue.shade100, width: 1),
                   boxShadow: [
-                    BoxShadow(
+                    const BoxShadow(
                       color: Colors.black12,
                       blurRadius: 8,
-                      offset: const Offset(0, 2),
+                      offset: Offset(0, 2),
                     ),
                   ],
                 ),

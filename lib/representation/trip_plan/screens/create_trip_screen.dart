@@ -85,7 +85,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                 Container(
                   height: 38.h,
                   width: double.infinity,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     image: DecorationImage(
                       image: AssetImage(AssetHelper.img_ex_ba_den_5),
                       fit: BoxFit.cover,
@@ -183,10 +183,10 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                             width: 1.5,
                           ),
                           boxShadow: [
-                            BoxShadow(
+                            const BoxShadow(
                               color: Colors.black12,
                               blurRadius: 4,
-                              offset: const Offset(0, 2),
+                              offset: Offset(0, 2),
                             )
                           ],
                         ),
