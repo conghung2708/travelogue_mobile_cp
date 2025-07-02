@@ -30,7 +30,7 @@ class TripDayCard extends StatelessWidget {
       constraints: BoxConstraints(minHeight: 18.h),
       margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
       decoration: BoxDecoration(
-        image: DecorationImage(
+        image: const DecorationImage(
           image: AssetImage(AssetHelper.img_lac_vien_01),
           fit: BoxFit.cover,
           opacity: 0.15,
@@ -69,7 +69,6 @@ class TripDayCard extends StatelessWidget {
                   },
                 );
                 if (result != null && result is List) {
-                  print('🟢 Nhận được ${result.length} mục từ SelectPlaceForDayScreen');
                   onUpdate(result);
                 }
               },
@@ -118,13 +117,13 @@ class TripDayCard extends StatelessWidget {
                         child: imageUrl != null && imageUrl.isNotEmpty
                             ? Image.network(imageUrl,
                                 width: 48, height: 48, fit: BoxFit.cover)
-                            : Icon(Icons.image_not_supported, size: 32),
+                            : const Icon(Icons.image_not_supported, size: 32),
                       ),
                       title: Text(title, style: TextStyle(fontSize: 13.sp)),
                       subtitle:
                           Text(subtitle, style: TextStyle(fontSize: 11.5.sp)),
                       trailing: IconButton(
-                        icon: Icon(Icons.delete, color: Colors.red),
+                        icon: const Icon(Icons.delete, color: Colors.red),
                         onPressed: () {
                           final updatedList = List.of(selectedItems);
                           updatedList.removeAt(index);

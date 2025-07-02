@@ -2,13 +2,21 @@ import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
 import 'package:travelogue_mobile/model/review_base_model.dart';
 
 class ReviewRestaurantTestModel implements ReviewBase {
+  @override
   final String id;
+  @override
   final String userName;
+  @override
   final String userAvatarUrl;
+  @override
   final int rating;
+  @override
   final String comment;
+  @override
   final DateTime createdAt;
+  @override
   int likes;
+  @override
   int dislikes;
 
   ReviewRestaurantTestModel({

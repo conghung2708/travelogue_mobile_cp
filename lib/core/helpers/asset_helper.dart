@@ -182,4 +182,7 @@ class AssetHelper {
   static const String img_hobby = 'assets/images/img_hobby.png';
 
 
+
+  static const String img_tour_type_selector = 'assets/images/img_tour_type_selector.jpg';
+
 }

@@ -46,7 +46,7 @@ class _HobbyScreenState extends State<HobbyScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: Container(
+      body: DecoratedBox(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [Color(0xFFF0F8FF), Color(0xFFE1F5FE)],

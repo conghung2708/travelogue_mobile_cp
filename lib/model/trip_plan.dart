@@ -36,6 +36,7 @@ class TripPlan implements BaseTrip {
   @override
   TourGuideTestModel? tourGuide;
 
+  @override
   String? versionId;
 
   TripPlan({

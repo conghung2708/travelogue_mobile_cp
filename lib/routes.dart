@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:travelogue_mobile/model/args/reviews_screen_args.dart';
-import 'package:travelogue_mobile/model/craft_village_model.dart';
+import 'package:travelogue_mobile/model/args/tour_calendar_args.dart';
 import 'package:travelogue_mobile/model/event_model.dart';
 import 'package:travelogue_mobile/model/experience_model.dart';
 import 'package:travelogue_mobile/model/location_model.dart';
 import 'package:travelogue_mobile/model/review_test_model.dart';
-import 'package:travelogue_mobile/model/trip_plan.dart';
+import 'package:travelogue_mobile/model/tour/tour_test_model.dart';
 import 'package:travelogue_mobile/representation/auth/screens/forgot_password_screen.dart';
 import 'package:travelogue_mobile/representation/auth/screens/login_screen.dart';
 import 'package:travelogue_mobile/representation/craft_village/screens/craft_village_detail_screen.dart';
@@ -18,7 +18,6 @@ import 'package:travelogue_mobile/representation/festival/screens/festival_scree
 import 'package:travelogue_mobile/representation/home/screens/home_screen.dart';
 import 'package:travelogue_mobile/representation/review/screens/reviews_screen.dart';
 import 'package:travelogue_mobile/representation/hotel/screens/hotel_detail_screen.dart';
-
 import 'package:travelogue_mobile/representation/intro/screens/intro_screen.dart';
 import 'package:travelogue_mobile/representation/main_screen.dart';
 import 'package:travelogue_mobile/representation/home/screens/place_detail_screen.dart';
@@ -27,6 +26,9 @@ import 'package:travelogue_mobile/representation/news/screens/news_screen.dart';
 import 'package:travelogue_mobile/representation/restaurent/screens/restaurent_detail_screen.dart';
 import 'package:travelogue_mobile/representation/home/screens/search_screen.dart';
 import 'package:travelogue_mobile/representation/intro/screens/splash_screen.dart';
+import 'package:travelogue_mobile/representation/tour/screens/tour_detail_screen.dart';
+import 'package:travelogue_mobile/representation/tour/screens/tour_schedule_calender_screen.dart';
+import 'package:travelogue_mobile/representation/tour/screens/tour_type_selector.dart';
 import 'package:travelogue_mobile/representation/trip_plan/screens/create_trip_screen.dart';
 import 'package:travelogue_mobile/representation/trip_plan/screens/select_place_for_day_screen.dart';
 import 'package:travelogue_mobile/representation/trip_plan/screens/select_tour_guide_screen.dart';
@@ -101,9 +103,7 @@ final Map<String, WidgetBuilder> routes = {
     );
   },
   CraftVillageDetailScreen.routeName: (context) {
-    final args =
-        ModalRoute.of(context)!.settings.arguments as CraftVillageModel;
-    return CraftVillageDetailScreen();
+    return const CraftVillageDetailScreen();
   },
   MyTripPlansScreen.routeName: (_) => const MyTripPlansScreen(),
 TripDetailScreen.routeName: (context) => const TripDetailScreen(),
@@ -121,4 +121,27 @@ SelectPlaceForDayScreen.routeName: (context) {
 },
 
 SelectTourGuideScreen.routeName: (_) => const SelectTourGuideScreen(),
+
+TourDetailScreen.routeName: (context) {
+  final tour = ModalRoute.of(context)!.settings.arguments as TourTestModel;
+  return TourDetailScreen(tour: tour);
+},
+
+TourTypeSelector.routeName: (context) {
+  final tour = ModalRoute.of(context)!.settings.arguments as TourTestModel;
+  return TourTypeSelector(tour: tour);
+},
+
+TourScheduleCalendarScreen.routeName: (context) {
+  final args = ModalRoute.of(context)!.settings.arguments as TourCalendarArgs;
+  return TourScheduleCalendarScreen(
+    schedules: args.schedules,
+    tour: args.tour,
+  );
+},
+
+
 };
+
+
+ 

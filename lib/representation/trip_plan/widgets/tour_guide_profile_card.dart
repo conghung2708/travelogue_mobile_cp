@@ -114,6 +114,7 @@ class TourGuideProfileCard extends StatelessWidget {
         return 'Nam';
       case Gender.female:
         return 'Nữ';
+      // ignore: no_default_cases
       default:
         return 'Khác';
     }
@@ -121,11 +122,21 @@ class TourGuideProfileCard extends StatelessWidget {
 
   IconData _tagToIcon(String tag) {
     final lower = tag.toLowerCase();
-    if (lower.contains('nhiệt') || lower.contains('năng')) return Icons.wb_sunny;
-    if (lower.contains('vui')) return Icons.emoji_emotions;
-    if (lower.contains('lịch sự') || lower.contains('lịch thiệp')) return Icons.handshake;
-    if (lower.contains('kinh nghiệm')) return Icons.school;
-    if (lower.contains('thân thiện')) return Icons.people_alt;
+    if (lower.contains('nhiệt') || lower.contains('năng')) {
+      return Icons.wb_sunny;
+    }
+    if (lower.contains('vui')) {
+      return Icons.emoji_emotions;
+    }
+    if (lower.contains('lịch sự') || lower.contains('lịch thiệp')) {
+      return Icons.handshake;
+    }
+    if (lower.contains('kinh nghiệm')) {
+      return Icons.school;
+    }
+    if (lower.contains('thân thiện')) {
+      return Icons.people_alt;
+    }
     return Icons.label;
   }
 

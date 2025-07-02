@@ -21,7 +21,6 @@ class TripHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // 🔹 Nền ảnh
         Container(
           height: 26.h,
           width: double.infinity,
@@ -31,7 +30,7 @@ class TripHeader extends StatelessWidget {
               bottomRight: Radius.circular(6.w),
             ),
             image: DecorationImage(
-              image: AssetImage(AssetHelper.img_dien_son_01),
+              image: const AssetImage(AssetHelper.img_dien_son_01),
               fit: BoxFit.cover,
               colorFilter: ColorFilter.mode(
                 Colors.black.withOpacity(0.25),
@@ -41,7 +40,6 @@ class TripHeader extends StatelessWidget {
           ),
         ),
 
-        // 🔹 Tên hành trình + icon ✏️
         Positioned(
           bottom: 2.h,
           left: 4.w,
@@ -63,7 +61,7 @@ class TripHeader extends StatelessWidget {
                           color: Colors.white,
                           fontFamily: "Pattaya",
                         ),
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           hintText: "Nhập tên hành trình...",
                           hintStyle: TextStyle(
                             color: Colors.white70,
@@ -109,7 +107,7 @@ class TripHeader extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 16.sp,
-                backgroundImage: AssetImage(AssetHelper.avatar),
+                backgroundImage: const AssetImage(AssetHelper.avatar),
               ),
               const Spacer(),
               Container(
@@ -118,7 +116,7 @@ class TripHeader extends StatelessWidget {
                   color: Colors.blueAccent,
                   borderRadius: BorderRadius.circular(3.w),
                   boxShadow: [
-                    BoxShadow(
+                    const BoxShadow(
                       color: Colors.black26,
                       blurRadius: 4,
                       offset: Offset(0, 2),

@@ -101,7 +101,6 @@ class _FestivalDetailScreenState extends State<FestivalDetailScreen>
     final festival = ModalRoute.of(context)!.settings.arguments as EventModel;
     final now = DateTime.now();
     final start = festival.startDate ?? now;
-    final end = festival.endDate ?? now;
     final isUpcoming = now.isBefore(start);
 
     return Scaffold(
@@ -170,7 +169,7 @@ class _FestivalDetailScreenState extends State<FestivalDetailScreen>
                             BoxShadow(
                               color: Colors.blueAccent.withOpacity(0.3),
                               blurRadius: 10,
-                              offset: Offset(0, 5),
+                              offset: const Offset(0, 5),
                             )
                           ],
                         ),

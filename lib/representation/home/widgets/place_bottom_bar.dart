@@ -11,7 +11,6 @@ import 'package:travelogue_mobile/model/review_test_model.dart';
 import 'package:travelogue_mobile/representation/craft_village/screens/craft_village.dart';
 import 'package:travelogue_mobile/representation/home/widgets/rating_button_widget.dart';
 import 'package:travelogue_mobile/representation/review/screens/reviews_screen.dart';
-import 'package:travelogue_mobile/representation/hotel/widgets/hotels.dart';
 import 'package:travelogue_mobile/representation/map/screens/viet_map_location_screen.dart';
 import 'package:travelogue_mobile/representation/restaurent/widgets/restaurents.dart';
 import 'package:vietmap_flutter_gl/vietmap_flutter_gl.dart';

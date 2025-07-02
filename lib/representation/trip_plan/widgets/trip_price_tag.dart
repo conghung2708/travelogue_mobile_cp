@@ -33,7 +33,7 @@ class TripPriceTag extends StatelessWidget {
                   ),
                 ),
                 TextSpan(
-                  text: '${currencyFormat.format(price)}',
+                  text: currencyFormat.format(price),
                   style: TextStyle(
                     fontSize: 15.5.sp,
                     color: Colors.indigo.shade900,

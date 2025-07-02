@@ -57,7 +57,7 @@ class TripOverviewHeader extends StatelessWidget {
                     value: '${trip.rating} sao',
                     label: 'Chất lượng',
                   )
-                : TripInfoIconRow(
+                : const TripInfoIconRow(
                     icon: Icons.explore,
                     value: 'Tự thiết kế',
                     label: 'Hành trình',

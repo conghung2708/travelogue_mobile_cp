@@ -24,7 +24,7 @@ class _AnimatedGradientTextState extends State<AnimatedGradientText>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 3),
-    )..repeat(); // Lặp vô hạn
+    )..repeat();
   }
 
   @override

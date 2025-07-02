@@ -121,7 +121,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                       color: Colors.white70,
                                       fontSize: 14,
                                     ),
-                                    speed: Duration(milliseconds: 60),
+                                    speed: const Duration(milliseconds: 60),
                                   ),
                                 ],
                                 totalRepeatCount: 999,

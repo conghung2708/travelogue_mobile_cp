@@ -11,7 +11,7 @@ import 'package:travelogue_mobile/core/constants/color_constants.dart';
 import 'package:travelogue_mobile/data/data_local/base_local_data.dart';
 import 'package:sizer/sizer.dart';
 import 'package:travelogue_mobile/representation/main_screen.dart';
-import 'package:travelogue_mobile/representation/trip_plan/screens/create_trip_screen.dart';
+import 'package:travelogue_mobile/representation/tour/screens/tour_screen.dart';
 import 'package:travelogue_mobile/representation/trip_plan/screens/my_trip_plan_screen.dart';
 import 'package:travelogue_mobile/routes.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -120,7 +120,7 @@ class _MyAppState extends State<MyApp> {
             locale: const Locale('vi', 'VN'),
 
             routes: routes,
-            home: const MainScreen(),
+            home: const TourScreen(),
             // home: const ExperienceScreen(),
             // home: const FestivalScreen(),
           );
