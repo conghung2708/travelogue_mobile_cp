@@ -11,6 +11,9 @@ import 'package:travelogue_mobile/representation/trip_plan/screens/my_trip_plan_
 
 class TourScreen extends StatefulWidget {
   const TourScreen({super.key});
+  static const String routeName = '/tour';
+
+
 
   @override
   State<TourScreen> createState() => _TourScreenState();

@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sizer/sizer.dart';
@@ -27,12 +28,16 @@ class TourDetailScreen extends StatelessWidget {
   final TourTestModel tour;
   final TourMediaTestModel? media;
   final TourGuideTestModel? guide;
+  final bool readOnly;
+  final DateTime? departureDate;
 
   const TourDetailScreen({
     super.key,
     required this.tour,
     this.media,
     this.guide,
+    this.readOnly = false,
+    this.departureDate,
   });
 
   Widget _buildTourImage() {
@@ -100,22 +105,25 @@ class TourDetailScreen extends StatelessWidget {
                             final locationList = homeState.locations;
                             final restaurantList = restaurantState.restaurants;
 
-                            TourPlanVersionTestModel? currentVersion;
-                            try {
-                              currentVersion = mockTourPlanVersions.firstWhere(
-                                  (v) => v.id == tour.currentVersionId);
-                            } catch (_) {
-                              currentVersion = null;
-                            }
+                            final locationMap = {
+                              for (var l in locationList) l.id: l
+                            };
+                            final restaurantMap = {
+                              for (var r in restaurantList) r.id: r
+                            };
 
-                            TourGuideTestModel? currentGuide;
-                            try {
-                              if (currentVersion?.tourGuideId != null) {
-                                currentGuide = mockTourGuides.firstWhere(
-                                    (g) => g.id == currentVersion!.tourGuideId);
-                              }
-                            } catch (_) {
-                              currentGuide = null;
+                            final TourPlanVersionTestModel? currentVersion =
+                                mockTourPlanVersions.firstWhereOrNull(
+                              (v) => v.id == tour.currentVersionId,
+                            );
+
+                            TourGuideTestModel? currentGuide = guide;
+
+                            if (currentGuide == null &&
+                                currentVersion?.tourGuideId != null) {
+                              currentGuide = mockTourGuides.firstWhereOrNull(
+                                (g) => g.id == currentVersion!.tourGuideId,
+                              );
                             }
 
                             final locationPlans = mockTourPlanLocations
@@ -146,59 +154,38 @@ class TourDetailScreen extends StatelessWidget {
                               );
                             }).toList();
 
+                            final villageMap = {
+                              for (var v in craftVillageList) v.id: v
+                            };
+
                             final Map<String, String> descriptionMap = {
                               for (var loc in locationPlans)
-                                loc.id: locationList
-                                        .firstWhere(
-                                          (l) => l.id == loc.locationId,
-                                          orElse: () => LocationModel(
-                                              id: '',
-                                              name: '',
-                                              description: ''),
-                                        )
-                                        .description ??
-                                    '',
+                                loc.id: locationMap[loc.locationId]?.description ?? '',
                               for (var cui in cuisinePlans)
-                                cui.id: restaurantList
-                                        .firstWhere(
-                                          (r) => r.id == cui.cuisineId,
-                                          orElse: () => RestaurantModel(
-                                              id: '',
-                                              name: '',
-                                              description: ''),
-                                        )
-                                        .description ??
-                                    '',
+                                cui.id: restaurantMap[cui.cuisineId]?.description ?? '',
                               for (var vil in villagePlans)
-                                vil.id: craftVillageList
-                                    .firstWhere(
-                                      (v) => v.id == vil.craftVillageId,
-                                      orElse: () => CraftVillageModel(
-                                        id: '',
-                                        name: '',
-                                        description: '',
-                                        content: '',
-                                        phoneNumber: '',
-                                        email: '',
-                                        address: '',
-                                        imageList: [],
-                                      ),
-                                    )
-                                    .description,
+                                vil.id: villageMap[vil.craftVillageId]?.description ?? '',
                             };
 
                             return SingleChildScrollView(
                               padding: EdgeInsets.all(4.w),
-                              child: TourDetailContent(
-                                tour: tour,
-                                guide: guide ?? currentGuide,
-                                locations: locationPlans,
-                                cuisines: cuisinePlans,
-                                villages: villagePlans,
-                                locationList: locationList,
-                                restaurantList: restaurantList,
-                                craftVillageList: craftVillageList,
-                                descriptionMap: descriptionMap,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  TourDetailContent(
+                                    tour: tour,
+                                    guide: currentGuide,
+                                    locations: locationPlans,
+                                    cuisines: cuisinePlans,
+                                    villages: villagePlans,
+                                    locationList: locationList,
+                                    restaurantList: restaurantList,
+                                    craftVillageList: craftVillageList,
+                                    descriptionMap: descriptionMap,
+                                    readOnly: readOnly,
+                                    departureDate: departureDate,
+                                  ),
+                                ],
                               ),
                             );
                           },
@@ -209,43 +196,45 @@ class TourDetailScreen extends StatelessWidget {
                 ],
               ),
             ),
-            floatingActionButton: FloatingActionButton(
-              backgroundColor: Colors.green,
-              onPressed: () async {
-                final confirm = await showDialog<bool>(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text("Xác nhận"),
-                    content: const Text("Bạn có muốn gọi điện cho 0336626193 không?"),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(false),
-                        child: const Text("Huỷ"),
-                      ),
-                      ElevatedButton(
-                        onPressed: () => Navigator.of(context).pop(true),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
+            floatingActionButton: readOnly
+                ? null
+                : FloatingActionButton(
+                    backgroundColor: Colors.green,
+                    onPressed: () async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text("Xác nhận"),
+                          content: const Text("Bạn có muốn gọi điện cho 0336626193 không?"),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(false),
+                              child: const Text("Huỷ"),
+                            ),
+                            ElevatedButton(
+                              onPressed: () => Navigator.of(context).pop(true),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                              ),
+                              child: const Text("Gọi"),
+                            )
+                          ],
                         ),
-                        child: const Text("Gọi"),
-                      )
-                    ],
-                  ),
-                );
+                      );
 
-                if (confirm == true) {
-                  final phoneUri = Uri(scheme: 'tel', path: '0336626193');
-                  if (await canLaunchUrl(phoneUri)) {
-                    await launchUrl(phoneUri);
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Không thể thực hiện cuộc gọi.')),
-                    );
-                  }
-                }
-              },
-              child: const Icon(Icons.phone),
-            ),
+                      if (confirm == true) {
+                        final phoneUri = Uri(scheme: 'tel', path: '0336626193');
+                        if (await canLaunchUrl(phoneUri)) {
+                          await launchUrl(phoneUri);
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Không thể thực hiện cuộc gọi.')),
+                          );
+                        }
+                      }
+                    },
+                    child: const Icon(Icons.phone),
+                  ),
           );
         },
       ),
