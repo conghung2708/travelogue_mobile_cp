@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sizer/sizer.dart';
+
 import 'package:travelogue_mobile/model/tour/tour_test_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_plan_version_test_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_type_test_model.dart';
+
 import 'package:travelogue_mobile/representation/tour/screens/tour_type_selector.dart';
 import 'package:travelogue_mobile/representation/trip_plan/widgets/trip_marquee_info.dart';
 import 'package:travelogue_mobile/representation/trip_plan/widgets/trip_info_icon_row.dart';
@@ -11,25 +13,32 @@ import 'package:travelogue_mobile/representation/tour/widgets/tour_confirmed_act
 
 class TourOverviewHeader extends StatelessWidget {
   final TourTestModel tour;
+  final bool? readOnly;
+  final DateTime? departureDate;
 
   const TourOverviewHeader({
     super.key,
     required this.tour,
+    this.readOnly,
+    this.departureDate,
   });
 
   @override
   Widget build(BuildContext context) {
     TourPlanVersionTestModel? version;
     try {
-      version =
-          mockTourPlanVersions.firstWhere((v) => v.id == tour.currentVersionId);
+      version = mockTourPlanVersions.firstWhere(
+        (v) => v.id == tour.currentVersionId,
+      );
     } catch (_) {
       version = null;
     }
 
     TourTypeTestModel? tourType;
     try {
-      tourType = mockTourTypes.firstWhere((t) => t.id == tour.tourTypeId);
+      tourType = mockTourTypes.firstWhere(
+        (t) => t.id == tour.tourTypeId,
+      );
     } catch (_) {
       tourType = null;
     }
@@ -38,8 +47,9 @@ class TourOverviewHeader extends StatelessWidget {
     final int totalDays = tour.totalDays;
     final String tourDuration = '${totalDays}N${totalDays - 1}D';
 
-
-    final String tourDate = 'Chưa chọn ngày';
+    final String tourDate = departureDate != null
+        ? DateFormat('dd/MM/yyyy').format(departureDate!)
+        : 'Chưa chọn ngày';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -86,9 +96,9 @@ class TourOverviewHeader extends StatelessWidget {
         SizedBox(height: 2.h),
         if (version != null)
           TourConfirmedActionCard(
+            departureDate: departureDate,
             tour: tour,
             currencyFormat: NumberFormat.currency(locale: 'vi_VN', symbol: '₫'),
-            days: [],
             price: tourPrice,
             onConfirmed: () async {
               final result = await Navigator.pushNamed(
@@ -97,6 +107,7 @@ class TourOverviewHeader extends StatelessWidget {
                 arguments: tour,
               );
             },
+            readOnly: readOnly,
           ),
       ],
     );

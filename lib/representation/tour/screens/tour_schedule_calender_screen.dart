@@ -4,10 +4,12 @@ import 'package:sizer/sizer.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:travelogue_mobile/core/constants/color_constants.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
+import 'package:travelogue_mobile/model/tour/tour_media_test_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_test_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_plan_version_test_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_schedule_with_price.dart';
 import 'package:travelogue_mobile/model/tour/tour_with_schedule_model.dart';
+import 'package:travelogue_mobile/representation/tour/screens/tour_payment_confirmation_screen.dart';
 import 'package:travelogue_mobile/representation/tour/widgets/calendar_day_cell.dart';
 import 'package:travelogue_mobile/representation/tour/widgets/tour_schedule_header.dart';
 import 'package:travelogue_mobile/representation/tour/widgets/tour_calendar_selector.dart';
@@ -188,13 +190,28 @@ class _TourScheduleCalendarScreenState
                                             Expanded(
                                               child: InkWell(
                                                 onTap: () {
-                                                  final selected =
-                                                      TourWithScheduleModel(
-                                                    tour: widget.tour,
-                                                    selectedSchedule: matched,
+                                                  final matchedMedia =
+                                                      mockTourMedia.firstWhere(
+                                                    (m) =>
+                                                        m.tourId ==
+                                                        widget.tour.id,
+                                                    orElse: () =>
+                                                        TourMediaTestModel(
+                                                            id: 'none'),
                                                   );
-                                                  Navigator.pop(
-                                                      context, selected);
+
+                                                  Navigator.pop(context);
+
+                                                  Navigator.pushNamed(
+                                                    context,
+                                                    TourPaymentConfirmationScreen
+                                                        .routeName,
+                                                    arguments: {
+                                                      'tour': widget.tour,
+                                                      'schedule': matched,
+                                                      'media': matchedMedia,
+                                                    },
+                                                  );
                                                 },
                                                 borderRadius:
                                                     BorderRadius.circular(12),

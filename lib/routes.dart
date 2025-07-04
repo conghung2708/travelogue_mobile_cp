@@ -27,7 +27,10 @@ import 'package:travelogue_mobile/representation/restaurent/screens/restaurent_d
 import 'package:travelogue_mobile/representation/home/screens/search_screen.dart';
 import 'package:travelogue_mobile/representation/intro/screens/splash_screen.dart';
 import 'package:travelogue_mobile/representation/tour/screens/tour_detail_screen.dart';
+import 'package:travelogue_mobile/representation/tour/screens/tour_payment_confirmation_screen.dart';
+import 'package:travelogue_mobile/representation/tour/screens/tour_qr_payment_screen.dart';
 import 'package:travelogue_mobile/representation/tour/screens/tour_schedule_calender_screen.dart';
+import 'package:travelogue_mobile/representation/tour/screens/tour_screen.dart';
 import 'package:travelogue_mobile/representation/tour/screens/tour_type_selector.dart';
 import 'package:travelogue_mobile/representation/trip_plan/screens/create_trip_screen.dart';
 import 'package:travelogue_mobile/representation/trip_plan/screens/select_place_for_day_screen.dart';
@@ -139,6 +142,25 @@ TourScheduleCalendarScreen.routeName: (context) {
     tour: args.tour,
   );
 },
+
+TourPaymentConfirmationScreen.routeName: (context) {
+  final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+  return TourPaymentConfirmationScreen(
+    tour: args['tour'],
+    schedule: args['schedule'],
+    media: args['media'],
+  );
+},
+
+TourQrPaymentScreen.routeName: (context) {
+  final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+  return TourQrPaymentScreen(
+    price: args['price'],
+    tourName: args['tourName'],
+  );
+},
+
+  TourScreen.routeName: (context) => const TourScreen(),
 
 
 };

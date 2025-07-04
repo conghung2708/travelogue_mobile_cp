@@ -185,4 +185,6 @@ class AssetHelper {
 
   static const String img_tour_type_selector = 'assets/images/img_tour_type_selector.jpg';
 
+  static const String img_qr_code = 'assets/images/img_qr_code.png';
+
 }
