@@ -1,11 +1,11 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:marquee/marquee.dart';
 import 'package:sizer/sizer.dart';
 import 'package:travelogue_mobile/core/constants/color_constants.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
+import 'package:travelogue_mobile/model/tour/tour_schedule_test_model.dart';
 import 'package:travelogue_mobile/representation/tour/screens/tour_screen.dart';
 
 class TourQrPaymentScreen extends StatefulWidget {
@@ -13,11 +13,19 @@ class TourQrPaymentScreen extends StatefulWidget {
 
   final double price;
   final String tourName;
+  final String scheduleId;
+  final DateTime departureDate;
+  final int adults;
+  final int children;
 
   const TourQrPaymentScreen({
     super.key,
     required this.price,
     required this.tourName,
+    required this.scheduleId,
+    required this.departureDate,
+    required this.adults,
+    required this.children,
   });
 
   @override
@@ -77,6 +85,38 @@ class _TourQrPaymentScreenState extends State<TourQrPaymentScreen> {
     super.dispose();
   }
 
+  void _completePayment() {
+    final totalPeople = widget.adults + widget.children;
+    final index = mockTourSchedules.indexWhere((schedule) =>
+        schedule.id == widget.scheduleId &&
+        schedule.departureDate == widget.departureDate);
+
+    if (index != -1) {
+      final old = mockTourSchedules[index];
+      mockTourSchedules[index] = TourScheduleTestModel(
+        id: old.id,
+        tourId: old.tourId,
+        departureDate: old.departureDate,
+        maxParticipant: old.maxParticipant,
+        currentBooked: old.currentBooked + totalPeople,
+        isActive: old.isActive,
+        isDeleted: old.isDeleted,
+        createdTime: old.createdTime,
+        lastUpdatedTime: DateTime.now(),
+        deletedTime: old.deletedTime,
+        createdBy: old.createdBy,
+        lastUpdatedBy: 'TourQrPaymentScreen',
+        deletedBy: old.deletedBy,
+      );
+    }
+
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      TourScreen.routeName,
+      (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
@@ -86,7 +126,7 @@ class _TourQrPaymentScreenState extends State<TourQrPaymentScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(context, currencyFormat),
+            _buildHeader(currencyFormat),
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 3.h),
@@ -110,15 +150,9 @@ class _TourQrPaymentScreenState extends State<TourQrPaymentScreen> {
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      TourScreen.routeName,
-                      (route) => false,
-                    );
-                  },
-                  icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-                  label: const Text('Quay về'),
+                  onPressed: _completePayment,
+                  icon: const Icon(Icons.check_circle_outline_rounded),
+                  label: const Text('Hoàn tất thanh toán'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: ColorPalette.primaryColor,
                     foregroundColor: Colors.white,
@@ -137,7 +171,7 @@ class _TourQrPaymentScreenState extends State<TourQrPaymentScreen> {
     );
   }
 
-  Widget _buildHeader(BuildContext context, NumberFormat currencyFormat) {
+  Widget _buildHeader(NumberFormat currencyFormat) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.only(top: 2.h, bottom: 2.5.h, left: 4.w, right: 4.w),
@@ -176,7 +210,7 @@ class _TourQrPaymentScreenState extends State<TourQrPaymentScreen> {
             text: TextSpan(
               style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600),
               children: [
-                TextSpan(
+                const TextSpan(
                     text: 'Giá tour: ',
                     style: TextStyle(color: Colors.white70)),
                 TextSpan(
@@ -204,7 +238,7 @@ class _TourQrPaymentScreenState extends State<TourQrPaymentScreen> {
           const Icon(Icons.timer_rounded, size: 20, color: Colors.blueAccent),
           SizedBox(width: 2.w),
           Text(
-            '$_formattedTimeLeft',
+            _formatDuration(_remaining),
             style: TextStyle(
               fontSize: 16.sp,
               fontWeight: FontWeight.w600,
@@ -216,11 +250,6 @@ class _TourQrPaymentScreenState extends State<TourQrPaymentScreen> {
         ],
       ),
     );
-  }
-
-  String get _formattedTimeLeft {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    return '${twoDigits(_remaining.inMinutes)}:${twoDigits(_remaining.inSeconds % 60)}';
   }
 
   Widget _buildQrCard() {

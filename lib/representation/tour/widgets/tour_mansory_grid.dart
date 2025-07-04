@@ -38,20 +38,18 @@ class TourMasonryGrid extends StatelessWidget {
         final tour = tours[index];
         final height = (20 + random.nextInt(10)).h;
 
-        // Lấy media theo tourId
         final selectedMedia = medias
             .where((m) => m.tourId == tour.id)
             .toList()
             .firstOrNull;
 
-        // Lấy version hiện tại theo currentVersionId
         final currentVersionId = tour.currentVersionId;
         final version = versions
             .where((v) => v.id == currentVersionId)
             .toList()
             .firstOrNull;
 
-        // Lấy hướng dẫn viên từ version.tourGuideId
+
         final guide = version != null
             ? guides
                 .where((g) => g.id == version.tourGuideId)
@@ -59,11 +57,14 @@ class TourMasonryGrid extends StatelessWidget {
                 .firstOrNull
             : null;
 
+        final isDiscount = version?.isDiscount ?? false;
+
         return SizedBox(
           height: height,
           child: TourCard(
             tour: tour,
             media: selectedMedia,
+            isDiscount: isDiscount, 
             onTap: () {
               Navigator.push(
                 context,
@@ -72,6 +73,7 @@ class TourMasonryGrid extends StatelessWidget {
                     tour: tour,
                     media: selectedMedia,
                     guide: guide,
+                    // isDiscount: isDiscount,
                   ),
                 ),
               );

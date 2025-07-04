@@ -1,7 +1,8 @@
 class TourPlanVersionTestModel {
   final String id;
   final String tourId;
-  final double price;
+  final double adultPrice;
+  final double childrenPrice;
   final DateTime versionDate;
   final String description;
   final int versionNumber;
@@ -9,11 +10,14 @@ class TourPlanVersionTestModel {
   final bool isActive;
   final bool isDeleted;
   final String? tourGuideId;
+  final bool isDiscount;
+  final double price;
 
   TourPlanVersionTestModel({
     required this.id,
     required this.tourId,
-    required this.price,
+    required this.adultPrice,
+    required this.childrenPrice,
     required this.versionDate,
     required this.description,
     required this.versionNumber,
@@ -21,14 +25,17 @@ class TourPlanVersionTestModel {
     required this.isActive,
     required this.isDeleted,
     this.tourGuideId,
-  });
+    this.isDiscount = false,
+    double? price,
+  }) : price = price ?? (isDiscount ? adultPrice * 0.9 : adultPrice);
 }
 
 final List<TourPlanVersionTestModel> mockTourPlanVersions = [
   TourPlanVersionTestModel(
     id: 'version1',
     tourId: 'tour1',
-    price: 350000,
+    adultPrice: 350000,
+    childrenPrice: 250000,
     versionDate: DateTime(2025, 7, 1),
     description: 'Phiên bản tiêu chuẩn cho tour trong ngày Núi Bà Đen.',
     versionNumber: 1,
@@ -36,11 +43,14 @@ final List<TourPlanVersionTestModel> mockTourPlanVersions = [
     isActive: true,
     isDeleted: false,
     tourGuideId: 'guide1',
+    isDiscount: false,
+    price: 350000, 
   ),
   TourPlanVersionTestModel(
     id: 'version2',
     tourId: 'tour2',
-    price: 490000,
+    adultPrice: 490000,
+    childrenPrice: 340000,
     versionDate: DateTime(2025, 7, 1),
     description: 'Phiên bản gốc 2 ngày khám phá tâm linh.',
     versionNumber: 1,
@@ -48,11 +58,14 @@ final List<TourPlanVersionTestModel> mockTourPlanVersions = [
     isActive: true,
     isDeleted: false,
     tourGuideId: 'guide3',
+    isDiscount: true,
+    price: 550000, 
   ),
   TourPlanVersionTestModel(
     id: 'version3',
     tourId: 'tour2',
-    price: 540000,
+    adultPrice: 690000,
+    childrenPrice: 390000,
     versionDate: DateTime(2025, 7, 15),
     description: 'Phiên bản nâng cao với thêm điểm đến và bữa BBQ tối.',
     versionNumber: 2,
@@ -60,5 +73,7 @@ final List<TourPlanVersionTestModel> mockTourPlanVersions = [
     isActive: true,
     isDeleted: false,
     tourGuideId: 'guide4',
+    isDiscount: true,
+    price: 540000,
   ),
 ];

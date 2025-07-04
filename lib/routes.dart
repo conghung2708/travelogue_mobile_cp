@@ -31,6 +31,7 @@ import 'package:travelogue_mobile/representation/tour/screens/tour_payment_confi
 import 'package:travelogue_mobile/representation/tour/screens/tour_qr_payment_screen.dart';
 import 'package:travelogue_mobile/representation/tour/screens/tour_schedule_calender_screen.dart';
 import 'package:travelogue_mobile/representation/tour/screens/tour_screen.dart';
+import 'package:travelogue_mobile/representation/tour/screens/tour_team_selector_screen.dart';
 import 'package:travelogue_mobile/representation/tour/screens/tour_type_selector.dart';
 import 'package:travelogue_mobile/representation/trip_plan/screens/create_trip_screen.dart';
 import 'package:travelogue_mobile/representation/trip_plan/screens/select_place_for_day_screen.dart';
@@ -135,13 +136,7 @@ TourTypeSelector.routeName: (context) {
   return TourTypeSelector(tour: tour);
 },
 
-TourScheduleCalendarScreen.routeName: (context) {
-  final args = ModalRoute.of(context)!.settings.arguments as TourCalendarArgs;
-  return TourScheduleCalendarScreen(
-    schedules: args.schedules,
-    tour: args.tour,
-  );
-},
+TourScheduleCalendarScreen.routeName: (context) => const TourScheduleCalendarScreen(),
 
 TourPaymentConfirmationScreen.routeName: (context) {
   final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
@@ -157,11 +152,24 @@ TourQrPaymentScreen.routeName: (context) {
   return TourQrPaymentScreen(
     price: args['price'],
     tourName: args['tourName'],
+    scheduleId: args['scheduleId'],
+    departureDate: args['departureDate'],
+    adults: args['adults'],
+    children: args['children'],
   );
 },
 
   TourScreen.routeName: (context) => const TourScreen(),
 
+
+TourTeamSelectorScreen.routeName: (context) {
+  final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+  return TourTeamSelectorScreen(
+    tour: args['tour'],
+    schedule: args['schedule'],
+    media: args['media'], 
+  );
+},
 
 };
 

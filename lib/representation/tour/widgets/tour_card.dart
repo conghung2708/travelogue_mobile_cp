@@ -3,17 +3,20 @@ import 'package:sizer/sizer.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
 import 'package:travelogue_mobile/model/tour/tour_media_test_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_test_model.dart';
+import 'package:travelogue_mobile/representation/tour/widgets/discount_tag.dart';
 
 class TourCard extends StatelessWidget {
   final TourTestModel tour;
   final TourMediaTestModel? media;
   final VoidCallback? onTap;
+  final bool isDiscount;
 
   const TourCard({
     super.key,
     required this.tour,
     this.media,
     this.onTap,
+    this.isDiscount = false,
   });
 
   @override
@@ -27,11 +30,14 @@ class TourCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(4.w),
         child: Stack(
           children: [
+           
             Positioned.fill(
               child: isAsset
                   ? Image.asset(imageUrl, fit: BoxFit.cover)
                   : Image.network(imageUrl, fit: BoxFit.cover),
             ),
+
+  
             Positioned.fill(
               child: Container(
                 decoration: const BoxDecoration(
@@ -43,6 +49,15 @@ class TourCard extends StatelessWidget {
                 ),
               ),
             ),
+
+            // Discount Tag
+            if (isDiscount)
+              Positioned(
+                top: 2.w,
+                left: 2.w,
+                child: DiscountTag(),
+              ),
+
             Positioned(
               left: 3.w,
               bottom: 3.h,
@@ -56,8 +71,8 @@ class TourCard extends StatelessWidget {
                       fontSize: 14.5.sp,
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
-                      shadows: [
-                        const Shadow(
+                      shadows: const [
+                        Shadow(
                           offset: Offset(0.5, 1),
                           blurRadius: 2,
                           color: Colors.black87,
@@ -84,8 +99,8 @@ class TourCard extends StatelessWidget {
                           color: Colors.white,
                           fontSize: 11.5.sp,
                           fontWeight: FontWeight.w400,
-                          shadows: [
-                            const Shadow(
+                          shadows: const [
+                            Shadow(
                               offset: Offset(0.5, 1),
                               blurRadius: 1,
                               color: Colors.black87,

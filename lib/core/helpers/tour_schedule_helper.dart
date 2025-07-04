@@ -11,8 +11,7 @@ List<TourScheduleWithPrice> combineScheduleWithPrice({
   for (var version in versions) {
     if (version.isActive && !version.isDeleted) {
       final current = latestVersionMap[version.tourId];
-      if (current == null ||
-          version.versionDate.isBefore(version.versionDate)) {
+      if (current == null || version.versionDate.isAfter(current.versionDate)) {
         latestVersionMap[version.tourId] = version;
       }
     }
@@ -27,8 +26,11 @@ List<TourScheduleWithPrice> combineScheduleWithPrice({
       maxParticipant: s.maxParticipant,
       currentBooked: s.currentBooked,
       availableSlot: s.maxParticipant - s.currentBooked,
-      price: version?.price ?? 0,
+      adultPrice: version?.adultPrice ?? 0,
+      childrenPrice: version?.childrenPrice ?? 0,
+      price: version?.price ?? 0, 
       versionId: version?.id ?? '',
+      isDiscount: version?.isDiscount ?? false, 
     );
   }).toList();
 }
