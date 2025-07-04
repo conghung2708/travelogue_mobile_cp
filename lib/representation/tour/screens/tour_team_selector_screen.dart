@@ -161,59 +161,77 @@ class _TourTeamSelectorScreenState extends State<TourTeamSelectorScreen> {
   }
 
   Widget _buildCounter(
-    String label,
-    int value,
-    Function(int) onChanged,
-    double unitPrice, {
-    required bool isAdult,
-  }) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 1.8.h),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white24),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            '$label – ${formatter.format(unitPrice)}đ',
-            style: TextStyle(fontSize: 14.sp, color: Colors.white),
-          ),
-          Row(
-            children: [
-              _roundIconButton(
-                Icons.remove,
-                (isAdult && value > 1) || (!isAdult && value > 0)
-                    ? () => onChanged(value - 1)
-                    : null,
+  String label,
+  int value,
+  Function(int) onChanged,
+  double unitPrice, {
+  required bool isAdult,
+}) {
+  return Container(
+    padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 1.8.h),
+    decoration: BoxDecoration(
+      color: Colors.white.withOpacity(0.1),
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: Colors.white24),
+    ),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+    
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '$label – ${formatter.format(unitPrice)}đ',
+              style: TextStyle(fontSize: 14.sp, color: Colors.white),
+            ),
+            SizedBox(height: 0.5.h),
+            Text(
+              isAdult
+                  ? '(Từ 12 tuổi trở lên)'
+                  : '(Từ 1 đến dưới 12 tuổi)',
+              style: TextStyle(
+                fontSize: 13.sp,
+                color: Colors.white70,
+                fontStyle: FontStyle.italic,
               ),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 3.w),
-                child: Text(
-                  '$value',
-                  style: TextStyle(fontSize: 15.sp, color: Colors.white),
-                ),
+            ),
+          ],
+        ),
+        Row(
+          children: [
+            _roundIconButton(
+              Icons.remove,
+              (isAdult && value > 1) || (!isAdult && value > 0)
+                  ? () => onChanged(value - 1)
+                  : null,
+            ),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 3.w),
+              child: Text(
+                '$value',
+                style: TextStyle(fontSize: 15.sp, color: Colors.white),
               ),
-              _roundIconButton(
-                Icons.add,
-                canAdd()
-                    ? () {
-                        if (!canAdd()) {
-                          _showLimitReachedMessage();
-                        } else {
-                          onChanged(value + 1);
-                        }
+            ),
+            _roundIconButton(
+              Icons.add,
+              canAdd()
+                  ? () {
+                      if (!canAdd()) {
+                        _showLimitReachedMessage();
+                      } else {
+                        onChanged(value + 1);
                       }
-                    : null,
-              ),
-            ],
-          )
-        ],
-      ),
-    );
-  }
+                    }
+                  : null,
+            ),
+          ],
+        )
+      ],
+    ),
+  );
+}
+
 
   Widget _roundIconButton(IconData icon, VoidCallback? onTap) {
     return GestureDetector(
