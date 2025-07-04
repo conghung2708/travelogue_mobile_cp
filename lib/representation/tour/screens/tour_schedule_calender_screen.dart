@@ -1,15 +1,21 @@
+// ✅ Full code sau khi chỉnh sửa để show Dialog cho cả tour đoàn và đi lẻ
+// File: tour_schedule_calendar_screen.dart
+
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sizer/sizer.dart';
 import 'package:table_calendar/table_calendar.dart';
+
 import 'package:travelogue_mobile/core/constants/color_constants.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
+import 'package:travelogue_mobile/model/args/tour_calendar_args.dart';
 import 'package:travelogue_mobile/model/tour/tour_media_test_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_test_model.dart';
-import 'package:travelogue_mobile/model/tour/tour_plan_version_test_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_schedule_with_price.dart';
-import 'package:travelogue_mobile/model/tour/tour_with_schedule_model.dart';
+import 'package:travelogue_mobile/model/tour/tour_plan_version_test_model.dart';
 import 'package:travelogue_mobile/representation/tour/screens/tour_payment_confirmation_screen.dart';
+import 'package:travelogue_mobile/representation/tour/screens/tour_team_selector_screen.dart';
 import 'package:travelogue_mobile/representation/tour/widgets/calendar_day_cell.dart';
 import 'package:travelogue_mobile/representation/tour/widgets/tour_schedule_header.dart';
 import 'package:travelogue_mobile/representation/tour/widgets/tour_calendar_selector.dart';
@@ -17,14 +23,7 @@ import 'package:travelogue_mobile/representation/tour/widgets/tour_calendar_sele
 class TourScheduleCalendarScreen extends StatefulWidget {
   static const String routeName = '/tour-schedule-calendar';
 
-  final List<TourScheduleWithPrice> schedules;
-  final TourTestModel tour;
-
-  const TourScheduleCalendarScreen({
-    super.key,
-    required this.schedules,
-    required this.tour,
-  });
+  const TourScheduleCalendarScreen({super.key});
 
   @override
   State<TourScheduleCalendarScreen> createState() =>
@@ -33,49 +32,42 @@ class TourScheduleCalendarScreen extends StatefulWidget {
 
 class _TourScheduleCalendarScreenState
     extends State<TourScheduleCalendarScreen> {
+  late TourTestModel tour;
+  late List<TourScheduleWithPrice> schedules;
+  late bool isGroupTour;
+
   DateTime focusedDay = DateTime.now();
   DateTime? selectedDay;
 
-  late final List<TourScheduleWithPrice> tourSchedules;
+  late List<TourScheduleWithPrice> tourSchedules;
   final formatter = NumberFormat('#,###');
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    final args = ModalRoute.of(context)!.settings.arguments as TourCalendarArgs;
+    tour = args.tour;
+    schedules = args.schedules;
+    isGroupTour = args.isGroupTour;
 
     final versions = mockTourPlanVersions
-        .where((v) => v.tourId == widget.tour.id && v.isActive && !v.isDeleted)
+        .where((v) => v.tourId == tour.id && v.isActive && !v.isDeleted)
         .toList();
 
     versions.sort((a, b) => b.versionNumber.compareTo(a.versionNumber));
     final latestVersionId = versions.isNotEmpty ? versions.first.id : null;
 
-    debugPrint('📌 Tour ID: ${widget.tour.id}');
-    debugPrint('📌 Latest Version ID: $latestVersionId');
-
-    tourSchedules = widget.schedules.where((s) {
-      final match =
-          s.tourId == widget.tour.id && s.versionId == latestVersionId;
-      if (match) {
-        debugPrint('✅ Schedule matched: ${s.departureDate}');
-      }
-      return match;
+    tourSchedules = schedules.where((s) {
+      return s.tourId == tour.id && s.versionId == latestVersionId;
     }).toList();
-
-    for (final s in tourSchedules) {
-      debugPrint(
-          '📅 Available: ${s.departureDate} (local: ${s.departureDate.toLocal()})');
-    }
   }
 
-  TourScheduleWithPrice? getScheduleForDay(DateTime day) {
-    for (final s in tourSchedules) {
-      if (isSameDay(s.departureDate, day)) {
-        return s;
-      }
-    }
-    return null;
-  }
+TourScheduleWithPrice? getScheduleForDay(DateTime day) {
+  return tourSchedules.firstWhereOrNull(
+    (s) => isSameDay(s.departureDate, day),
+  );
+}
 
   bool isSameDay(DateTime a, DateTime b) {
     return a.year == b.year && a.month == b.month && a.day == b.day;
@@ -108,7 +100,7 @@ class _TourScheduleCalendarScreenState
                     focusedDay: focusedDay,
                     selectedDay: selectedDay,
                     getScheduleForDay: getScheduleForDay,
-                    onDaySelected: (selected, focused) {
+                    onDaySelected: (selected, focused) async {
                       final matched = getScheduleForDay(selected);
                       if (matched != null) {
                         showDialog(
@@ -136,7 +128,8 @@ class _TourScheduleCalendarScreenState
                                                 .defaultGradientBackground,
                                           ),
                                           child: Icon(Icons.event_available,
-                                              size: 28.sp, color: Colors.white),
+                                              size: 28.sp,
+                                              color: Colors.white),
                                         ),
                                         SizedBox(height: 2.h),
                                         Text(
@@ -171,13 +164,15 @@ class _TourScheduleCalendarScreenState
                                               child: OutlinedButton(
                                                 onPressed: () =>
                                                     Navigator.pop(context),
-                                                style: OutlinedButton.styleFrom(
+                                                style:
+                                                    OutlinedButton.styleFrom(
                                                   foregroundColor:
                                                       Colors.grey.shade700,
                                                   side: BorderSide(
-                                                      color:
-                                                          Colors.grey.shade400),
-                                                  shape: RoundedRectangleBorder(
+                                                      color: Colors
+                                                          .grey.shade400),
+                                                  shape:
+                                                      RoundedRectangleBorder(
                                                     borderRadius:
                                                         BorderRadius.circular(
                                                             12),
@@ -189,29 +184,62 @@ class _TourScheduleCalendarScreenState
                                             SizedBox(width: 4.w),
                                             Expanded(
                                               child: InkWell(
-                                                onTap: () {
+                                                onTap: () async {
+                                                  Navigator.pop(context);
                                                   final matchedMedia =
                                                       mockTourMedia.firstWhere(
                                                     (m) =>
-                                                        m.tourId ==
-                                                        widget.tour.id,
+                                                        m.tourId == tour.id,
                                                     orElse: () =>
                                                         TourMediaTestModel(
                                                             id: 'none'),
                                                   );
 
-                                                  Navigator.pop(context);
+                                                  if (isGroupTour) {
+                                                    final result =
+                                                        await Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (_) =>
+                                                            TourTeamSelectorScreen(
+                                                          tour: tour,
+                                                          schedule: matched,
+                                                          media: matchedMedia,
+                                                        ),
+                                                      ),
+                                                    );
 
-                                                  Navigator.pushNamed(
-                                                    context,
-                                                    TourPaymentConfirmationScreen
-                                                        .routeName,
-                                                    arguments: {
-                                                      'tour': widget.tour,
-                                                      'schedule': matched,
-                                                      'media': matchedMedia,
-                                                    },
-                                                  );
+                                                    if (result is Map<String,
+                                                            dynamic> &&
+                                                        result['confirmed'] ==
+                                                            true) {
+                                                      Navigator.pushNamed(
+                                                        context,
+                                                        TourPaymentConfirmationScreen
+                                                            .routeName,
+                                                        arguments: {
+                                                          'tour': tour,
+                                                          'schedule': matched,
+                                                          'media': matchedMedia,
+                                                          'adults':
+                                                              result['adults'],
+                                                          'children': result[
+                                                              'children'],
+                                                        },
+                                                      );
+                                                    }
+                                                  } else {
+                                                    Navigator.pushNamed(
+                                                      context,
+                                                      TourPaymentConfirmationScreen
+                                                          .routeName,
+                                                      arguments: {
+                                                        'tour': tour,
+                                                        'schedule': matched,
+                                                        'media': matchedMedia,
+                                                      },
+                                                    );
+                                                  }
                                                 },
                                                 borderRadius:
                                                     BorderRadius.circular(12),
@@ -274,38 +302,38 @@ class _TourScheduleCalendarScreenState
       ),
     );
   }
-}
 
-Widget _buildDialogRow(IconData icon, String label, String value) {
-  return Row(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Icon(icon, color: ColorPalette.primaryColor, size: 20.sp),
-      SizedBox(width: 2.w),
-      Expanded(
-        child: Text.rich(
-          TextSpan(
-            children: [
-              TextSpan(
-                text: '$label ',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                  fontSize: 15.sp,
+  Widget _buildDialogRow(IconData icon, String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: ColorPalette.primaryColor, size: 20.sp),
+        SizedBox(width: 2.w),
+        Expanded(
+          child: Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: '$label ',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                    fontSize: 15.sp,
+                  ),
                 ),
-              ),
-              TextSpan(
-                text: value,
-                style: TextStyle(
-                  fontWeight: FontWeight.normal,
-                  color: Colors.black87,
-                  fontSize: 15.sp,
+                TextSpan(
+                  text: value,
+                  style: TextStyle(
+                    fontWeight: FontWeight.normal,
+                    color: Colors.black87,
+                    fontSize: 15.sp,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
-      ),
-    ],
-  );
+      ],
+    );
+  }
 }

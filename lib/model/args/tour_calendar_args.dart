@@ -4,9 +4,11 @@ import 'package:travelogue_mobile/model/tour/tour_test_model.dart';
 class TourCalendarArgs {
   final TourTestModel tour;
   final List<TourScheduleWithPrice> schedules;
+  final bool isGroupTour; 
 
   TourCalendarArgs({
     required this.tour,
     required this.schedules,
+    this.isGroupTour = false, 
   });
 }

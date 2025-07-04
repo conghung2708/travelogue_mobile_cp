@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:sizer/sizer.dart';
 import 'package:intl/intl.dart';
+import 'package:sizer/sizer.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:travelogue_mobile/representation/home/widgets/title_widget.dart';
-import 'package:travelogue_mobile/representation/tour/screens/tour_detail_screen.dart';
-import 'package:travelogue_mobile/representation/tour/screens/tour_qr_payment_screen.dart';
+import 'package:travelogue_mobile/representation/tour/widgets/discount_tag.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:travelogue_mobile/core/constants/color_constants.dart';
+import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
 import 'package:travelogue_mobile/model/tour/tour_test_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_schedule_with_price.dart';
 import 'package:travelogue_mobile/model/tour/tour_media_test_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_plan_version_test_model.dart';
 import 'package:travelogue_mobile/model/tour_guide_test_model.dart';
-
-import 'package:travelogue_mobile/core/constants/color_constants.dart';
-import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
+import 'package:travelogue_mobile/representation/home/widgets/title_widget.dart';
+import 'package:travelogue_mobile/representation/tour/screens/tour_detail_screen.dart';
+import 'package:travelogue_mobile/representation/tour/screens/tour_qr_payment_screen.dart';
 
 class TourPaymentConfirmationScreen extends StatefulWidget {
   static const routeName = '/tour-payment-confirmation';
@@ -23,6 +23,8 @@ class TourPaymentConfirmationScreen extends StatefulWidget {
   final TourScheduleWithPrice schedule;
   final TourMediaTestModel? media;
   final DateTime? departureDate;
+  final int adults;
+  final int children;
 
   const TourPaymentConfirmationScreen({
     super.key,
@@ -30,6 +32,8 @@ class TourPaymentConfirmationScreen extends StatefulWidget {
     required this.schedule,
     this.media,
     this.departureDate,
+    this.adults = 1,
+    this.children = 0,
   });
 
   @override
@@ -45,6 +49,9 @@ class _TourPaymentConfirmationScreenState
   Widget build(BuildContext context) {
     final formatter = NumberFormat('#,###');
     final mediaUrl = widget.media?.mediaUrl;
+    final adultTotal = widget.adults * widget.schedule.price;
+    final childrenTotal = widget.children * widget.schedule.childrenPrice;
+    final totalPrice = adultTotal + childrenTotal;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -53,15 +60,13 @@ class _TourPaymentConfirmationScreenState
           children: [
             Container(
               width: double.infinity,
-              padding:
-                  EdgeInsets.only(left: 4.w, right: 4.w, top: 2.h, bottom: 2.h),
+              padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
               decoration: const BoxDecoration(
                 gradient: Gradients.defaultGradientBackground,
                 borderRadius:
                     BorderRadius.vertical(bottom: Radius.circular(24)),
               ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
@@ -101,8 +106,9 @@ class _TourPaymentConfirmationScreenState
                 ],
               ),
             ),
+
+            // Card thông tin tour
             Container(
-              width: double.infinity,
               margin: EdgeInsets.all(4.w),
               padding: EdgeInsets.all(3.w),
               decoration: BoxDecoration(
@@ -112,17 +118,28 @@ class _TourPaymentConfirmationScreenState
               ),
               child: Row(
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: SizedBox(
-                      width: 24.w,
-                      height: 10.h,
-                      child: mediaUrl != null && mediaUrl.startsWith('http')
-                          ? Image.network(mediaUrl, fit: BoxFit.cover)
-                          : Image.asset(
-                              mediaUrl ?? AssetHelper.img_tay_ninh_login,
-                              fit: BoxFit.cover),
-                    ),
+                  Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: SizedBox(
+                          width: 24.w,
+                          height: 10.h,
+                          child: mediaUrl != null && mediaUrl.startsWith('http')
+                              ? Image.network(mediaUrl, fit: BoxFit.cover)
+                              : Image.asset(
+                                  mediaUrl ?? AssetHelper.img_tay_ninh_login,
+                                  fit: BoxFit.cover,
+                                ),
+                        ),
+                      ),
+                      if (widget.schedule.isDiscount)
+                        const Positioned(
+                          top: 0,
+                          left: 0,
+                          child: DiscountTag(),
+                        ),
+                    ],
                   ),
                   SizedBox(width: 3.w),
                   Expanded(
@@ -152,9 +169,7 @@ class _TourPaymentConfirmationScreenState
                               version = mockTourPlanVersions.firstWhere(
                                 (v) => v.id == widget.tour.currentVersionId,
                               );
-                            } catch (_) {
-                              version = null;
-                            }
+                            } catch (_) {}
 
                             TourGuideTestModel? guide;
                             try {
@@ -163,9 +178,7 @@ class _TourPaymentConfirmationScreenState
                                   (g) => g.id == version!.tourGuideId,
                                 );
                               }
-                            } catch (_) {
-                              guide = null;
-                            }
+                            } catch (_) {}
 
                             Navigator.push(
                               context,
@@ -175,7 +188,7 @@ class _TourPaymentConfirmationScreenState
                                   media: widget.media,
                                   guide: guide,
                                   readOnly: true,
-                                   departureDate: widget.schedule.departureDate,
+                                  departureDate: widget.schedule.departureDate,
                                 ),
                               ),
                             );
@@ -202,6 +215,8 @@ class _TourPaymentConfirmationScreenState
                 ],
               ),
             ),
+
+            // Body chi tiết
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
@@ -209,158 +224,230 @@ class _TourPaymentConfirmationScreenState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Divider(color: ColorPalette.dividerColor, thickness: 6.sp),
-                    Row(
-                      children: [
-                        const Icon(Icons.monetization_on, color: Colors.red),
-                        SizedBox(width: 2.w),
-                        Text('Giá vé hiện tại:',
-                            style: TextStyle(fontSize: 14.sp)),
-                        const Spacer(),
-                        Text(
-                          '${formatter.format(widget.schedule.price)} VND',
-                          style: TextStyle(
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.red,
-                          ),
-                        ),
-                      ],
-                    ),
+                    _buildPaymentSummary(
+                        formatter, totalPrice, adultTotal, childrenTotal),
                     SizedBox(height: 2.h),
                     const TitleWithCustoneUnderline(
                       text: '📘 Điều khoản & ',
                       text2: 'Trách nhiệm dịch vụ',
                     ),
                     SizedBox(height: 1.h),
-                    Container(
-                      padding: EdgeInsets.all(3.w),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: MarkdownBody(
-                        data: '''
-  🚩 **Cam kết dịch vụ của Travelogue**
-
-  ✅ **Không hoàn hủy vé** sau khi thanh toán *(trừ khi có lý do đặc biệt được xác nhận)*.
-
-  ✅ Mang theo **CMND/CCCD hoặc hộ chiếu** để xác minh danh tính.
-
-  ✅ **Tuân thủ tuyệt đối** hướng dẫn trưởng đoàn và nhân viên hỗ trợ.
-
-  ✅ Mặc trang phục **lịch sự, kín đáo** phù hợp văn hoá điểm đến.
-
-  ✅ **Không xả rác**, giữ vệ sinh và không gây ồn ào nơi công cộng.
-
-  ✅ Nếu không khoẻ, **báo ngay hướng dẫn viên** để được hỗ trợ kịp thời.
-
-  ✨ *Chúng tôi vinh dự được đồng hành cùng bạn trong hành trình đầy ý nghĩa này. Cảm ơn bạn đã tin tưởng Travelogue!* ✨
-  ''',
-                        styleSheet:
-                            MarkdownStyleSheet.fromTheme(Theme.of(context))
-                                .copyWith(
-                          p: TextStyle(fontSize: 13.sp, height: 1.6),
-                          strong: const TextStyle(fontWeight: FontWeight.bold),
-                          em: const TextStyle(fontStyle: FontStyle.italic),
-                          blockSpacing: 12,
-                        ),
-                      ),
-                    ),
+                    _buildPolicyMarkdown(),
                     SizedBox(height: 1.5.h),
-                    Row(
-                      children: [
-                        Checkbox(
-                          value: _agreed,
-                          onChanged: (value) {
-                            setState(() => _agreed = value ?? false);
-                          },
-                        ),
-                        Expanded(
-                          child: Text(
-                            'Tôi đã đọc và đồng ý với các điều khoản cam kết dịch vụ ở trên.',
-                            style: TextStyle(fontSize: 13.sp),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 1.5.h),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: () async {
-                          final confirmed =
-                              await _showCallSupportDialog(context);
-                          if (confirmed == true) {
-                            final Uri callUri =
-                                Uri(scheme: 'tel', path: '0336626193');
-                            if (await canLaunchUrl(callUri)) {
-                              await launchUrl(callUri);
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content:
-                                        Text('Không thể thực hiện cuộc gọi.')),
-                              );
-                            }
-                          }
-                        },
-                        icon: const Icon(Icons.headset_mic, color: Colors.blue),
-                        label: Text(
-                          'Liên hệ hỗ trợ',
-                          style: TextStyle(
-                            color: Colors.blue,
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Colors.blue),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16)),
-                          padding: EdgeInsets.symmetric(vertical: 1.5.h),
-                        ),
-                      ),
-                    ),
+                    _buildAgreementCheckbox(),
+                    _buildSupportButton(),
                     SizedBox(height: 2.h),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _agreed
-                            ? () {
-                                Navigator.pushNamed(
-                                  context,
-                                  TourQrPaymentScreen.routeName,
-                                  arguments: {
-                                    'price': widget.schedule.price,
-                                    'tourName': widget.tour.name,
-                                  },
-                                );
-                              }
-                            : null,
-                        style: ElevatedButton.styleFrom(
-                          padding: EdgeInsets.symmetric(vertical: 1.8.h),
-                          backgroundColor: ColorPalette.primaryColor,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                        child: Text(
-                          "Xác nhận và thanh toán",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13.sp,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
+                    _buildConfirmButton(totalPrice),
                     SizedBox(height: 2.h),
                   ],
                 ),
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPaymentSummary(NumberFormat formatter, double totalPrice,
+      double adultTotal, double childrenTotal) {
+    return Container(
+      padding: EdgeInsets.all(3.w),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF3E0),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFFFE0B2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.receipt_long_rounded, color: Colors.deepOrange),
+              SizedBox(width: 2.w),
+              Text(
+                'Chi tiết thanh toán',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.deepOrange.shade700,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 1.5.h),
+          _buildPriceRow('👨 Người lớn', widget.adults, widget.schedule.price),
+          SizedBox(height: 0.6.h),
+          _buildPriceRow(
+              '🧒 Trẻ em', widget.children, widget.schedule.childrenPrice),
+          Divider(height: 2.5.h, color: Colors.grey.shade400),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '💰 Tổng cộng:',
+                style: TextStyle(
+                  fontSize: 14.5.sp,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.deepOrange.shade900,
+                ),
+              ),
+              Text(
+                '${formatter.format(totalPrice)}đ',
+                style: TextStyle(
+                  fontSize: 14.5.sp,
+                  fontWeight: FontWeight.bold,
+                  color: ColorPalette.primaryColor,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPriceRow(String label, int quantity, double price) {
+    final formatter = NumberFormat('#,###');
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          '$label x$quantity',
+          style: TextStyle(fontSize: 13.5.sp, color: Colors.brown.shade800),
+        ),
+        Text(
+          '${formatter.format(quantity * price)}đ',
+          style: TextStyle(
+            fontSize: 13.5.sp,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPolicyMarkdown() {
+    return Container(
+      padding: EdgeInsets.all(3.w),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: const MarkdownBody(
+        data: '''
+🚩 **Cam kết dịch vụ của Travelogue**
+
+✅ **Không hoàn hủy vé** sau khi thanh toán *(trừ khi có lý do đặc biệt được xác nhận)*.
+
+✅ Mang theo **CMND/CCCD hoặc hộ chiếu** để xác minh danh tính.
+
+✅ **Tuân thủ tuyệt đối** hướng dẫn trưởng đoàn và nhân viên hỗ trợ.
+
+✅ Mặc trang phục **lịch sự, kín đáo** phù hợp văn hoá điểm đến.
+
+✅ **Không xả rác**, giữ vệ sinh và không gây ồn ào nơi công cộng.
+
+✅ Nếu không khoẻ, **báo ngay hướng dẫn viên** để được hỗ trợ kịp thời.
+
+✨ *Chúng tôi vinh dự được đồng hành cùng bạn trong hành trình đầy ý nghĩa này. Cảm ơn bạn đã tin tưởng Travelogue!* ✨
+''',
+      ),
+    );
+  }
+
+  Widget _buildAgreementCheckbox() {
+    return Row(
+      children: [
+        Checkbox(
+          value: _agreed,
+          onChanged: (value) {
+            setState(() => _agreed = value ?? false);
+          },
+        ),
+        Expanded(
+          child: Text(
+            'Tôi đã đọc và đồng ý với các điều khoản cam kết dịch vụ ở trên.',
+            style: TextStyle(fontSize: 13.sp),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSupportButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: () async {
+          final confirmed = await _showCallSupportDialog(context);
+          if (confirmed == true) {
+            final Uri callUri = Uri(scheme: 'tel', path: '0336626193');
+            if (await canLaunchUrl(callUri)) {
+              await launchUrl(callUri);
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Không thể thực hiện cuộc gọi.')),
+              );
+            }
+          }
+        },
+        icon: const Icon(Icons.headset_mic, color: Colors.blue),
+        label: Text(
+          'Liên hệ hỗ trợ',
+          style: TextStyle(
+            color: Colors.blue,
+            fontSize: 14.sp,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: Colors.blue),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          padding: EdgeInsets.symmetric(vertical: 1.5.h),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildConfirmButton(double totalPrice) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: _agreed
+            ? () {
+                Navigator.pushNamed(
+                  context,
+                  TourQrPaymentScreen.routeName,
+                  arguments: {
+                    'price': totalPrice,
+                    'tourName': widget.tour.name,
+                    'scheduleId': widget.schedule.scheduleId,
+                    'departureDate': widget.schedule.departureDate,
+                    'adults': widget.adults,
+                    'children': widget.children,
+                  },
+                );
+              }
+            : null,
+        style: ElevatedButton.styleFrom(
+          padding: EdgeInsets.symmetric(vertical: 1.8.h),
+          backgroundColor: ColorPalette.primaryColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+        child: Text(
+          "Xác nhận và thanh toán",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 13.sp,
+            color: Colors.white,
+          ),
         ),
       ),
     );

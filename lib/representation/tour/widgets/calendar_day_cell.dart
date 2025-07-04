@@ -19,9 +19,10 @@ class CalendarDayCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasAvailable = schedule != null && schedule!.availableSlot > 0;
     final priceText =
-        schedule != null ? '${(schedule!.price / 1000).round()}K' : '';
-    final isLowSlot = schedule != null && schedule!.availableSlot <= 5;
+        hasAvailable ? '${(schedule!.price / 1000).round()}K' : '';
+    final isLowSlot = hasAvailable && schedule!.availableSlot <= 5;
 
     return Container(
       margin: EdgeInsets.all(0.7.w),
@@ -58,7 +59,7 @@ class CalendarDayCell extends StatelessWidget {
               ),
             ),
           ),
-          if (schedule != null)
+          if (hasAvailable)
             Flexible(
               child: Text(
                 priceText,

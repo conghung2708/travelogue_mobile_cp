@@ -14,7 +14,10 @@ class TourTypeSelector extends StatelessWidget {
 
   final TourTestModel tour;
 
-  const TourTypeSelector({super.key, required this.tour});
+  const TourTypeSelector({
+    super.key,
+    required this.tour,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -76,8 +79,6 @@ class TourTypeSelector extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: 5.h),
-
-                  /// Card 1 – Đi lẻ
                   AnimatedEntrance(
                     delay: const Duration(milliseconds: 200),
                     child: _buildMoodCard(
@@ -88,34 +89,10 @@ class TourTypeSelector extends StatelessWidget {
                           "Nếu bạn muốn tận hưởng không gian một mình, không phụ thuộc lịch trình người khác – đây là lựa chọn lý tưởng.",
                       icon: Icons.person_outline,
                       color: Colors.deepPurple,
-                      onTap: () {
-                        final versions = mockTourPlanVersions
-                            .where((v) => v.tourId == tour.id && v.isActive && !v.isDeleted)
-                            .toList();
-
-                        versions.sort((a, b) => b.versionNumber.compareTo(a.versionNumber));
-                        final latestVersion = versions.isNotEmpty ? versions.first : null;
-
-                        final scheduleWithPriceList = combineScheduleWithPrice(
-                          schedules: mockTourSchedules,
-                          versions: latestVersion != null ? [latestVersion] : [],
-                        );
-
-                        Navigator.pushNamed(
-                          context,
-                          TourScheduleCalendarScreen.routeName,
-                          arguments: TourCalendarArgs(
-                            tour: tour,
-                            schedules: scheduleWithPriceList,
-                          ),
-                        );
-                      },
+                      isGroupTour: false,
                     ),
                   ),
-
                   SizedBox(height: 3.h),
-
-                  /// Card 2 – Đi theo đoàn
                   AnimatedEntrance(
                     delay: const Duration(milliseconds: 600),
                     child: _buildMoodCard(
@@ -126,10 +103,9 @@ class TourTypeSelector extends StatelessWidget {
                           "Nếu bạn yêu thích kết nối, chia sẻ khoảnh khắc và khám phá cùng bạn đồng hành – lựa chọn này là dành cho bạn.",
                       icon: Icons.groups_3_rounded,
                       color: Colors.teal,
-                      onTap: () => Navigator.pop(context, "Đi theo đoàn"),
+                      isGroupTour: true,
                     ),
                   ),
-
                   const Spacer(),
                   Center(
                     child: Padding(
@@ -161,10 +137,32 @@ class TourTypeSelector extends StatelessWidget {
     required String description,
     required IconData icon,
     required Color color,
-    required VoidCallback onTap,
+    required bool isGroupTour,
   }) {
     return InkWell(
-      onTap: onTap,
+      onTap: () {
+        final versions = mockTourPlanVersions
+            .where((v) => v.tourId == tour.id && v.isActive && !v.isDeleted)
+            .toList();
+
+        versions.sort((a, b) => b.versionNumber.compareTo(a.versionNumber));
+        final latestVersion = versions.isNotEmpty ? versions.first : null;
+
+        final scheduleWithPriceList = combineScheduleWithPrice(
+          schedules: mockTourSchedules,
+          versions: latestVersion != null ? [latestVersion] : [],
+        );
+
+        Navigator.pushNamed(
+          context,
+          TourScheduleCalendarScreen.routeName,
+          arguments: TourCalendarArgs(
+            tour: tour,
+            schedules: scheduleWithPriceList,
+            isGroupTour: isGroupTour, // ✅ TRUYỀN RÕ RÀNG
+          ),
+        );
+      },
       borderRadius: BorderRadius.circular(24),
       child: Container(
         margin: EdgeInsets.only(bottom: 3.h),
