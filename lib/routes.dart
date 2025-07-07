@@ -4,6 +4,7 @@ import 'package:travelogue_mobile/model/args/tour_calendar_args.dart';
 import 'package:travelogue_mobile/model/event_model.dart';
 import 'package:travelogue_mobile/model/experience_model.dart';
 import 'package:travelogue_mobile/model/location_model.dart';
+import 'package:travelogue_mobile/model/order/order_test_model.dart';
 import 'package:travelogue_mobile/model/review_test_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_test_model.dart';
 import 'package:travelogue_mobile/representation/auth/screens/forgot_password_screen.dart';
@@ -16,6 +17,7 @@ import 'package:travelogue_mobile/representation/experience/screens/experience_s
 import 'package:travelogue_mobile/representation/festival/screens/festival_detail_screen.dart';
 import 'package:travelogue_mobile/representation/festival/screens/festival_screen.dart';
 import 'package:travelogue_mobile/representation/home/screens/home_screen.dart';
+import 'package:travelogue_mobile/representation/order/screens/order_screen.dart';
 import 'package:travelogue_mobile/representation/review/screens/reviews_screen.dart';
 import 'package:travelogue_mobile/representation/hotel/screens/hotel_detail_screen.dart';
 import 'package:travelogue_mobile/representation/intro/screens/intro_screen.dart';
@@ -170,6 +172,8 @@ TourTeamSelectorScreen.routeName: (context) {
     media: args['media'], 
   );
 },
+
+OrderScreen.routeName: (context) => OrderScreen(orders: mockOrders),
 
 };
 

@@ -30,6 +30,7 @@ class TourDetailScreen extends StatelessWidget {
   final TourGuideTestModel? guide;
   final bool readOnly;
   final DateTime? departureDate;
+  final bool? isBooked;
 
   const TourDetailScreen({
     super.key,
@@ -38,6 +39,7 @@ class TourDetailScreen extends StatelessWidget {
     this.guide,
     this.readOnly = false,
     this.departureDate,
+    this.isBooked = false,
   });
 
   Widget _buildTourImage() {
@@ -184,6 +186,7 @@ class TourDetailScreen extends StatelessWidget {
                                     descriptionMap: descriptionMap,
                                     readOnly: readOnly,
                                     departureDate: departureDate,
+                                    isBooked: isBooked,
                                   ),
                                 ],
                               ),

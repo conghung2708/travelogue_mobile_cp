@@ -15,12 +15,14 @@ class TourOverviewHeader extends StatelessWidget {
   final TourTestModel tour;
   final bool? readOnly;
   final DateTime? departureDate;
+  final bool? isBooked;
 
   const TourOverviewHeader({
     super.key,
     required this.tour,
     this.readOnly,
     this.departureDate,
+    this.isBooked,
   });
 
   @override
@@ -97,6 +99,7 @@ class TourOverviewHeader extends StatelessWidget {
         if (version != null)
           TourConfirmedActionCard(
             departureDate: departureDate,
+            isBooked: isBooked,
             tour: tour,
             currencyFormat: NumberFormat.currency(locale: 'vi_VN', symbol: '₫'),
             price: tourPrice,

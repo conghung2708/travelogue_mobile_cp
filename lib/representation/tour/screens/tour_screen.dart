@@ -8,6 +8,7 @@ import 'package:travelogue_mobile/model/tour/tour_plan_version_test_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_test_model.dart';
 import 'package:travelogue_mobile/model/tour_guide_test_model.dart';
 import 'package:travelogue_mobile/representation/home/widgets/title_widget.dart';
+import 'package:travelogue_mobile/representation/order/screens/order_screen.dart';
 import 'package:travelogue_mobile/representation/tour/widgets/tour_mansory_grid.dart';
 import 'package:travelogue_mobile/representation/trip_plan/screens/my_trip_plan_screen.dart';
 
@@ -161,8 +162,7 @@ void didChangeDependencies() {
                     targetPadding: const EdgeInsets.all(4),
                     child: GestureDetector(
                       onTap: () {
-                        Navigator.pushNamed(
-                            context, MyTripPlansScreen.routeName);
+                  Navigator.pushNamed(context, OrderScreen.routeName);
                       },
                       child: Stack(
                         alignment: Alignment.center,
