@@ -132,6 +132,4 @@ class _MyAppState extends State<MyApp> {
 //goi y lich trinh (khong can follow)
 //Tour guide (phai co chung nhan, biet tieng anh ==> kiem duyet (ben phia tay ninh))
 //Quan an , hotel, co so san xuat, dac san (gioi thieu, tiep khach booking) => optional nhung bat buoc.
-
-
 //Luu su kien ghi bam chi tiet

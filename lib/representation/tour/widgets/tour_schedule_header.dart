@@ -22,7 +22,7 @@ class TourScheduleHeader extends StatelessWidget {
                 size: 18.sp, color: Colors.black),
           ),
         ),
-        const Spacer(),
+        const Spacer(), 
         Text(
           'Chọn ngày khởi hành',
           style: TextStyle(
