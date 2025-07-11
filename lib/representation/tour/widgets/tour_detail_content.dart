@@ -26,6 +26,7 @@ class TourDetailContent extends StatelessWidget {
   final Map<String, String> descriptionMap;
   final bool? readOnly;
   final DateTime? departureDate;
+  final bool? isBooked;
 
   const TourDetailContent({
     super.key,
@@ -40,6 +41,7 @@ class TourDetailContent extends StatelessWidget {
     required this.descriptionMap,
     this.readOnly,
     this.departureDate,
+    this.isBooked,
   });
 
   final String _tourNoteMarkdown = """
@@ -84,7 +86,7 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        TourOverviewHeader(tour: tour, readOnly: readOnly, departureDate: departureDate),
+        TourOverviewHeader(tour: tour, readOnly: readOnly, departureDate: departureDate, isBooked: isBooked),
         DefaultTabController(
           length: 3,
           child: Column(

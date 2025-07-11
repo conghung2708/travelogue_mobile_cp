@@ -11,6 +11,7 @@ class TourConfirmedActionCard extends StatelessWidget {
   final double price;
   final void Function()? onConfirmed;
   final bool? readOnly;
+  final bool? isBooked;
 
   const TourConfirmedActionCard({
     super.key,
@@ -20,6 +21,7 @@ class TourConfirmedActionCard extends StatelessWidget {
     this.departureDate,
     this.onConfirmed,
     this.readOnly = false,
+    this.isBooked = false,
   });
 
   @override
@@ -27,8 +29,10 @@ class TourConfirmedActionCard extends StatelessWidget {
     final tripDate = (departureDate != null)
         ? DateFormat('dd/MM/yyyy').format(departureDate!)
         : 'Chưa chọn ngày';
-
     final formattedPrice = currencyFormat.format(price);
+
+    final bool isViewingOnly = readOnly == true;
+    final bool hasBeenBooked = isBooked == true;
 
     return Container(
       padding: EdgeInsets.all(4.w),
@@ -45,7 +49,9 @@ class TourConfirmedActionCard extends StatelessWidget {
               Icon(Icons.check_circle, color: Colors.green, size: 18.sp),
               SizedBox(width: 2.w),
               Text(
-                "Tour đã sẵn sàng để đặt",
+                hasBeenBooked
+                    ? "Tour đã được đặt"
+                    : "Tour đã sẵn sàng để đặt",
                 style: TextStyle(
                   fontSize: 15.sp,
                   fontWeight: FontWeight.bold,
@@ -75,7 +81,9 @@ class TourConfirmedActionCard extends StatelessWidget {
             ),
           ),
           SizedBox(height: 2.h),
-          if (readOnly == false)
+
+          // Nút đặt tour (nếu chưa booked và không readonly)
+          if (!isViewingOnly && !hasBeenBooked)
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -205,6 +213,8 @@ class TourConfirmedActionCard extends StatelessWidget {
                 ),
               ),
             )
+
+          // Khi đã booked hoặc readonly
           else
             Container(
               margin: EdgeInsets.only(top: 2.h),
@@ -218,7 +228,9 @@ class TourConfirmedActionCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '🌏 Hành trình của bạn đang chờ đợi!',
+                    hasBeenBooked
+                        ? '✅ Tour của bạn đã được đặt thành công!'
+                        : '🌏 Hành trình của bạn đang chờ đợi!',
                     style: TextStyle(
                       fontSize: 14.5.sp,
                       fontWeight: FontWeight.bold,
@@ -227,7 +239,9 @@ class TourConfirmedActionCard extends StatelessWidget {
                   ),
                   SizedBox(height: 1.2.h),
                   Text(
-                    'Chỉ một bước nữa, Travelogue hân hạnh đồng hành cùng bạn trên hành trình đầy cảm xúc và khám phá.',
+                    hasBeenBooked
+                        ? 'Chúng tôi đã ghi nhận lịch trình của bạn. Hẹn gặp bạn trong hành trình sắp tới!'
+                        : 'Chỉ một bước nữa, Travelogue hân hạnh đồng hành cùng bạn trên hành trình đầy cảm xúc và khám phá.',
                     style: TextStyle(
                       fontSize: 12.5.sp,
                       color: Colors.blueGrey.shade800,
@@ -236,44 +250,49 @@ class TourConfirmedActionCard extends StatelessWidget {
                   ),
                   SizedBox(height: 1.h),
                   Text(
-                    '📌 Từ khung cảnh mê hồn đến ẩm thực đặc sắc – mọi trải nghiệm đáng nhớ đang chờ đón bạn.',
+                    hasBeenBooked
+                        ? '🎉 Cảm ơn bạn đã chọn Travelogue!'
+                        : '📌 Từ khung cảnh mê hồn đến ẩm thực đặc sắc – mọi trải nghiệm đáng nhớ đang chờ đón bạn.',
                     style: TextStyle(
                       fontSize: 12.5.sp,
                       color: Colors.blueGrey.shade800,
                       height: 1.4,
                     ),
                   ),
-                  SizedBox(height: 2.h),
-                  Center(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: Gradients.defaultGradientBackground,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: ElevatedButton.icon(
-                        onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
-                        label: Text(
-                          "Quay lại đặt tour ngay",
-                          style: TextStyle(
-                            fontSize: 13.5.sp,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
+                  if (!hasBeenBooked)
+                    SizedBox(height: 2.h),
+                  if (!hasBeenBooked)
+                    Center(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: Gradients.defaultGradientBackground,
+                          borderRadius: BorderRadius.circular(14),
                         ),
-                        style: ElevatedButton.styleFrom(
-                          elevation: 0,
-                          shadowColor: Colors.transparent,
-                          backgroundColor: Colors.transparent,
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 6.w, vertical: 1.5.h),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                        child: ElevatedButton.icon(
+                          onPressed: () => Navigator.pop(context),
+                          icon:
+                              const Icon(Icons.arrow_back, color: Colors.white),
+                          label: Text(
+                            "Quay lại đặt tour ngay",
+                            style: TextStyle(
+                              fontSize: 13.5.sp,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            elevation: 0,
+                            shadowColor: Colors.transparent,
+                            backgroundColor: Colors.transparent,
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 6.w, vertical: 1.5.h),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),
