@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:travelogue_mobile/core/trip_plan/bloc/trip_plan_event.dart';
 import 'package:travelogue_mobile/core/trip_plan/bloc/trip_plan_state.dart';
-import 'package:travelogue_mobile/model/craft_village_model.dart';
+import 'package:travelogue_mobile/model/craft_village/craft_village_model.dart';
 import 'package:travelogue_mobile/model/location_model.dart';
 import 'package:travelogue_mobile/model/restaurant_model.dart';
 

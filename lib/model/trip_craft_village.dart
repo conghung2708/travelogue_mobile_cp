@@ -1,4 +1,4 @@
-import 'package:travelogue_mobile/model/craft_village_model.dart';
+import 'package:travelogue_mobile/model/craft_village/craft_village_model.dart';
 
 class TripPlanCraftVillage {
   final String tripPlanVersionId;

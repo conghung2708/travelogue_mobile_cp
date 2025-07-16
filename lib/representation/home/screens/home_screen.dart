@@ -289,8 +289,10 @@ class _HomeScreenState extends State<HomeScreen>
                                                     indexTypeLocation = index;
                                                   });
                                                 },
-                                                title: listTypes[index].name ??
-                                                    category.title,
+                                            title: index < listTypes.length
+        ? (listTypes[index].name ?? category.title)
+        : category.title,
+
                                               ),
                                             ),
                                           ),
