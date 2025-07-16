@@ -16,7 +16,7 @@ import 'package:travelogue_mobile/model/tour/tour_plan_location_test_model.dart'
 import 'package:travelogue_mobile/model/tour/tour_plan_cuisine_test_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_plan_craft_village_test_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_media_test_model.dart';
-import 'package:travelogue_mobile/model/craft_village_model.dart';
+import 'package:travelogue_mobile/model/craft_village/craft_village_model.dart';
 import 'package:travelogue_mobile/model/location_model.dart';
 import 'package:travelogue_mobile/model/restaurant_model.dart';
 

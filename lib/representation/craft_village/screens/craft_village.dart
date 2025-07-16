@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
-import 'package:travelogue_mobile/model/craft_village_model.dart';
+import 'package:travelogue_mobile/model/craft_village/craft_village_model.dart';
 import 'package:travelogue_mobile/representation/craft_village/screens/craft_village_card.dart';
 
 class CraftVillages extends StatelessWidget {

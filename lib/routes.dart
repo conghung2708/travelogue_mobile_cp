@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:travelogue_mobile/model/args/reviews_screen_args.dart';
 import 'package:travelogue_mobile/model/args/tour_calendar_args.dart';
+import 'package:travelogue_mobile/model/craft_village/workshop_test_model.dart';
 import 'package:travelogue_mobile/model/event_model.dart';
 import 'package:travelogue_mobile/model/experience_model.dart';
 import 'package:travelogue_mobile/model/location_model.dart';
@@ -52,6 +53,7 @@ import 'package:travelogue_mobile/representation/user/screens/support_screen.dar
 import 'package:travelogue_mobile/representation/user/screens/tay_ninh_predictor_screen.dart';
 import 'package:travelogue_mobile/representation/user/screens/travel_guide_screen.dart';
 import 'package:travelogue_mobile/representation/user/screens/user_profile_screen.dart';
+import 'package:travelogue_mobile/representation/workshop/screens/workshop_detail_screen.dart';
 import 'package:vietmap_flutter_navigation/vietmap_flutter_navigation.dart';
 
 final Map<String, WidgetBuilder> routes = {
@@ -174,6 +176,11 @@ TourTeamSelectorScreen.routeName: (context) {
 },
 
 OrderScreen.routeName: (context) => OrderScreen(orders: mockOrders),
+
+  WorkshopDetailScreen.routeName: (context) => WorkshopDetailScreen(
+        workshop:
+            ModalRoute.of(context)!.settings.arguments as WorkshopTestModel,
+  ),
 
 };
 

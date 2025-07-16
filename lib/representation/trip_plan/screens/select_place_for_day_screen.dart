@@ -8,7 +8,7 @@ import 'package:travelogue_mobile/model/location_model.dart';
 import 'package:travelogue_mobile/model/restaurant_model.dart';
 import 'package:travelogue_mobile/model/trip_craft_village.dart';
 import 'package:travelogue_mobile/model/trip_plan.dart';
-import 'package:travelogue_mobile/model/craft_village_model.dart';
+import 'package:travelogue_mobile/model/craft_village/craft_village_model.dart';
 import 'package:travelogue_mobile/core/blocs/home/home_bloc.dart';
 import 'package:travelogue_mobile/model/trip_plan_cuisine.dart';
 import 'package:travelogue_mobile/model/trip_plan_location.dart';

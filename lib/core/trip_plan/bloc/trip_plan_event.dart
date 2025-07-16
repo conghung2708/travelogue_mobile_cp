@@ -1,7 +1,7 @@
 
 
 import 'package:equatable/equatable.dart';
-import 'package:travelogue_mobile/model/craft_village_model.dart';
+import 'package:travelogue_mobile/model/craft_village/craft_village_model.dart';
 import 'package:travelogue_mobile/model/location_model.dart';
 import 'package:travelogue_mobile/model/restaurant_model.dart';
 
