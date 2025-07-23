@@ -9,6 +9,7 @@ import 'package:travelogue_mobile/representation/home/screens/home_screen.dart';
 import 'package:travelogue_mobile/representation/event/screens/event_screen.dart';
 import 'package:travelogue_mobile/representation/map/screens/viet_map_navigation_screen.dart';
 import 'package:travelogue_mobile/representation/tour/screens/tour_screen.dart';
+import 'package:travelogue_mobile/representation/tour_guide/screens/tour_guide_screen.dart';
 import 'package:travelogue_mobile/representation/user/screens/user_profile_screen.dart';
 
 class MainScreen extends StatefulWidget {
@@ -23,10 +24,11 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   final List<Widget> _screens = [
     const HomeScreen(),
-    const EventScreen(),
+    const TourGuideScreen(),
     const TourScreen(), 
-    const VietMapNavigationScreen(),
-    const UserProfileScreen(),
+    const EventScreen(),
+    // const VietMapNavigationScreen(),
+    // const UserProfileScreen(),
   ];
 
   @override
@@ -51,10 +53,11 @@ class _MainScreenState extends State<MainScreen> {
             unselectedItemColor: ColorPalette.primaryColor.withOpacity(0.2),
             items: [
               _buildNavItem(FontAwesomeIcons.house, "Trang chủ"),
-              _buildNavItem(FontAwesomeIcons.solidCalendarDays, "Thông tin"),
+              _buildNavItem(FontAwesomeIcons.peopleRoof, "Hướng dẫn viên"),
               _buildNavItem(FontAwesomeIcons.squarePen, "Tour khám phá"),
-              _buildNavItem(FontAwesomeIcons.solidMap, "Bản đồ"),
-              _buildNavItem(FontAwesomeIcons.solidUser, "Cài đặt"),
+              _buildNavItem(FontAwesomeIcons.solidCalendarDays, "Thông tin"),
+              // _buildNavItem(FontAwesomeIcons.solidMap, "Bản đồ"),
+              // _buildNavItem(FontAwesomeIcons.solidUser, "Cài đặt"),
             ],
           ),
         );

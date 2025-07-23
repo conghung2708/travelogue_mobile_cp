@@ -72,6 +72,7 @@ dependencies:
   collection: ^1.18.0
   showcaseview: ^4.0.1
   timeline_tile: ^2.0.0
+  google_fonts: ^6.2.1
 
   # Caching
   hive: ^2.2.3

@@ -1,3 +1,4 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:travelogue_mobile/core/repository/home_repository.dart';
@@ -16,159 +17,145 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   List<LocationModel> locations = [];
   final List<EventModel> events = [];
   final List<LocationModel> locationFavorites = [];
+
   HomeBloc() : super(HomeInitial()) {
-    on<HomeEvent>((event, emit) async {
-      if (event is GetLocationTypeEvent) {
-        if (HomeLocal().getListTypeLocation()?.isNotEmpty ?? false) {
-          locationTypes.addAll(HomeLocal().getListTypeLocation()!);
-          emit(_getHomeSuccess);
-        }
-
-        await _getLocationType();
-        emit(_getHomeSuccess);
-      }
-
-      if (event is GetAllLocationEvent) {
-        if (HomeLocal().getAllLocations()?.isNotEmpty ?? false) {
-          locations.addAll(HomeLocal().getAllLocations()!);
-          emit(_getHomeSuccess);
-        }
-
-        await _getLocationAll();
-        emit(_getHomeSuccess);
-      }
-
-      if (event is FilterLocationTypeEvent) {
-        if (HomeLocal().getAllLocations()?.isNotEmpty ?? false) {
-          locations.clear();
-          locations.addAll(HomeLocal()
-              .getAllLocations()!
-              .where((e) => e.typeLocationId == event.locationTypeId)
-              .toList());
-
-          if (locations.isEmpty) {
-            locations.addAll(HomeLocal().getAllLocations()!);
-          }
-          emit(_getHomeSuccess);
-        }
-      }
-
-      if (event is GetEventHomeEvent) {
-        if (HomeLocal().getEvents()?.isNotEmpty ?? false) {
-          events.addAll(HomeLocal().getEvents()!);
-          emit(_getHomeSuccess);
-        }
-
-        await _getEvents();
-        emit(_getHomeSuccess);
-      }
-
-      if (event is GetLocationFavoriteEvent) {
-        await _getLocationFavorite();
-        locations = locations
-            .map((e) => e.copyWith(
-                isLiked:
-                    locationFavorites.map((e) => e.id).toList().contains(e.id)))
-            .toList();
-
-        emit(_getHomeSuccess);
-      }
-
-      if (event is UpdateLikedLocationEvent) {
-        if (UserLocal().getAccessToken.isEmpty) {
-          Navigator.of(event.context).pushNamed(LoginScreen.routeName);
-          return;
-        }
-
-        final List<String> listIdFavorite = HomeLocal().getListLocationFavorite;
-
-        if (event.isLiked) {
-          bool isSuccess = await _updateFavorite(event);
-          if (!isSuccess) {
-            return;
-          }
-          listIdFavorite.add(event.locationId);
-          HomeLocal().saveLocationFavorite(listIdFavorite: listIdFavorite);
-        } else {
-          bool isSuccess = await _updateFavorite(event);
-          if (!isSuccess) {
-            return;
-          }
-          listIdFavorite.remove(event.locationId);
-          HomeLocal().saveLocationFavorite(listIdFavorite: listIdFavorite);
-        }
-
-        locations = locations
-            .map((e) => e.copyWith(isLiked: listIdFavorite.contains(e.id)))
-            .toList();
-        emit(_getHomeSuccess);
-      }
-    });
+    on<GetLocationTypeEvent>(_onGetLocationType);
+    on<GetAllLocationEvent>(_onGetAllLocation);
+    on<GetEventHomeEvent>(_onGetEvents);
+    on<GetLocationFavoriteEvent>(_onGetLocationFavorite);
+    on<FilterLocationByCategoryEvent>(_onFilterLocationByCategory);
+    on<UpdateLikedLocationEvent>(_onUpdateLikedLocation);
   }
 
-  // Private function
+  Future<void> _onGetLocationType(
+      GetLocationTypeEvent event, Emitter<HomeState> emit) async {
+    if (HomeLocal().getListTypeLocation()?.isNotEmpty ?? false) {
+      locationTypes
+        ..clear()
+        ..addAll(HomeLocal().getListTypeLocation()!);
+      emit(_getHomeSuccess);
+    }
+
+    final listType = await HomeRepository().getTypeLocation();
+    if (listType.isNotEmpty) {
+      locationTypes
+        ..clear()
+        ..addAll(listType);
+      HomeLocal().saveTypeLocations(types: listType);
+      emit(_getHomeSuccess);
+    }
+  }
+
+Future<void> _onGetAllLocation(
+    GetAllLocationEvent event, Emitter<HomeState> emit) async {
+  if (HomeLocal().getAllLocations()?.isNotEmpty ?? false) {
+    locations = [...HomeLocal().getAllLocations()!];
+    print('📦 Lấy địa điểm từ local cache: ${locations.length} địa điểm');
+    emit(_getHomeSuccess); 
+  }
+
+  final allLocations = await HomeRepository().getAllLocation();
+  print('📡 Gọi API lấy địa điểm...');
+  if (allLocations.isNotEmpty) {
+    locations = [...allLocations];
+    print('✅ Lấy địa điểm từ API thành công: ${locations.length} địa điểm');
+    HomeLocal().saveAllLocations(locations: allLocations);
+    emit(_getHomeSuccess); 
+  } else {
+    print('❌ API trả về danh sách rỗng.');
+  }
+}
+
+
+  Future<void> _onGetEvents(
+      GetEventHomeEvent event, Emitter<HomeState> emit) async {
+    if (HomeLocal().getEvents()?.isNotEmpty ?? false) {
+      events
+        ..clear()
+        ..addAll(HomeLocal().getEvents()!);
+      emit(_getHomeSuccess);
+    }
+
+    final allEvents = await HomeRepository().getEvents();
+    if (allEvents.isNotEmpty) {
+      events
+        ..clear()
+        ..addAll(allEvents);
+      HomeLocal().saveEvents(events: allEvents);
+      emit(_getHomeSuccess);
+    }
+  }
+
+  Future<void> _onGetLocationFavorite(
+      GetLocationFavoriteEvent event, Emitter<HomeState> emit) async {
+    final listFavorite = await HomeRepository().getLocationFavorite();
+    if (listFavorite.isEmpty) return;
+
+    locationFavorites
+      ..clear()
+      ..addAll(listFavorite);
+
+    final favoriteIds = locationFavorites.map((e) => e.id).toSet();
+    locations = locations
+        .map((e) => e.copyWith(isLiked: favoriteIds.contains(e.id)))
+        .toList();
+
+    HomeLocal().saveLocationFavorite(
+      listIdFavorite: locationFavorites.map((e) => e.id ?? '').toList(),
+    );
+
+    emit(_getHomeSuccess);
+  }
+
+  void _onFilterLocationByCategory(
+      FilterLocationByCategoryEvent event, Emitter<HomeState> emit) {
+    final all = HomeLocal().getAllLocations();
+    if (all == null) return;
+
+    final filtered = all
+        .where((e) => (e.categories ?? [])
+            .any((c) => c.toLowerCase().trim() == event.category.toLowerCase().trim()))
+        .toList();
+
+    locations = filtered.isEmpty ? all : filtered;
+    emit(_getHomeSuccess);
+  }
+
+  Future<void> _onUpdateLikedLocation(
+      UpdateLikedLocationEvent event, Emitter<HomeState> emit) async {
+    if (UserLocal().getAccessToken.isEmpty) {
+      Navigator.of(event.context).pushNamed(LoginScreen.routeName);
+      return;
+    }
+
+    final listIdFavorite = HomeLocal().getListLocationFavorite.toSet();
+
+    final success = event.isLiked
+        ? await HomeRepository()
+            .updateLikedLocation(locationId: event.locationId)
+        : await HomeRepository()
+            .deletedLikedLocation(locationId: event.locationId);
+
+    if (!success) return;
+
+    event.isLiked
+        ? listIdFavorite.add(event.locationId)
+        : listIdFavorite.remove(event.locationId);
+
+    HomeLocal()
+        .saveLocationFavorite(listIdFavorite: listIdFavorite.toList());
+
+    locations = locations
+        .map((e) => e.copyWith(isLiked: listIdFavorite.contains(e.id)))
+        .toList();
+
+    emit(_getHomeSuccess);
+  }
+
   GetHomeSuccess get _getHomeSuccess => GetHomeSuccess(
         typeLocations: locationTypes,
         locations: locations,
         events: events,
         locationFavorites: locationFavorites,
       );
-
-  Future<void> _getLocationType() async {
-    final List<TypeLocationModel> listType =
-        await HomeRepository().getTypeLocation();
-
-    if (listType.isEmpty) {
-      return;
-    }
-
-    locationTypes.addAll(listType);
-    HomeLocal().saveTypeLocations(types: listType);
-  }
-
-  Future<void> _getLocationAll() async {
-    final List<LocationModel> allLocations =
-        await HomeRepository().getAllLocation();
-
-    if (allLocations.isEmpty) {
-      return;
-    }
-
-    locations.addAll(allLocations);
-    HomeLocal().saveAllLocations(locations: allLocations);
-  }
-
-  Future<void> _getEvents() async {
-    final List<EventModel> allEvents = await HomeRepository().getEvents();
-    if (allEvents.isEmpty) {
-      return;
-    }
-
-    events.addAll(allEvents);
-    HomeLocal().saveEvents(events: allEvents);
-  }
-
-  Future<void> _getLocationFavorite() async {
-    final List<LocationModel> listFavorite =
-        await HomeRepository().getLocationFavorite();
-    if (listFavorite.isEmpty) {
-      return;
-    }
-
-    locationFavorites.addAll(listFavorite);
-    HomeLocal().saveLocationFavorite(
-        listIdFavorite: listFavorite.map((e) => e.id ?? '').toList());
-  }
-
-  Future<bool> _updateFavorite(UpdateLikedLocationEvent event) async {
-    bool isSuccess = false;
-    if (event.isLiked) {
-      isSuccess = await HomeRepository()
-          .updateLikedLocation(locationId: event.locationId);
-    } else {
-      isSuccess = await HomeRepository()
-          .deletedLikedLocation(locationId: event.locationId);
-    }
-    return isSuccess;
-  }
 }

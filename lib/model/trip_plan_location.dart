@@ -34,8 +34,8 @@ final List<TripPlanLocation> tripLocations = [
       latitude: 11.0464125,
       longitude: 106.387984375,
       rating: 0,
-      typeLocationId: '08dd74f1-e8cc-431e-85c8-c563159bce3f',
-      typeLocationName: 'Di tích lịch sử',
+      // typeLocationId: '08dd74f1-e8cc-431e-85c8-c563159bce3f',
+      // typeLocationName: 'Di tích lịch sử',
       medias: [
         MediaModel(mediaUrl: 'https://i.imgur.com/dI9a3Fj.jpeg'),
         MediaModel(mediaUrl: 'https://i.imgur.com/1voTlly.jpeg'),
@@ -57,8 +57,8 @@ final List<TripPlanLocation> tripLocations = [
       latitude: 11.118853,
       longitude: 106.19102,
       rating: 0,
-      typeLocationId: '08dd74f1-e8cc-431e-85c8-c563159bce3f',
-      typeLocationName: 'Di tích lịch sử',
+      // typeLocationId: '08dd74f1-e8cc-431e-85c8-c563159bce3f',
+      // typeLocationName: 'Di tích lịch sử',
       medias: [
         MediaModel(mediaUrl: 'https://i.imgur.com/BgKd6ZM.jpeg'),
       ],

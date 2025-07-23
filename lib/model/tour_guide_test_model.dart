@@ -18,6 +18,7 @@ class TourGuideTestModel {
   final int reviewsCount;
   TourGuideStatus status;
   final String? declineReason;
+  final double price;
 
   TourGuideTestModel({
     required this.id,
@@ -31,6 +32,7 @@ class TourGuideTestModel {
     required this.reviewsCount,
     required this.status,
     this.declineReason,
+    required this.price,
   });
 }
 
@@ -46,6 +48,7 @@ final List<TourGuideTestModel> mockTourGuides = [
     rating: 5,
     reviewsCount: 87,
     status: TourGuideStatus.available,
+    price: 800000,
   ),
   TourGuideTestModel(
     id: "guide2",
@@ -57,7 +60,8 @@ final List<TourGuideTestModel> mockTourGuides = [
     tags: ["Thân thiện", "Trekking", "Nói tiếng Anh"],
     rating: 3,
     reviewsCount: 65,
-    status: TourGuideStatus.pending,
+    status: TourGuideStatus.available,
+    price: 100000,
   ),
   TourGuideTestModel(
     id: "guide3",
@@ -69,8 +73,8 @@ final List<TourGuideTestModel> mockTourGuides = [
     tags: ["Địa phương", "Kinh nghiệm", "Lịch sử"],
     rating: 5,
     reviewsCount: 112,
-    status: TourGuideStatus.declined,
-    declineReason: "Lịch cá nhân bận",
+    status: TourGuideStatus.available,
+    price: 950000,
   ),
   TourGuideTestModel(
     id: "guide4",
@@ -82,6 +86,7 @@ final List<TourGuideTestModel> mockTourGuides = [
     tags: ["Trẻ trung", "Ngoại ngữ", "Chụp ảnh đẹp"],
     rating: 5,
     reviewsCount: 74,
-    status: TourGuideStatus.unavailable,
+    status: TourGuideStatus.available,
+    price: 110000,
   ),
 ];

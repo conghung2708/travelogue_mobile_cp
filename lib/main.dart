@@ -77,19 +77,20 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    AppBloc().initial();
+ AppBloc.instance.initial();
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-    AppBloc().cleanData();
-  }
+ @override
+void dispose() {
+  super.dispose();
+  AppBloc.instance.cleanData();
+}
+
 
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
-      providers: AppBloc.instance.providers,
+    providers: AppBloc.instance.providers,
       child: Sizer(
         builder: (context, orientation, deviceType) {
           return ShowCaseWidget(

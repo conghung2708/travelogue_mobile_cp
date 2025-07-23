@@ -13,7 +13,6 @@ import 'package:travelogue_mobile/core/helpers/string_helper.dart';
 import 'package:travelogue_mobile/model/event_model.dart';
 import 'package:travelogue_mobile/model/location_model.dart';
 import 'package:travelogue_mobile/model/place_category.dart';
-import 'package:travelogue_mobile/model/type_location_model.dart';
 import 'package:travelogue_mobile/representation/home/screens/search_screen.dart';
 import 'package:travelogue_mobile/representation/home/widgets/app_bar_container.dart';
 import 'package:travelogue_mobile/representation/home/widgets/rotating_suprise_button.dart';
@@ -33,16 +32,12 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
-  PlaceCategoryModel? selectedCategory;
   Weather? _weather;
-
   final String apiKey = '971b89c53f966b43dcea3ce43525c2f9';
   late WeatherFactory wf;
   late AnimationController _sunController;
-
   final double lat = 11.3495;
   final double lon = 106.1099;
-
   int indexTypeLocation = -1;
 
   @override
@@ -108,8 +103,7 @@ class _HomeScreenState extends State<HomeScreen>
                                 animation: _sunController,
                                 builder: (context, child) {
                                   return Transform.rotate(
-                                    angle:
-                                        _sunController.value * 2 * 3.1415926535,
+                                    angle: _sunController.value * 2 * pi,
                                     child: const Icon(Icons.wb_sunny_outlined,
                                         color: Colors.amberAccent, size: 20),
                                   );
@@ -241,73 +235,99 @@ class _HomeScreenState extends State<HomeScreen>
                     physics: const BouncingScrollPhysics(),
                     child: BlocBuilder<HomeBloc, HomeState>(
                       builder: (context, state) {
-                        final List<TypeLocationModel> listTypes =
-                            state.props[0] as List<TypeLocationModel>;
-                        final List<LocationModel> listLocation =
-                            state.props[1] as List<LocationModel>;
-                        final List<EventModel> listEvents =
-                            state.props[2] as List<EventModel>;
+                        if (state is GetHomeSuccess) {
+                          final List<LocationModel> listLocation =
+                              state.locations;
+                          final List<EventModel> listEvents = state.events;
+                          // final Set<String> uniqueCategories =
+                          //     listLocation.expan d((e) {
+                          //   return (e.categories ?? []).cast<String>();
+                          // }).toSet();
 
-                        return Column(
-                          children: [
-                            const SizedBox(height: kDefaultPadding),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: kMediumPadding),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  ...placeCategories
-                                      .asMap()
-                                      .map(
-                                        (index, category) => MapEntry(
-                                          index,
-                                          Expanded(
-                                            child: Padding(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal:
-                                                          kDefaultPadding / 2),
-                                              child: BuildItemCategory(
-                                                isCLicked:
-                                                    index == indexTypeLocation,
-                                                icon: ImageHelper.loadFromAsset(
-                                                  category.image,
-                                                  width: kBottomBarIconSize,
-                                                  height: kBottomBarIconSize,
-                                                ),
-                                                color: category.color,
-                                                onTap: () {
-                                                  AppBloc.homeBloc.add(
-                                                    FilterLocationTypeEvent(
-                                                        locationTypeId:
-                                                            listTypes[index]
-                                                                    .id ??
-                                                                ''),
-                                                  );
-                                                  setState(() {
-                                                    indexTypeLocation = index;
-                                                  });
-                                                },
-                                            title: index < listTypes.length
-        ? (listTypes[index].name ?? category.title)
-        : category.title,
+                          // debugPrint('✅ Categories: $uniqueCategories');
+                          // debugPrint('📌 Location count: ${listLocation.length}');
 
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      )
-                                      .values,
-                                ],
+                          return Column(
+                            children: [
+                              const SizedBox(height: kDefaultPadding),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: kMediumPadding),
+                           child: placeCategories.isNotEmpty
+    ? SizedBox(
+        height: 100,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          itemCount: placeCategories.length,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          separatorBuilder: (context, index) => const SizedBox(width: 12),
+          itemBuilder: (context, index) {
+            final category = placeCategories[index];
+            return GestureDetector(
+              onTap: () {
+                AppBloc.homeBloc.add(
+                  FilterLocationByCategoryEvent(category: category.title),
+                );
+                setState(() {
+                  indexTypeLocation = index;
+                });
+              },
+              child: Container(
+                width: 120,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: category.color.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: indexTypeLocation == index
+                        ? category.color
+                        : Colors.transparent,
+                    width: 2,
+                  ),
+                ),
+                padding: const EdgeInsets.all(8),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset(
+                      category.image,
+                      width: 28,
+                      height: 28,
+                      fit: BoxFit.contain,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      category.title,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      )
+    : const Center(child: Text('Không có danh mục địa điểm')),
+
                               ),
-                            ),
-                            const SizedBox(height: kDefaultPadding),
-                            HotLocations(places: listLocation),
-                            const SizedBox(height: kDefaultPadding),
-                            UpcomingFestivals(festivals: listEvents),
-                            const SizedBox(height: kDefaultPadding * 4),
-                          ],
+                              const SizedBox(height: kDefaultPadding),
+                              HotLocations(places: listLocation),
+                              const SizedBox(height: kDefaultPadding),
+                              UpcomingFestivals(festivals: listEvents),
+                              const SizedBox(height: kDefaultPadding * 4),
+                            ],
+                          );
+                        }
+                        return const Padding(
+                          padding: EdgeInsets.only(top: 80.0),
+                          child: Center(child: CircularProgressIndicator()),
                         );
                       },
                     ),

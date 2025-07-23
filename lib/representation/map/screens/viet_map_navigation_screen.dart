@@ -50,17 +50,13 @@ class _VietMapNavigationScreenState extends State<VietMapNavigationScreen> {
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        serviceEnabled = await Geolocator.openLocationSettings();
-        if (!serviceEnabled) {}
+        await Geolocator.openLocationSettings();
       }
 
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {}
       }
-
-      if (permission == LocationPermission.deniedForever) {}
 
       Position position = await Geolocator.getCurrentPosition();
 
@@ -114,9 +110,7 @@ class _VietMapNavigationScreenState extends State<VietMapNavigationScreen> {
   }
 
   Future<void> _onSearchChanged(String query) async {
-    if (query.isEmpty) {
-      return;
-    }
+    if (query.isEmpty) return;
 
     final result = await Vietmap.autocomplete(
       VietMapAutoCompleteParams(
@@ -141,9 +135,7 @@ class _VietMapNavigationScreenState extends State<VietMapNavigationScreen> {
 
         final place = places.first;
         final refId = place.refId;
-        if (refId == null || refId.isEmpty) {
-          return;
-        }
+        if (refId == null || refId.isEmpty) return;
 
         final detailResult = await Vietmap.place(refId);
         detailResult.fold(
@@ -157,15 +149,12 @@ class _VietMapNavigationScreenState extends State<VietMapNavigationScreen> {
             final lat = detail.lat?.toDouble();
             final lng = detail.lng?.toDouble();
 
-            if (lat == null || lng == null) {
-              return;
-            }
+            if (lat == null || lng == null) return;
 
             final location = LatLng(lat, lng);
 
             await _navigationController?.removeAllMarkers();
             await _navigationController?.moveCamera(latLng: location, zoom: 16);
-
             await _navigationController?.addImageMarkers([
               NavigationMarker(
                 imagePath: AssetHelper.icon_location,
@@ -188,9 +177,7 @@ class _VietMapNavigationScreenState extends State<VietMapNavigationScreen> {
   }
 
   void _startNavigation() {
-    if (destination == null) {
-      return;
-    }
+    if (destination == null) return;
 
     setState(() {
       _isNavigationActive = true;
@@ -224,11 +211,8 @@ class _VietMapNavigationScreenState extends State<VietMapNavigationScreen> {
   void _setInstructionImage(String? modifier, String? type) {
     if (modifier != null && type != null) {
       try {
-        List<String> data = [
-          type.replaceAll(' ', '_'),
-          modifier.replaceAll(' ', '_')
-        ];
-        String path = 'assets/navigation_symbol/${data.join('_')}.svg';
+        String path =
+            'assets/navigation_symbol/${type.replaceAll(' ', '_')}_${modifier.replaceAll(' ', '_')}.svg';
         setState(() {
           instructionImage = SvgPicture.asset(
             path,
@@ -257,8 +241,11 @@ class _VietMapNavigationScreenState extends State<VietMapNavigationScreen> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final List<LocationModel> locations =
-              state.props[1] as List<LocationModel>;
+          if (state is! GetHomeSuccess) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final List<LocationModel> locations = state.locations;
           final List<String> _dynamicSuggestions =
               locations.map((e) => e.name ?? '').toSet().toList();
 
@@ -346,8 +333,9 @@ class _VietMapNavigationScreenState extends State<VietMapNavigationScreen> {
                             shrinkWrap: true,
                             padding: EdgeInsets.zero,
                             children: _dynamicSuggestions
-                                .where((item) => item.toLowerCase().contains(
-                                    _searchController.text.toLowerCase()))
+                                .where((item) => item
+                                    .toLowerCase()
+                                    .contains(_searchController.text.toLowerCase()))
                                 .map((item) => ListTile(
                                       title: Text(item,
                                           style: TextStyle(fontSize: 14.sp)),
