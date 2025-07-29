@@ -28,4 +28,7 @@ class Endpoints {
 
   //Restaurant
   static const restaurant = 'api/restaurant';
+
+  //Tour
+  static const tour = 'api/tour';
 }

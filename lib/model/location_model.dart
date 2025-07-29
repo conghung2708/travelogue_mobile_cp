@@ -1,22 +1,23 @@
 import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:travelogue_mobile/model/media_model.dart';
 
 class LocationModel {
-  String? id;
-  String? name;
-  String? description;
-  String? content;
-  double? latitude;
-  double? longitude;
-  int? rating;
-  String? openTime;
-  String? closeTime;
-  List<String>? categories;
-  String? districtId;
-  String? districtName;
-  List<MediaModel>? medias;
-  bool isLiked;
+  final String? id;
+  final String? name;
+  final String? description;
+  final String? content;
+  final double? latitude;
+  final double? longitude;
+  final int? rating;
+  final String? openTime;
+  final String? closeTime;
+  final String? category; 
+  final String? districtId;
+  final String? districtName;
+  final List<MediaModel>? medias;
+  final bool isLiked;
 
   LocationModel({
     this.id,
@@ -28,7 +29,7 @@ class LocationModel {
     this.rating,
     this.openTime,
     this.closeTime,
-    this.categories,
+    this.category,
     this.districtId,
     this.districtName,
     this.medias,
@@ -45,7 +46,7 @@ class LocationModel {
     int? rating,
     String? openTime,
     String? closeTime,
-    List<String>? categories,
+    String? category,
     String? districtId,
     String? districtName,
     List<MediaModel>? medias,
@@ -61,7 +62,7 @@ class LocationModel {
       rating: rating ?? this.rating,
       openTime: openTime ?? this.openTime,
       closeTime: closeTime ?? this.closeTime,
-      categories: categories ?? this.categories,
+      category: category ?? this.category,
       districtId: districtId ?? this.districtId,
       districtName: districtName ?? this.districtName,
       medias: medias ?? this.medias,
@@ -82,14 +83,14 @@ class LocationModel {
           : int.tryParse(map['rating']?.toString() ?? ''),
       openTime: map['openTime']?.toString(),
       closeTime: map['closeTime']?.toString(),
-      categories:
-          (map['categories'] as List?)?.map((e) => e.toString()).toList(),
+      category: map['category']?.toString(), 
       districtId: map['districtId']?.toString(),
       districtName: map['districtName']?.toString(),
-    medias: map['medias'] is List
-    ? (map['medias'] as List).map((e) => MediaModel.fromMap(e)).toList()
-    : [],
-
+      medias: (map['medias'] != null && map['medias'] is List)
+          ? (map['medias'] as List)
+              .map((e) => MediaModel.fromMap(e))
+              .toList()
+          : [],
     );
   }
 
@@ -104,10 +105,10 @@ class LocationModel {
       'rating': rating,
       'openTime': openTime,
       'closeTime': closeTime,
-      'categories': categories,
+      'category': category, // ✅
       'districtId': districtId,
       'districtName': districtName,
-      'medias': medias,
+      'medias': medias?.map((e) => e.toMap()).toList(),
     };
   }
 
@@ -118,28 +119,27 @@ class LocationModel {
 
   @override
   String toString() {
-    return 'LocationModel(id: $id, name: $name, latitude: $latitude, longitude: $longitude, districtName: $districtName)';
+    return 'LocationModel(id: $id, name: $name, category: $category, district: $districtName)';
   }
 
   @override
   bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-
-    return other is LocationModel &&
-        other.id == id &&
-        other.name == name &&
-        other.description == description &&
-        other.content == content &&
-        other.latitude == latitude &&
-        other.longitude == longitude &&
-        other.rating == rating &&
-        other.openTime == openTime &&
-        other.closeTime == closeTime &&
-        listEquals(other.categories, categories) &&
-        other.districtId == districtId &&
-        other.districtName == districtName &&
-        listEquals(other.medias, medias) &&
-        other.isLiked == isLiked & listEquals(other.medias, medias);
+    return identical(this, other) ||
+        (other is LocationModel &&
+            other.id == id &&
+            other.name == name &&
+            other.description == description &&
+            other.content == content &&
+            other.latitude == latitude &&
+            other.longitude == longitude &&
+            other.rating == rating &&
+            other.openTime == openTime &&
+            other.closeTime == closeTime &&
+            other.category == category &&
+            other.districtId == districtId &&
+            other.districtName == districtName &&
+            listEquals(other.medias, medias) &&
+            other.isLiked == isLiked);
   }
 
   @override
@@ -153,15 +153,18 @@ class LocationModel {
         rating.hashCode ^
         openTime.hashCode ^
         closeTime.hashCode ^
-        categories.hashCode ^
+        category.hashCode ^
         districtId.hashCode ^
         districtName.hashCode ^
         medias.hashCode ^
         isLiked.hashCode;
   }
 
-   String get imgUrlFirst => (medias?.isNotEmpty ?? false)
-      ? medias!.firstWhere((e) => e.mediaUrl?.isNotEmpty ?? false).mediaUrl ??
+  String get imgUrlFirst => (medias?.isNotEmpty ?? false)
+      ? (medias!.firstWhere(
+              (e) => e.mediaUrl?.isNotEmpty ?? false,
+              orElse: () => MediaModel(mediaUrl: '')))
+          .mediaUrl ??
           ''
       : '';
 

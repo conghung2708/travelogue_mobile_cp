@@ -120,26 +120,26 @@ class _PlaceBottomBarState extends State<PlaceBottomBar> {
                               ],
                             ),
                           ),
-                          Expanded(
-                            flex: 2,
-                            child: Align(
-                              alignment: Alignment.centerRight,
-                              child: RatingButtonWidget(
-                                rating: widget.place.rating?.toDouble() ?? 0.0,
-                                onTap: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    ReviewsScreen.routeName,
-                                    arguments:
-                                        ReviewsScreenArgs<ReviewTestModel>(
-                                      reviews: mockReviews,
-                                      averageRating: widget.place.rating?.toDouble() ?? 0,
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ),
+                          // Expanded(
+                          //   flex: 2,
+                          //   child: Align(
+                          //     alignment: Alignment.centerRight,
+                          //     child: RatingButtonWidget(
+                          //       rating: widget.place.rating?.toDouble() ?? 0.0,
+                          //       onTap: () {
+                          //         Navigator.pushNamed(
+                          //           context,
+                          //           ReviewsScreen.routeName,
+                          //           arguments:
+                          //               ReviewsScreenArgs<ReviewTestModel>(
+                          //             reviews: mockReviews,
+                          //             averageRating: widget.place.rating?.toDouble() ?? 0,
+                          //           ),
+                          //         );
+                          //       },
+                          //     ),
+                          //   ),
+                          // ),
                         ],
                       ),
                       const SizedBox(height: 15),

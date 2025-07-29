@@ -10,6 +10,7 @@ import 'package:travelogue_mobile/core/blocs/app_bloc.dart';
 import 'package:travelogue_mobile/core/constants/color_constants.dart';
 import 'package:travelogue_mobile/data/data_local/base_local_data.dart';
 import 'package:sizer/sizer.dart';
+import 'package:travelogue_mobile/representation/auth/screens/login_screen.dart';
 import 'package:travelogue_mobile/representation/hobby/screens/hobby_screen.dart';
 import 'package:travelogue_mobile/representation/home/screens/home_screen.dart';
 import 'package:travelogue_mobile/representation/main_screen.dart';
@@ -120,7 +121,7 @@ void dispose() {
               ],
               locale: const Locale('vi', 'VN'),
               routes: routes,
-              home: const MainScreen(),
+              home: const HomeScreen(), 
             ),
           );
         },

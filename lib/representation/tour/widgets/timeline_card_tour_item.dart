@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sizer/sizer.dart';
-import 'package:travelogue_mobile/model/tour/tour_plan_craft_village_test_model.dart';
-import 'package:travelogue_mobile/model/tour/tour_plan_cuisine_test_model.dart';
-import 'package:travelogue_mobile/model/tour/tour_plan_location_test_model.dart';
 import 'package:travelogue_mobile/representation/widgets/image_grid_preview.dart';
 
 class TimelineCardTourItem extends StatelessWidget {
@@ -11,6 +8,8 @@ class TimelineCardTourItem extends StatelessWidget {
   final String name;
   final List<String> imageUrls;
   final String? description;
+  final String? duration;
+  final String? note;
 
   const TimelineCardTourItem({
     super.key,
@@ -18,6 +17,8 @@ class TimelineCardTourItem extends StatelessWidget {
     required this.name,
     required this.imageUrls,
     this.description,
+    this.duration,
+    this.note,
   });
 
   @override
@@ -26,16 +27,16 @@ class TimelineCardTourItem extends StatelessWidget {
     final DateTime? end = item.endTime;
     final bool showTime = start != null && end != null;
 
-    final Icon icon = _getIcon(item);
-
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 1.h),
+      padding: EdgeInsets.symmetric(vertical: 0.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ListTile(
             contentPadding: EdgeInsets.zero,
-            leading: icon,
+            dense: true,
+            minVerticalPadding: 0,
+            // leading: _getIcon(item),
             title: Text(
               name,
               style: TextStyle(
@@ -62,25 +63,60 @@ class TimelineCardTourItem extends StatelessWidget {
                 ),
               ),
             ),
+
+          Padding(
+            padding: EdgeInsets.only(left: 4.w, right: 4.w, bottom: 1.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (duration != null && duration!.isNotEmpty)
+                  Row(
+                    children: [
+                      Icon(Icons.schedule, size: 16, color: Colors.teal),
+                      SizedBox(width: 2.w),
+                      Text(
+                        duration!,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: Colors.teal.shade700,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                if (note != null && note!.isNotEmpty) ...[
+                  SizedBox(height: 0.6.h),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.sticky_note_2_outlined,
+                          size: 16, color: Colors.orange),
+                      SizedBox(width: 2.w),
+                      Expanded(
+                        child: Text(
+                          note!,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontStyle: FontStyle.italic,
+                            color: Colors.orange.shade800,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
           if (imageUrls.isNotEmpty)
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 4.w),
               child: ImageGridPreview(images: imageUrls),
             ),
+
           Divider(height: 3.h),
         ],
       ),
     );
-  }
-
-  Icon _getIcon(dynamic item) {
-    if (item is TourPlanLocationTestModel) {
-      return const Icon(Icons.place, color: Colors.deepPurple);
-    } else if (item is TourPlanCuisineTestModel) {
-      return const Icon(Icons.restaurant, color: Colors.redAccent);
-    } else if (item is TourPlanCraftVillageTestModel) {
-      return const Icon(Icons.handyman, color: Colors.orange);
-    }
-    return const Icon(Icons.help_outline, color: Colors.grey);
   }
 }

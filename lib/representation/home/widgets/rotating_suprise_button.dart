@@ -5,6 +5,7 @@ import 'package:lottie/lottie.dart';
 import 'package:travelogue_mobile/core/blocs/app_bloc.dart';
 import 'package:travelogue_mobile/core/constants/color_constants.dart';
 import 'package:travelogue_mobile/core/constants/dimension_constants.dart';
+import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
 import 'package:travelogue_mobile/model/location_model.dart';
 import 'package:travelogue_mobile/representation/home/screens/place_detail_screen.dart';
 import 'package:travelogue_mobile/representation/home/widgets/title_widget.dart';
@@ -55,7 +56,7 @@ class _RotatingSurpriseButtonState extends State<RotatingSurpriseButton>
     );
 
     await Future.delayed(const Duration(seconds: 2));
-    Navigator.pop(context); // Close loading
+    Navigator.pop(context);
 
     showDialog(
       context: context,
@@ -186,12 +187,28 @@ class LocationPreview extends StatelessWidget {
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(22),
                 ),
-                child: Image.network(
-                  location.imgUrlFirst,
-                  height: 18.h,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                ),
+                child: location.imgUrlFirst != null &&
+                        location.imgUrlFirst!.isNotEmpty
+                    ? Image.network(
+                        location.imgUrlFirst!,
+                        height: 18.h,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Image.asset(
+                            AssetHelper.img_default,
+                            height: 18.h,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          );
+                        },
+                      )
+                    : Image.asset(
+                        AssetHelper.img_default,
+                        height: 18.h,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
               ),
               Padding(
                 padding: const EdgeInsets.only(

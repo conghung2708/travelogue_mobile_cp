@@ -1,22 +1,15 @@
-// ✅ Full code sau khi chỉnh sửa để show Dialog cho cả tour đoàn và đi lẻ
-// File: tour_schedule_calendar_screen.dart
-
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sizer/sizer.dart';
 import 'package:table_calendar/table_calendar.dart';
-
 import 'package:travelogue_mobile/core/constants/color_constants.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
 import 'package:travelogue_mobile/model/args/tour_calendar_args.dart';
-import 'package:travelogue_mobile/model/tour/tour_media_test_model.dart';
-import 'package:travelogue_mobile/model/tour/tour_test_model.dart';
-import 'package:travelogue_mobile/model/tour/tour_schedule_with_price.dart';
-import 'package:travelogue_mobile/model/tour/tour_plan_version_test_model.dart';
+import 'package:travelogue_mobile/model/tour/tour_model.dart';
+import 'package:travelogue_mobile/model/tour/tour_schedule_model.dart';
 import 'package:travelogue_mobile/representation/tour/screens/tour_payment_confirmation_screen.dart';
 import 'package:travelogue_mobile/representation/tour/screens/tour_team_selector_screen.dart';
-import 'package:travelogue_mobile/representation/tour/widgets/calendar_day_cell.dart';
 import 'package:travelogue_mobile/representation/tour/widgets/tour_schedule_header.dart';
 import 'package:travelogue_mobile/representation/tour/widgets/tour_calendar_selector.dart';
 
@@ -32,45 +25,40 @@ class TourScheduleCalendarScreen extends StatefulWidget {
 
 class _TourScheduleCalendarScreenState
     extends State<TourScheduleCalendarScreen> {
-  late TourTestModel tour;
-  late List<TourScheduleWithPrice> schedules;
+  late TourModel tour;
+  late List<TourScheduleModel> schedules;
   late bool isGroupTour;
 
   DateTime focusedDay = DateTime.now();
   DateTime? selectedDay;
 
-  late List<TourScheduleWithPrice> tourSchedules;
   final formatter = NumberFormat('#,###');
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-
     final args = ModalRoute.of(context)!.settings.arguments as TourCalendarArgs;
     tour = args.tour;
     schedules = args.schedules;
     isGroupTour = args.isGroupTour;
 
-    final versions = mockTourPlanVersions
-        .where((v) => v.tourId == tour.id && v.isActive && !v.isDeleted)
-        .toList();
-
-    versions.sort((a, b) => b.versionNumber.compareTo(a.versionNumber));
-    final latestVersionId = versions.isNotEmpty ? versions.first.id : null;
-
-    tourSchedules = schedules.where((s) {
-      return s.tourId == tour.id && s.versionId == latestVersionId;
-    }).toList();
+    // Debug
+    for (var s in schedules) {
+      print('[📆 Schedule] ${s.departureDate}');
+    }
   }
 
-TourScheduleWithPrice? getScheduleForDay(DateTime day) {
-  return tourSchedules.firstWhereOrNull(
-    (s) => isSameDay(s.departureDate, day),
-  );
-}
+  TourScheduleModel? getScheduleForDay(DateTime day) {
+    print('[DEBUG] getScheduleForDay: looking for $day');
 
-  bool isSameDay(DateTime a, DateTime b) {
-    return a.year == b.year && a.month == b.month && a.day == b.day;
+    return schedules.firstWhereOrNull((s) {
+      final dep = s.departureDate;
+      if (dep == null) return false;
+      final match = isSameDay(dep, day);
+      print(
+          '  📅 ${dep.toIso8601String()} vs ${day.toIso8601String()} => match: $match');
+      return match;
+    });
   }
 
   @override
@@ -103,6 +91,10 @@ TourScheduleWithPrice? getScheduleForDay(DateTime day) {
                     onDaySelected: (selected, focused) async {
                       final matched = getScheduleForDay(selected);
                       if (matched != null) {
+                        final departure = matched.departureDate!;
+                        final availableSlot = (matched.maxParticipant ?? 0) -
+                            (matched.currentBooked ?? 0);
+
                         showDialog(
                           context: context,
                           barrierColor: Colors.black.withOpacity(0.4),
@@ -128,8 +120,7 @@ TourScheduleWithPrice? getScheduleForDay(DateTime day) {
                                                 .defaultGradientBackground,
                                           ),
                                           child: Icon(Icons.event_available,
-                                              size: 28.sp,
-                                              color: Colors.white),
+                                              size: 28.sp, color: Colors.white),
                                         ),
                                         SizedBox(height: 2.h),
                                         Text(
@@ -143,20 +134,23 @@ TourScheduleWithPrice? getScheduleForDay(DateTime day) {
                                         ),
                                         SizedBox(height: 2.h),
                                         _buildDialogRow(
-                                            Icons.calendar_today,
-                                            'Ngày đi:',
-                                            DateFormat('dd/MM/yyyy')
-                                                .format(selected)),
+                                          Icons.calendar_today,
+                                          'Ngày đi:',
+                                          DateFormat('dd/MM/yyyy')
+                                              .format(departure),
+                                        ),
                                         SizedBox(height: 1.h),
                                         _buildDialogRow(
-                                            Icons.monetization_on,
-                                            'Giá:',
-                                            '${formatter.format(matched.price)}đ'),
+                                          Icons.monetization_on,
+                                          'Giá:',
+                                          '${formatter.format(matched.adultPrice?.round() ?? 0)}đ',
+                                        ),
                                         SizedBox(height: 1.h),
                                         _buildDialogRow(
-                                            Icons.people_outline,
-                                            'Còn lại:',
-                                            '${matched.availableSlot} chỗ'),
+                                          Icons.people_outline,
+                                          'Còn lại:',
+                                          '$availableSlot chỗ',
+                                        ),
                                         SizedBox(height: 3.h),
                                         Row(
                                           children: [
@@ -164,15 +158,13 @@ TourScheduleWithPrice? getScheduleForDay(DateTime day) {
                                               child: OutlinedButton(
                                                 onPressed: () =>
                                                     Navigator.pop(context),
-                                                style:
-                                                    OutlinedButton.styleFrom(
+                                                style: OutlinedButton.styleFrom(
                                                   foregroundColor:
                                                       Colors.grey.shade700,
                                                   side: BorderSide(
-                                                      color: Colors
-                                                          .grey.shade400),
-                                                  shape:
-                                                      RoundedRectangleBorder(
+                                                      color:
+                                                          Colors.grey.shade400),
+                                                  shape: RoundedRectangleBorder(
                                                     borderRadius:
                                                         BorderRadius.circular(
                                                             12),
@@ -186,14 +178,21 @@ TourScheduleWithPrice? getScheduleForDay(DateTime day) {
                                               child: InkWell(
                                                 onTap: () async {
                                                   Navigator.pop(context);
-                                                  final matchedMedia =
-                                                      mockTourMedia.firstWhere(
-                                                    (m) =>
-                                                        m.tourId == tour.id,
-                                                    orElse: () =>
-                                                        TourMediaTestModel(
-                                                            id: 'none'),
-                                                  );
+                                                  final matchedMediaUrl = (tour
+                                                              .mediaList
+                                                              .isNotEmpty &&
+                                                          tour.mediaList.first
+                                                                  .mediaUrl !=
+                                                              null &&
+                                                          tour
+                                                              .mediaList
+                                                              .first
+                                                              .mediaUrl!
+                                                              .isNotEmpty)
+                                                      ? tour.mediaList.first
+                                                          .mediaUrl!
+                                                      : AssetHelper
+                                                          .img_tay_ninh_login;
 
                                                   if (isGroupTour) {
                                                     final result =
@@ -204,7 +203,8 @@ TourScheduleWithPrice? getScheduleForDay(DateTime day) {
                                                             TourTeamSelectorScreen(
                                                           tour: tour,
                                                           schedule: matched,
-                                                          media: matchedMedia,
+                                                          media:
+                                                              matchedMediaUrl,
                                                         ),
                                                       ),
                                                     );
@@ -220,7 +220,11 @@ TourScheduleWithPrice? getScheduleForDay(DateTime day) {
                                                         arguments: {
                                                           'tour': tour,
                                                           'schedule': matched,
-                                                          'media': matchedMedia,
+                                                          'media':
+                                                              matchedMediaUrl,
+                                                          'departureDate':
+                                                              matched
+                                                                  .departureDate,
                                                           'adults':
                                                               result['adults'],
                                                           'children': result[
@@ -236,7 +240,12 @@ TourScheduleWithPrice? getScheduleForDay(DateTime day) {
                                                       arguments: {
                                                         'tour': tour,
                                                         'schedule': matched,
-                                                        'media': matchedMedia,
+                                                        'media':
+                                                            matchedMediaUrl,
+                                                        'departureDate': matched
+                                                            .departureDate,
+                                                        'adults': 1,
+                                                        'children': 0,
                                                       },
                                                     );
                                                   }

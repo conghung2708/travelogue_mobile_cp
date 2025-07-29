@@ -43,6 +43,7 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
+     AppBloc.homeBloc.add(GetAllLocationEvent());
     wf = WeatherFactory(apiKey, language: Language.VIETNAMESE);
     _getWeather();
     _sunController = AnimationController(
@@ -236,8 +237,10 @@ class _HomeScreenState extends State<HomeScreen>
                     child: BlocBuilder<HomeBloc, HomeState>(
                       builder: (context, state) {
                         if (state is GetHomeSuccess) {
+                        
                           final List<LocationModel> listLocation =
                               state.locations;
+                              print('🏡 UI nhận được địa điểm: ${state.locations.length}');
                           final List<EventModel> listEvents = state.events;
                           // final Set<String> uniqueCategories =
                           //     listLocation.expan d((e) {

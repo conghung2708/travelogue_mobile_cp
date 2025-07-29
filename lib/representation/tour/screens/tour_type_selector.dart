@@ -1,23 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
-import 'package:travelogue_mobile/core/helpers/tour_schedule_helper.dart';
 import 'package:travelogue_mobile/model/args/tour_calendar_args.dart';
-import 'package:travelogue_mobile/model/tour/tour_test_model.dart';
-import 'package:travelogue_mobile/model/tour/tour_plan_version_test_model.dart';
-import 'package:travelogue_mobile/model/tour/tour_schedule_test_model.dart';
+import 'package:travelogue_mobile/model/tour/tour_model.dart';
 import 'package:travelogue_mobile/representation/tour/screens/tour_schedule_calender_screen.dart';
 import 'package:travelogue_mobile/representation/widgets/animatied_entrance.dart';
 
 class TourTypeSelector extends StatelessWidget {
   static const String routeName = '/tour-type-selector';
 
-  final TourTestModel tour;
+  final TourModel tour;
 
   const TourTypeSelector({
     super.key,
     required this.tour,
   });
+
+  static Route<dynamic> routeFromSettings(RouteSettings settings) {
+    final args = settings.arguments as Map<String, dynamic>;
+    final parsedTour = TourModel.fromJson(args['tour']);
+    return MaterialPageRoute(
+      builder: (_) => TourTypeSelector(tour: parsedTour),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -79,6 +84,7 @@ class TourTypeSelector extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: 5.h),
+
                   AnimatedEntrance(
                     delay: const Duration(milliseconds: 200),
                     child: _buildMoodCard(
@@ -92,13 +98,15 @@ class TourTypeSelector extends StatelessWidget {
                       isGroupTour: false,
                     ),
                   ),
+
                   SizedBox(height: 3.h),
                   AnimatedEntrance(
                     delay: const Duration(milliseconds: 600),
                     child: _buildMoodCard(
                       context,
                       title: "Tôi muốn đồng hành cùng người khác",
-                      subtitle: "Gắn kết, chia sẻ và tạo nên kỷ niệm cùng nhau.",
+                      subtitle:
+                          "Gắn kết, chia sẻ và tạo nên kỷ niệm cùng nhau.",
                       description:
                           "Nếu bạn yêu thích kết nối, chia sẻ khoảnh khắc và khám phá cùng bạn đồng hành – lựa chọn này là dành cho bạn.",
                       icon: Icons.groups_3_rounded,
@@ -106,7 +114,10 @@ class TourTypeSelector extends StatelessWidget {
                       isGroupTour: true,
                     ),
                   ),
+
                   const Spacer(),
+
+                  /// Footer
                   Center(
                     child: Padding(
                       padding: EdgeInsets.only(bottom: 2.h),
@@ -141,25 +152,27 @@ class TourTypeSelector extends StatelessWidget {
   }) {
     return InkWell(
       onTap: () {
-        final versions = mockTourPlanVersions
-            .where((v) => v.tourId == tour.id && v.isActive && !v.isDeleted)
-            .toList();
+        final schedules = tour.schedules;
 
-        versions.sort((a, b) => b.versionNumber.compareTo(a.versionNumber));
-        final latestVersion = versions.isNotEmpty ? versions.first : null;
+        print('[TourTypeSelector] tour id: ${tour.tourId}');
+        print('[TourTypeSelector] schedules == null? ${schedules == null}');
+        print('[TourTypeSelector] schedules.length: ${schedules?.length}');
+        print('[TourTypeSelector] schedules: $schedules');
 
-        final scheduleWithPriceList = combineScheduleWithPrice(
-          schedules: mockTourSchedules,
-          versions: latestVersion != null ? [latestVersion] : [],
-        );
+        if (schedules == null || schedules.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Tour này chưa có lịch trình.')),
+          );
+          return;
+        }
 
         Navigator.pushNamed(
           context,
           TourScheduleCalendarScreen.routeName,
           arguments: TourCalendarArgs(
             tour: tour,
-            schedules: scheduleWithPriceList,
-            isGroupTour: isGroupTour, // ✅ TRUYỀN RÕ RÀNG
+            schedules: schedules,
+            isGroupTour: isGroupTour,
           ),
         );
       },

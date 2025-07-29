@@ -45,17 +45,12 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       emit(_getHomeSuccess);
     }
   }
-
-Future<void> _onGetAllLocation(
-    GetAllLocationEvent event, Emitter<HomeState> emit) async {
-  if (HomeLocal().getAllLocations()?.isNotEmpty ?? false) {
-    locations = [...HomeLocal().getAllLocations()!];
-    print('📦 Lấy địa điểm từ local cache: ${locations.length} địa điểm');
-    emit(_getHomeSuccess); 
-  }
+Future<void> _onGetAllLocation(GetAllLocationEvent event, Emitter<HomeState> emit) async {
+  emit(HomeLoading()); 
 
   final allLocations = await HomeRepository().getAllLocation();
   print('📡 Gọi API lấy địa điểm...');
+
   if (allLocations.isNotEmpty) {
     locations = [...allLocations];
     print('✅ Lấy địa điểm từ API thành công: ${locations.length} địa điểm');
@@ -63,6 +58,7 @@ Future<void> _onGetAllLocation(
     emit(_getHomeSuccess); 
   } else {
     print('❌ API trả về danh sách rỗng.');
+    emit(HomeInitial());
   }
 }
 
@@ -107,19 +103,21 @@ Future<void> _onGetAllLocation(
     emit(_getHomeSuccess);
   }
 
-  void _onFilterLocationByCategory(
-      FilterLocationByCategoryEvent event, Emitter<HomeState> emit) {
-    final all = HomeLocal().getAllLocations();
-    if (all == null) return;
+void _onFilterLocationByCategory(
+    FilterLocationByCategoryEvent event, Emitter<HomeState> emit) {
+  final all = HomeLocal().getAllLocations();
+  if (all == null) return;
 
-    final filtered = all
-        .where((e) => (e.categories ?? [])
-            .any((c) => c.toLowerCase().trim() == event.category.toLowerCase().trim()))
-        .toList();
+  final filtered = all.where((e) {
+    final cat = e.category?.toLowerCase().trim();
+    final selectedCat = event.category.toLowerCase().trim();
+    return cat == selectedCat;
+  }).toList();
 
-    locations = filtered.isEmpty ? all : filtered;
-    emit(_getHomeSuccess);
-  }
+  locations = filtered.isEmpty ? all : filtered;
+  emit(_getHomeSuccess);
+}
+
 
   Future<void> _onUpdateLikedLocation(
       UpdateLikedLocationEvent event, Emitter<HomeState> emit) async {

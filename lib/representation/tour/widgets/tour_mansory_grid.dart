@@ -1,28 +1,19 @@
 import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:sizer/sizer.dart';
-
-import 'package:travelogue_mobile/model/tour/tour_media_test_model.dart';
-import 'package:travelogue_mobile/model/tour/tour_test_model.dart';
-import 'package:travelogue_mobile/model/tour/tour_plan_version_test_model.dart';
-import 'package:travelogue_mobile/model/tour_guide_test_model.dart';
-
-import 'package:travelogue_mobile/representation/tour/widgets/tour_card.dart';
+import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
+import 'package:travelogue_mobile/model/tour/tour_model.dart';
 import 'package:travelogue_mobile/representation/tour/screens/tour_detail_screen.dart';
+import 'package:travelogue_mobile/representation/tour/widgets/tour_card.dart';
 
 class TourMasonryGrid extends StatelessWidget {
-  final List<TourTestModel> tours;
-  final List<TourMediaTestModel> medias;
-  final List<TourPlanVersionTestModel> versions;
-  final List<TourGuideTestModel> guides;
+  final List<TourModel> tours;
 
   const TourMasonryGrid({
     super.key,
     required this.tours,
-    required this.medias,
-    required this.versions,
-    required this.guides,
   });
 
   @override
@@ -36,44 +27,21 @@ class TourMasonryGrid extends StatelessWidget {
       itemCount: tours.length,
       itemBuilder: (context, index) {
         final tour = tours[index];
+        final image = AssetHelper.img_default;
         final height = (20 + random.nextInt(10)).h;
-
-        final selectedMedia = medias
-            .where((m) => m.tourId == tour.id)
-            .toList()
-            .firstOrNull;
-
-        final currentVersionId = tour.currentVersionId;
-        final version = versions
-            .where((v) => v.id == currentVersionId)
-            .toList()
-            .firstOrNull;
-
-
-        final guide = version != null
-            ? guides
-                .where((g) => g.id == version.tourGuideId)
-                .toList()
-                .firstOrNull
-            : null;
-
-        final isDiscount = version?.isDiscount ?? false;
 
         return SizedBox(
           height: height,
           child: TourCard(
             tour: tour,
-            media: selectedMedia,
-            isDiscount: isDiscount, 
+            image: image,
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (_) => TourDetailScreen(
                     tour: tour,
-                    media: selectedMedia,
-                    guide: guide,
-                    // isDiscount: isDiscount,
+                    image: image,
                   ),
                 ),
               );

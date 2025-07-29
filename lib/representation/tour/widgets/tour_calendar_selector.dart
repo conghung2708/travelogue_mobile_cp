@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sizer/sizer.dart';
 import 'package:table_calendar/table_calendar.dart';
-import 'package:travelogue_mobile/model/tour/tour_schedule_with_price.dart';
+import 'package:travelogue_mobile/model/tour/tour_schedule_model.dart';
 import 'package:travelogue_mobile/representation/tour/widgets/calendar_day_cell.dart';
 
 class TourCalendarSelector extends StatelessWidget {
   final DateTime focusedDay;
   final DateTime? selectedDay;
   final void Function(DateTime selected, DateTime focused) onDaySelected;
-  final TourScheduleWithPrice? Function(DateTime day) getScheduleForDay;
+  final TourScheduleModel? Function(DateTime day) getScheduleForDay;
 
   const TourCalendarSelector({
     super.key,
@@ -27,11 +27,9 @@ class TourCalendarSelector extends StatelessWidget {
         firstDay: DateTime.now().subtract(const Duration(days: 30)),
         lastDay: DateTime.now().add(const Duration(days: 365)),
         focusedDay: focusedDay,
-        selectedDayPredicate: (day) =>
-            selectedDay != null &&
-            day.year == selectedDay!.year &&
-            day.month == selectedDay!.month &&
-            day.day == selectedDay!.day,
+        selectedDayPredicate: (day) {
+          return selectedDay != null && isSameDay(day, selectedDay);
+        },
         calendarFormat: CalendarFormat.month,
         availableCalendarFormats: const {CalendarFormat.month: 'Tháng'},
         onFormatChanged: (_) {},
@@ -75,7 +73,10 @@ class TourCalendarSelector extends StatelessWidget {
           selectedBuilder: (context, day, _) {
             final matched = getScheduleForDay(day);
             return CalendarDayCell(
-                day: day, schedule: matched, isSelected: true);
+              day: day,
+              schedule: matched,
+              isSelected: true,
+            );
           },
         ),
       ),

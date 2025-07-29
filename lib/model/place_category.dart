@@ -32,7 +32,7 @@ List<PlaceCategoryModel> placeCategories = [
   ),
   PlaceCategoryModel(
     image: AssetHelper.icon_historical_site,
-    title: 'Di Tích Lịch Sử',
+    title: 'Địa Điểm Lịch Sử',
     color: const Color(0xffFFB74D), 
   ),
   PlaceCategoryModel(

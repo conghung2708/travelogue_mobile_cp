@@ -18,6 +18,30 @@ class TourMediaTestModel {
     this.isThumbnail,
     this.tourId,
   });
+  factory TourMediaTestModel.fromJson(Map<String, dynamic> json) {
+  return TourMediaTestModel(
+    id: json['id'] ?? '',
+    mediaUrl: json['mediaUrl'],
+    fileName: json['fileName'],
+    fileType: json['fileType'],
+    sizeInBytes: json['sizeInBytes'],
+    isThumbnail: json['isThumbnail'],
+    tourId: json['tourId'],
+  );
+}
+
+Map<String, dynamic> toJson() {
+  return {
+    'id': id,
+    'mediaUrl': mediaUrl,
+    'fileName': fileName,
+    'fileType': fileType,
+    'sizeInBytes': sizeInBytes,
+    'isThumbnail': isThumbnail,
+    'tourId': tourId,
+  };
+}
+
 }
 
 
@@ -35,3 +59,4 @@ final List<TourMediaTestModel> mockTourMedia = [
     tourId: 'tour2',
   ),
 ];
+
