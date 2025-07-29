@@ -2,26 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sizer/sizer.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:travelogue_mobile/representation/tour/widgets/discount_tag.dart';
-import 'package:url_launcher/url_launcher.dart';
-
 import 'package:travelogue_mobile/core/constants/color_constants.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
-import 'package:travelogue_mobile/model/tour/tour_test_model.dart';
-import 'package:travelogue_mobile/model/tour/tour_schedule_with_price.dart';
-import 'package:travelogue_mobile/model/tour/tour_media_test_model.dart';
-import 'package:travelogue_mobile/model/tour/tour_plan_version_test_model.dart';
-import 'package:travelogue_mobile/model/tour_guide_test_model.dart';
+import 'package:travelogue_mobile/model/composite/tour_detail_composite_model.dart';
+import 'package:travelogue_mobile/model/tour/tour_model.dart';
+import 'package:travelogue_mobile/model/tour/tour_schedule_model.dart';
 import 'package:travelogue_mobile/representation/home/widgets/title_widget.dart';
 import 'package:travelogue_mobile/representation/tour/screens/tour_detail_screen.dart';
 import 'package:travelogue_mobile/representation/tour/screens/tour_qr_payment_screen.dart';
+import 'package:travelogue_mobile/representation/tour/widgets/discount_tag.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class TourPaymentConfirmationScreen extends StatefulWidget {
   static const routeName = '/tour-payment-confirmation';
 
-  final TourTestModel tour;
-  final TourScheduleWithPrice schedule;
-  final TourMediaTestModel? media;
+  final TourModel tour;
+  final TourScheduleModel schedule;
+  final String? media;
   final DateTime? departureDate;
   final int adults;
   final int children;
@@ -48,175 +45,21 @@ class _TourPaymentConfirmationScreenState
   @override
   Widget build(BuildContext context) {
     final formatter = NumberFormat('#,###');
-    final mediaUrl = widget.media?.mediaUrl;
-    final adultTotal = widget.adults * widget.schedule.price;
-    final childrenTotal = widget.children * widget.schedule.childrenPrice;
-    final totalPrice = adultTotal + childrenTotal;
+    final mediaUrl = widget.media;
+    final double adultPrice = widget.schedule.adultPrice?.toDouble() ?? 0;
+    final double childrenPrice = widget.schedule.childrenPrice?.toDouble() ?? 0;
+
+    final double adultTotal = widget.adults * adultPrice;
+    final double childrenTotal = widget.children * childrenPrice;
+    final double totalPrice = adultTotal + childrenTotal;
 
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
-              decoration: const BoxDecoration(
-                gradient: Gradients.defaultGradientBackground,
-                borderRadius:
-                    BorderRadius.vertical(bottom: Radius.circular(24)),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back_ios,
-                            color: Colors.white),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                      SizedBox(width: 2.w),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(
-                              'Thông tin thanh toán',
-                              style: TextStyle(
-                                fontSize: 17.sp,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                            SizedBox(height: 0.5.h),
-                            Text(
-                              DateFormat('EEEE, dd MMMM yyyy', 'vi_VN')
-                                  .format(widget.schedule.departureDate),
-                              style: TextStyle(
-                                fontSize: 15.sp,
-                                color: Colors.white70,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(width: 25.sp),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            // Card thông tin tour
-            Container(
-              margin: EdgeInsets.all(4.w),
-              padding: EdgeInsets.all(3.w),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade300),
-              ),
-              child: Row(
-                children: [
-                  Stack(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: SizedBox(
-                          width: 24.w,
-                          height: 10.h,
-                          child: mediaUrl != null && mediaUrl.startsWith('http')
-                              ? Image.network(mediaUrl, fit: BoxFit.cover)
-                              : Image.asset(
-                                  mediaUrl ?? AssetHelper.img_tay_ninh_login,
-                                  fit: BoxFit.cover,
-                                ),
-                        ),
-                      ),
-                      if (widget.schedule.isDiscount)
-                        const Positioned(
-                          top: 0,
-                          left: 0,
-                          child: DiscountTag(),
-                        ),
-                    ],
-                  ),
-                  SizedBox(width: 3.w),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '🇻🇳 Tây Ninh, Việt Nam',
-                          style: TextStyle(
-                              fontSize: 14.sp, color: Colors.grey.shade600),
-                        ),
-                        SizedBox(height: 0.5.h),
-                        Text(
-                          widget.tour.name,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 1.h),
-                        GestureDetector(
-                          onTap: () {
-                            TourPlanVersionTestModel? version;
-                            try {
-                              version = mockTourPlanVersions.firstWhere(
-                                (v) => v.id == widget.tour.currentVersionId,
-                              );
-                            } catch (_) {}
-
-                            TourGuideTestModel? guide;
-                            try {
-                              if (version?.tourGuideId != null) {
-                                guide = mockTourGuides.firstWhere(
-                                  (g) => g.id == version!.tourGuideId,
-                                );
-                              }
-                            } catch (_) {}
-
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => TourDetailScreen(
-                                  tour: widget.tour,
-                                  media: widget.media,
-                                  guide: guide,
-                                  readOnly: true,
-                                  departureDate: widget.schedule.departureDate,
-                                ),
-                              ),
-                            );
-                          },
-                          child: Row(
-                            children: [
-                              Text(
-                                'Xem chi tiết',
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  color: Colors.green,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              SizedBox(width: 1.w),
-                              Icon(Icons.arrow_forward_ios,
-                                  size: 14.sp, color: Colors.green),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Body chi tiết
+            _buildHeader(),
+            _buildTourInfoCard(mediaUrl),
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
@@ -249,6 +92,126 @@ class _TourPaymentConfirmationScreenState
     );
   }
 
+  Widget _buildHeader() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+      decoration: const BoxDecoration(
+        gradient: Gradients.defaultGradientBackground,
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+            onPressed: () => Navigator.pop(context),
+          ),
+          SizedBox(width: 2.w),
+          Expanded(
+            child: Column(
+              children: [
+                Text(
+                  'Thông tin thanh toán',
+                  style: TextStyle(
+                      fontSize: 17.sp,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
+                ),
+                SizedBox(height: 0.5.h),
+                Text(
+                  DateFormat('EEEE, dd MMMM yyyy', 'vi_VN')
+                      .format(widget.departureDate ?? DateTime.now()),
+                  style: TextStyle(fontSize: 15.sp, color: Colors.white70),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(width: 25.sp),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTourInfoCard(String? mediaUrl) {
+    return Container(
+      margin: EdgeInsets.all(4.w),
+      padding: EdgeInsets.all(3.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Row(
+        children: [
+          Stack(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: SizedBox(
+                  width: 24.w,
+                  height: 10.h,
+                  child: mediaUrl != null && mediaUrl.startsWith('http')
+                      ? Image.network(mediaUrl, fit: BoxFit.cover)
+                      : Image.asset(mediaUrl ?? AssetHelper.img_tay_ninh_login,
+                          fit: BoxFit.cover),
+                ),
+              ),
+              if (widget.tour.isDiscount == true)
+                const Positioned(top: 0, left: 0, child: DiscountTag()),
+            ],
+          ),
+          SizedBox(width: 3.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('🇻🇳 Tây Ninh, Việt Nam',
+                    style: TextStyle(
+                        fontSize: 14.sp, color: Colors.grey.shade600)),
+                SizedBox(height: 0.5.h),
+                Text(
+                  widget.tour.name ?? '',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style:
+                      TextStyle(fontSize: 15.sp, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 1.h),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => TourDetailScreen(
+                          tour: widget.tour,
+                          image: widget.media ?? AssetHelper.img_tay_ninh_login,
+                          readOnly: true,
+                          departureDate: widget.departureDate,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Row(
+                    children: [
+                      Text('Xem chi tiết',
+                          style: TextStyle(
+                              fontSize: 14.sp,
+                              color: Colors.green,
+                              fontWeight: FontWeight.w600)),
+                      SizedBox(width: 1.w),
+                      Icon(Icons.arrow_forward_ios,
+                          size: 14.sp, color: Colors.green),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildPaymentSummary(NumberFormat formatter, double totalPrice,
       double adultTotal, double childrenTotal) {
     return Container(
@@ -265,41 +228,33 @@ class _TourPaymentConfirmationScreenState
             children: [
               Icon(Icons.receipt_long_rounded, color: Colors.deepOrange),
               SizedBox(width: 2.w),
-              Text(
-                'Chi tiết thanh toán',
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.deepOrange.shade700,
-                ),
-              ),
+              Text('Chi tiết thanh toán',
+                  style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.deepOrange.shade700)),
             ],
           ),
           SizedBox(height: 1.5.h),
-          _buildPriceRow('👨 Người lớn', widget.adults, widget.schedule.price),
+          _buildPriceRow(
+              '👨 Người lớn', widget.adults, widget.schedule.adultPrice ?? 0),
           SizedBox(height: 0.6.h),
           _buildPriceRow(
-              '🧒 Trẻ em', widget.children, widget.schedule.childrenPrice),
+              '🧒 Trẻ em', widget.children, widget.schedule.childrenPrice ?? 0),
           Divider(height: 2.5.h, color: Colors.grey.shade400),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                '💰 Tổng cộng:',
-                style: TextStyle(
-                  fontSize: 14.5.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.deepOrange.shade900,
-                ),
-              ),
-              Text(
-                '${formatter.format(totalPrice)}đ',
-                style: TextStyle(
-                  fontSize: 14.5.sp,
-                  fontWeight: FontWeight.bold,
-                  color: ColorPalette.primaryColor,
-                ),
-              ),
+              Text('💰 Tổng cộng:',
+                  style: TextStyle(
+                      fontSize: 14.5.sp,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.deepOrange.shade900)),
+              Text('${formatter.format(totalPrice)}đ',
+                  style: TextStyle(
+                      fontSize: 14.5.sp,
+                      fontWeight: FontWeight.bold,
+                      color: ColorPalette.primaryColor)),
             ],
           ),
         ],
@@ -312,18 +267,13 @@ class _TourPaymentConfirmationScreenState
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          '$label x$quantity',
-          style: TextStyle(fontSize: 13.5.sp, color: Colors.brown.shade800),
-        ),
-        Text(
-          '${formatter.format(quantity * price)}đ',
-          style: TextStyle(
-            fontSize: 13.5.sp,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
+        Text('$label x$quantity',
+            style: TextStyle(fontSize: 13.5.sp, color: Colors.brown.shade800)),
+        Text('${formatter.format(quantity * price)}đ',
+            style: TextStyle(
+                fontSize: 13.5.sp,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87)),
       ],
     );
   }
@@ -363,9 +313,7 @@ class _TourPaymentConfirmationScreenState
       children: [
         Checkbox(
           value: _agreed,
-          onChanged: (value) {
-            setState(() => _agreed = value ?? false);
-          },
+          onChanged: (value) => setState(() => _agreed = value ?? false),
         ),
         Expanded(
           child: Text(
@@ -395,19 +343,15 @@ class _TourPaymentConfirmationScreenState
           }
         },
         icon: const Icon(Icons.headset_mic, color: Colors.blue),
-        label: Text(
-          'Liên hệ hỗ trợ',
-          style: TextStyle(
-            color: Colors.blue,
-            fontSize: 14.sp,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        label: Text('Liên hệ hỗ trợ',
+            style: TextStyle(
+                color: Colors.blue,
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600)),
         style: OutlinedButton.styleFrom(
           side: const BorderSide(color: Colors.blue),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           padding: EdgeInsets.symmetric(vertical: 1.5.h),
         ),
       ),
@@ -420,16 +364,23 @@ class _TourPaymentConfirmationScreenState
       child: ElevatedButton(
         onPressed: _agreed
             ? () {
+                print('🧪 tour: ${widget.tour}');
+                print('🧪 schedule: ${widget.schedule}');
+                print('🧪 departureDate: ${widget.departureDate}');
+                print('🧪 adults: ${widget.adults}');
+                print('🧪 children: ${widget.children}');
+
                 Navigator.pushNamed(
                   context,
                   TourQrPaymentScreen.routeName,
                   arguments: {
-                    'price': totalPrice,
-                    'tourName': widget.tour.name,
-                    'scheduleId': widget.schedule.scheduleId,
-                    'departureDate': widget.schedule.departureDate,
+                    'tour': widget.tour,
+                    'schedule': widget.schedule,
+                    'departureDate': widget.departureDate!,
                     'adults': widget.adults,
                     'children': widget.children,
+                    'totalPrice': totalPrice,
+                    'startTime': DateTime.now(),
                   },
                 );
               }
@@ -437,24 +388,20 @@ class _TourPaymentConfirmationScreenState
         style: ElevatedButton.styleFrom(
           padding: EdgeInsets.symmetric(vertical: 1.8.h),
           backgroundColor: ColorPalette.primaryColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
-        child: Text(
-          "Xác nhận và thanh toán",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 13.sp,
-            color: Colors.white,
-          ),
-        ),
+        child: Text("Xác nhận và thanh toán",
+            style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 13.sp,
+                color: Colors.white)),
       ),
     );
   }
 }
 
-Future<bool?> _showCallSupportDialog(BuildContext context) {
+Future<bool?> _showCallSupportDialog(BuildContext context) async {
   return showDialog<bool>(
     context: context,
     builder: (context) => Dialog(
@@ -468,29 +415,23 @@ Future<bool?> _showCallSupportDialog(BuildContext context) {
             Container(
               padding: EdgeInsets.all(3.w),
               decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                shape: BoxShape.circle,
-              ),
+                  color: Colors.blue.shade50, shape: BoxShape.circle),
               child: Icon(Icons.headset_mic,
                   color: Colors.blueAccent, size: 28.sp),
             ),
             SizedBox(height: 2.h),
-            Text(
-              "Gọi hỗ trợ từ Travelogue?",
-              style: TextStyle(
-                fontSize: 16.5.sp,
-                fontWeight: FontWeight.bold,
-                color: Colors.blueGrey.shade800,
-              ),
-              textAlign: TextAlign.center,
-            ),
+            Text("Gọi hỗ trợ từ Travelogue?",
+                style: TextStyle(
+                    fontSize: 16.5.sp,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blueGrey.shade800),
+                textAlign: TextAlign.center),
             SizedBox(height: 1.2.h),
             Text(
-              "Bạn có muốn gọi ngay cho chúng tôi qua số 0336 626 193 để được tư vấn & hỗ trợ nhanh chóng?",
-              style: TextStyle(
-                  fontSize: 13.sp, height: 1.5, color: Colors.grey.shade700),
-              textAlign: TextAlign.center,
-            ),
+                "Bạn có muốn gọi ngay cho chúng tôi qua số 0336 626 193 để được tư vấn & hỗ trợ nhanh chóng?",
+                style: TextStyle(
+                    fontSize: 13.sp, height: 1.5, color: Colors.grey.shade700),
+                textAlign: TextAlign.center),
             SizedBox(height: 3.h),
             Row(
               children: [
@@ -503,9 +444,9 @@ Future<bool?> _showCallSupportDialog(BuildContext context) {
                           borderRadius: BorderRadius.circular(12)),
                     ),
                     child: Padding(
-                      padding: EdgeInsets.symmetric(vertical: 1.2.h),
-                      child: Text("Huỷ", style: TextStyle(fontSize: 13.5.sp)),
-                    ),
+                        padding: EdgeInsets.symmetric(vertical: 1.2.h),
+                        child:
+                            Text("Huỷ", style: TextStyle(fontSize: 13.5.sp))),
                   ),
                 ),
                 SizedBox(width: 4.w),

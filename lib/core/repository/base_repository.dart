@@ -12,7 +12,7 @@ import 'package:travelogue_mobile/data/data_local/user_local.dart';
 class BaseRepository {
   static diox.Dio dio = diox.Dio(
     diox.BaseOptions(
-      baseUrl: 'https://be.goyoungtayninh.homes/',
+      baseUrl: 'https://travelogue.homes/',
       connectTimeout: const Duration(milliseconds: connectTimeOut),
       receiveTimeout: const Duration(milliseconds: receiveTimeOut),
       sendTimeout: const Duration(milliseconds: receiveTimeOut),

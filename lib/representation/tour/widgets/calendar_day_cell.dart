@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
+import 'package:intl/intl.dart';
 import 'package:travelogue_mobile/core/constants/color_constants.dart';
-import 'package:travelogue_mobile/model/tour/tour_schedule_with_price.dart';
+import 'package:travelogue_mobile/model/tour/tour_schedule_model.dart';
 
 class CalendarDayCell extends StatelessWidget {
   final DateTime day;
-  final TourScheduleWithPrice? schedule;
+  final TourScheduleModel? schedule;
   final bool isToday;
   final bool isSelected;
 
@@ -19,10 +20,24 @@ class CalendarDayCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasAvailable = schedule != null && schedule!.availableSlot > 0;
-    final priceText =
-        hasAvailable ? '${(schedule!.price / 1000).round()}K' : '';
-    final isLowSlot = hasAvailable && schedule!.availableSlot <= 5;
+    // Debug log
+    print('⏱️ Rendering CalendarDayCell: ${day.toIso8601String()}');
+    print('📦 schedule: ${schedule?.toJson()}');
+
+    final max = schedule?.maxParticipant ?? 0;
+    final booked = schedule?.currentBooked ?? 0;
+    final price = schedule?.adultPrice ?? 0;
+
+    final availableSlot = max - booked;
+    final hasAvailable = availableSlot > 0;
+
+    final priceText = price >= 1000
+        ? '${(price / 1000).round()}K'
+        : '${price.round()}đ';
+
+    final isLowSlot = hasAvailable && availableSlot <= 5;
+
+    print('➡️ day: ${day.day} | slot: $availableSlot | price: $priceText');
 
     return Container(
       margin: EdgeInsets.all(0.7.w),

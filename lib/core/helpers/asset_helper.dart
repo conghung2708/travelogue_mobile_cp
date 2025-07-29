@@ -187,4 +187,10 @@ class AssetHelper {
 
   static const String img_qr_code = 'assets/images/img_qr_code.png';
 
+  
+  static const String img_icon_restauant = 'assets/icons/icon_restaurant.png';
+
+  static const String img_default = 'assets/images/img_default.png';
+
+
 }

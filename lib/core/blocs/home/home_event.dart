@@ -1,30 +1,48 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
 part of 'home_bloc.dart';
 
-abstract class HomeEvent {}
 
-class GetLocationTypeEvent extends HomeEvent {}
+abstract class HomeEvent extends Equatable {
+  const HomeEvent();
 
-class GetAllLocationEvent extends HomeEvent {}
-
-class GetEventHomeEvent extends HomeEvent {}
-
-class FilterLocationTypeEvent extends HomeEvent {
-  final String locationTypeId;
-  FilterLocationTypeEvent({
-    required this.locationTypeId,
-  });
+  @override
+  List<Object?> get props => [];
 }
 
-class GetLocationFavoriteEvent extends HomeEvent {}
+class GetLocationTypeEvent extends HomeEvent {
+  const GetLocationTypeEvent();
+}
+
+class GetAllLocationEvent extends HomeEvent {
+  const GetAllLocationEvent();
+}
+
+class GetEventHomeEvent extends HomeEvent {
+  const GetEventHomeEvent();
+}
+
+class GetLocationFavoriteEvent extends HomeEvent {
+  const GetLocationFavoriteEvent();
+}
+
+class FilterLocationByCategoryEvent extends HomeEvent {
+  final String category;
+  const FilterLocationByCategoryEvent({required this.category});
+
+  @override
+  List<Object?> get props => [category];
+}
 
 class UpdateLikedLocationEvent extends HomeEvent {
   final String locationId;
   final bool isLiked;
   final BuildContext context;
-  UpdateLikedLocationEvent({
+
+  const UpdateLikedLocationEvent({
     required this.locationId,
     required this.isLiked,
     required this.context,
   });
+
+  @override
+  List<Object?> get props => [locationId, isLiked];
 }

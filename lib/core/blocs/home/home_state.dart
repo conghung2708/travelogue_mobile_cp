@@ -1,33 +1,52 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
+
 part of 'home_bloc.dart';
 
-abstract class HomeState {
-  List<Object> get props => [
-        <TypeLocationModel>[],
-        <LocationModel>[],
-        <EventModel>[],
-        <LocationModel>[],
-      ];
+
+abstract class HomeState extends Equatable {
+  const HomeState();
+
+  @override
+  List<Object?> get props => [];
 }
 
-class HomeInitial extends HomeState {}
+/// Trạng thái khởi tạo ban đầu (chưa fetch bất kỳ dữ liệu nào)
+class HomeInitial extends HomeState {
+  @override
+  List<Object> get props => [];
+}
+
+/// Trạng thái đang loading (ví dụ khi fetch API)
+class HomeLoading extends HomeState {
+  const HomeLoading();
+}
+
 
 class GetHomeSuccess extends HomeState {
   final List<TypeLocationModel> typeLocations;
   final List<LocationModel> locations;
   final List<EventModel> events;
   final List<LocationModel> locationFavorites;
-  GetHomeSuccess({
+
+  const GetHomeSuccess({
     required this.typeLocations,
     required this.locations,
     required this.events,
     required this.locationFavorites,
   });
+
   @override
-  List<Object> get props => [
+  List<Object?> get props => [
         typeLocations,
         locations,
         events,
         locationFavorites,
       ];
+}
+class HomeError extends HomeState {
+  final String message;
+
+  const HomeError(this.message);
+
+  @override
+  List<Object?> get props => [message];
 }

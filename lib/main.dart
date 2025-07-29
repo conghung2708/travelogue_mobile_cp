@@ -10,6 +10,7 @@ import 'package:travelogue_mobile/core/blocs/app_bloc.dart';
 import 'package:travelogue_mobile/core/constants/color_constants.dart';
 import 'package:travelogue_mobile/data/data_local/base_local_data.dart';
 import 'package:sizer/sizer.dart';
+import 'package:travelogue_mobile/representation/auth/screens/login_screen.dart';
 import 'package:travelogue_mobile/representation/hobby/screens/hobby_screen.dart';
 import 'package:travelogue_mobile/representation/home/screens/home_screen.dart';
 import 'package:travelogue_mobile/representation/main_screen.dart';
@@ -77,19 +78,20 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    AppBloc().initial();
+ AppBloc.instance.initial();
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-    AppBloc().cleanData();
-  }
+ @override
+void dispose() {
+  super.dispose();
+  AppBloc.instance.cleanData();
+}
+
 
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
-      providers: AppBloc.instance.providers,
+    providers: AppBloc.instance.providers,
       child: Sizer(
         builder: (context, orientation, deviceType) {
           return ShowCaseWidget(
@@ -119,7 +121,7 @@ class _MyAppState extends State<MyApp> {
               ],
               locale: const Locale('vi', 'VN'),
               routes: routes,
-              home: const MainScreen(),
+              home: const HomeScreen(), 
             ),
           );
         },

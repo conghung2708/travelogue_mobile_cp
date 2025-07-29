@@ -19,17 +19,29 @@ class HomeRepository {
     return [];
   }
 
-  Future<List<LocationModel>> getAllLocation() async {
-    final Response response = await BaseRepository().getRoute(
-      Endpoints.location,
-    );
+Future<List<LocationModel>> getAllLocation() async {
+  final Response response = await BaseRepository().getRoute(
+    Endpoints.location,
+  );
 
-    if (response.statusCode == StatusCode.ok) {
+  print('📡 Response status: ${response.statusCode}');
+  print('📦 Raw data: ${response.data}');
+
+  if (response.statusCode == StatusCode.ok) {
+    try {
       final List listData = response.data['data'] as List;
+      print('📊 Danh sách địa điểm từ API: ${listData.length}');
       return listData.map((value) => LocationModel.fromMap(value)).toList();
+    } catch (e) {
+      print('❌ Lỗi parse danh sách địa điểm: $e');
     }
-    return [];
+  } else {
+    print('❌ API trả về mã lỗi: ${response.statusCode}');
   }
+
+  return [];
+}
+
 
   Future<List<EventModel>> getEvents() async {
     final Response response = await BaseRepository().getRoute(

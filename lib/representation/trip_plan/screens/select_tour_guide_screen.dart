@@ -102,6 +102,7 @@ class _SelectTourGuideScreenState extends State<SelectTourGuideScreen> {
                                     tags: guide.tags,
                                     rating: guide.rating,
                                     reviewsCount: guide.reviewsCount,
+                                    price: guide.price,
                                     status: TourGuideStatus.pending,
                                   );
 

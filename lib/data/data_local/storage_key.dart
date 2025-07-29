@@ -6,6 +6,7 @@ class StorageKey {
   static const String boxRestaurant = 'box_restaurant';
   static const String boxHome = 'box_home';
   static const String boxExperience = 'box_experience';
+  static const String boxTour = 'box_tour';
 
   // Global local
   static const String checkOpenFirstApp = "checkOpenFirstApp";
@@ -27,6 +28,9 @@ class StorageKey {
   // Box Restaurant
   static const String restaurants = 'restaurants';
 
-  // Box Experience
+  // Box ExperienceA
   static const String experiences = 'experiences';
+
+  //Tour Experience
+  static const String tours = 'tours';
 }

@@ -123,22 +123,22 @@ class FavoriteLocationScreen extends StatelessWidget {
                                 ),
                               ),
                               SizedBox(height: 1.h),
-                              Container(
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 2.5.w, vertical: 0.5.h),
-                                decoration: BoxDecoration(
-                                  color: Colors.teal.shade50,
-                                  borderRadius: BorderRadius.circular(50),
-                                ),
-                                child: Text(
-                                  location.typeLocationName ?? 'Địa điểm',
-                                  style: TextStyle(
-                                    fontSize: 11.5.sp,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.teal[700],
-                                  ),
-                                ),
-                              ),
+                              // Container(
+                              //   padding: EdgeInsets.symmetric(
+                              //       horizontal: 2.5.w, vertical: 0.5.h),
+                              //   decoration: BoxDecoration(
+                              //     color: Colors.teal.shade50,
+                              //     borderRadius: BorderRadius.circular(50),
+                              //   ),
+                              //   child: Text(
+                              //     location.typeLocationName ?? 'Địa điểm',
+                              //     style: TextStyle(
+                              //       fontSize: 11.5.sp,
+                              //       fontWeight: FontWeight.w500,
+                              //       color: Colors.teal[700],
+                              //     ),
+                              //   ),
+                              // ),
                               SizedBox(height: 1.2.h),
                               Expanded(
                                 child: Text(
