@@ -56,45 +56,30 @@ class BaseRepository {
     }
   }
 
-  Future<diox.Response<dynamic>> postRoute(
-    String gateway,
-    Map<String, dynamic> body, {
-    String? query,
-  }) async {
-    try {
-      final Map<String, String> paramsObject = {};
-      if (query != null) {
-        query.split('&').forEach((element) {
-          paramsObject[element.split('=')[0]] = element.split('=')[1];
-        });
-      }
-      final response = await dio.post(
-        gateway,
-        data: convert.jsonEncode(body),
-        options: getOptions(),
-        queryParameters: query == null ? null : paramsObject,
-      );
-      return response;
-    } on diox.DioException catch (exception) {
-      return catchDioError(exception: exception, gateway: gateway);
+ Future<diox.Response<dynamic>> postRoute({
+  required String gateway,
+  required Map<String, dynamic> data,
+  String? query,
+}) async {
+  try {
+    final Map<String, String> paramsObject = {};
+    if (query != null) {
+      query.split('&').forEach((element) {
+        paramsObject[element.split('=')[0]] = element.split('=')[1];
+      });
     }
-  }
 
-  Future<diox.Response<dynamic>> putRoute(
-    String gateway,
-    Map<String, dynamic> body,
-  ) async {
-    try {
-      final response = await dio.put(
-        gateway,
-        data: convert.jsonEncode(body),
-        options: getOptions(),
-      );
-      return response;
-    } on diox.DioException catch (exception) {
-      return catchDioError(exception: exception, gateway: gateway);
-    }
+    final response = await dio.post(
+      gateway,
+      data: convert.jsonEncode(data),
+      options: getOptions(),
+      queryParameters: query == null ? null : paramsObject,
+    );
+    return response;
+  } on diox.DioException catch (exception) {
+    return catchDioError(exception: exception, gateway: gateway);
   }
+}
 
   Future<diox.Response<dynamic>> patchRoute(
     String gateway, {
@@ -120,30 +105,21 @@ class BaseRepository {
       return catchDioError(exception: exception, gateway: gateway);
     }
   }
-
-  Future<diox.Response<dynamic>> getRoute(
-    String gateway, {
-    String? params,
-    String? query,
-  }) async {
-    try {
-      final Map<String, String> paramsObject = {};
-      if (query != null) {
-        query.split('&').forEach((element) {
-          paramsObject[element.split('=')[0]] = element.split('=')[1];
-        });
-      }
-
-      final response = await dio.get(
-        gateway,
-        options: getOptions(),
-        queryParameters: query == null ? null : paramsObject,
-      );
-      return response;
-    } on diox.DioException catch (exception) {
-      return catchDioError(exception: exception, gateway: gateway);
-    }
+Future<diox.Response<dynamic>> getRoute(
+  String gateway, {
+  Map<String, dynamic>? queryParameters,
+}) async {
+  try {
+    final response = await dio.get(
+      gateway,
+      options: getOptions(),
+      queryParameters: queryParameters,
+    );
+    return response;
+  } on diox.DioException catch (exception) {
+    return catchDioError(exception: exception, gateway: gateway);
   }
+}
 
   Future<diox.Response<dynamic>> deleteRoute(
     String gateway, {
@@ -207,4 +183,30 @@ class BaseRepository {
       'Accept-Encoding': 'gzip, deflate, br',
     };
   }
+  Future<diox.Response<dynamic>> putRoute({
+  required String gateway,
+  required Map<String, dynamic> data,
+  String? query,
+}) async {
+  try {
+    final Map<String, String> paramsObject = {};
+    if (query != null) {
+      query.split('&').forEach((element) {
+        paramsObject[element.split('=')[0]] = element.split('=')[1];
+      });
+    }
+
+    final response = await dio.put(
+      gateway,
+      data: convert.jsonEncode(data),
+      options: getOptions(),
+      queryParameters: query == null ? null : paramsObject,
+    );
+    return response;
+  } on diox.DioException catch (exception) {
+    return catchDioError(exception: exception, gateway: gateway);
+  }
 }
+
+}
+

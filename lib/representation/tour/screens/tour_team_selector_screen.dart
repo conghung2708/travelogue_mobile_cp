@@ -111,8 +111,7 @@ class _TourTeamSelectorScreenState extends State<TourTeamSelectorScreen> {
     return Align(
       alignment: Alignment.centerLeft,
       child: IconButton(
-        icon:
-            const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
         onPressed: () => Navigator.pop(context),
       ),
     );
@@ -168,8 +167,8 @@ class _TourTeamSelectorScreenState extends State<TourTeamSelectorScreen> {
                       : null),
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 3.w),
-                child:
-                    Text('$value', style: TextStyle(fontSize: 15.sp, color: Colors.white)),
+                child: Text('$value',
+                    style: TextStyle(fontSize: 15.sp, color: Colors.white)),
               ),
               _roundIconButton(Icons.add, canAdd()
                   ? () {
@@ -193,8 +192,9 @@ class _TourTeamSelectorScreenState extends State<TourTeamSelectorScreen> {
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color:
-              onTap != null ? Colors.white.withOpacity(0.15) : Colors.grey.withOpacity(0.1),
+          color: onTap != null
+              ? Colors.white.withOpacity(0.15)
+              : Colors.grey.withOpacity(0.1),
           shape: BoxShape.circle,
         ),
         child: Icon(icon, color: Colors.white),
@@ -229,6 +229,7 @@ class _TourTeamSelectorScreenState extends State<TourTeamSelectorScreen> {
                   departureDate: widget.schedule.departureDate,
                   adults: adultCount,
                   children: childrenCount,
+                  media: widget.media,
                 ),
               ),
             );
@@ -236,8 +237,8 @@ class _TourTeamSelectorScreenState extends State<TourTeamSelectorScreen> {
           style: ElevatedButton.styleFrom(
             backgroundColor: ColorPalette.primaryColor,
             padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 1.8.h),
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30)),
           ),
           child: const Text("Tiếp tục", style: TextStyle(color: Colors.white)),
         )
@@ -255,8 +256,8 @@ class _TourTeamSelectorScreenState extends State<TourTeamSelectorScreen> {
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(
-            colors: [Colors.white.withOpacity(0.95), Colors.white70]),
+        gradient:
+            LinearGradient(colors: [Colors.white.withOpacity(0.95), Colors.white70]),
       ),
       child: Row(
         children: [
@@ -276,7 +277,8 @@ class _TourTeamSelectorScreenState extends State<TourTeamSelectorScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('🌍 Việt Nam',
-                    style: TextStyle(fontSize: 13.sp, color: Colors.grey.shade600)),
+                    style:
+                        TextStyle(fontSize: 13.sp, color: Colors.grey.shade600)),
                 SizedBox(height: 0.5.h),
                 Text(tour.name ?? '',
                     style: TextStyle(
@@ -284,8 +286,7 @@ class _TourTeamSelectorScreenState extends State<TourTeamSelectorScreen> {
                         fontWeight: FontWeight.bold,
                         color: Colors.black87)),
                 SizedBox(height: 0.5.h),
-                Text(
-                    '📅 ${DateFormat('dd/MM/yyyy').format(schedule.departureDate!)}',
+                Text('📅 ${DateFormat('dd/MM/yyyy').format(schedule.departureDate!)}',
                     style: TextStyle(fontSize: 12.sp, color: Colors.grey.shade800)),
                 SizedBox(height: 0.5.h),
                 Text(

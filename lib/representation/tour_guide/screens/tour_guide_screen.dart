@@ -1,16 +1,46 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:sizer/sizer.dart';
-import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
-import 'package:travelogue_mobile/model/tour_guide_test_model.dart';
+import 'package:travelogue_mobile/core/blocs/tour_guide/tour_guide_bloc.dart';
+import 'package:travelogue_mobile/core/blocs/tour_guide/tour_guide_event.dart';
 import 'package:travelogue_mobile/core/constants/color_constants.dart';
+import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
+import 'package:travelogue_mobile/model/tour_guide/tour_guide_filter_model.dart';
 import 'package:travelogue_mobile/representation/home/widgets/title_widget.dart';
 import 'package:travelogue_mobile/representation/tour_guide/widgets/tour_guide_card.dart';
+import 'package:travelogue_mobile/representation/tour_guide/widgets/filter_guide_sheet.dart';
 
-class TourGuideScreen extends StatelessWidget {
+class TourGuideScreen extends StatefulWidget {
   const TourGuideScreen({super.key});
 
   static const String routeName = '/tour-guides';
+
+  @override
+  State<TourGuideScreen> createState() => _TourGuideScreenState();
+}
+
+class _TourGuideScreenState extends State<TourGuideScreen> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<TourGuideBloc>().add(const GetAllTourGuidesEvent());
+  }
+
+  void _openFilterSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(4.w)),
+      ),
+      builder: (_) => FilterGuideSheet(
+        onApplyFilter: (TourGuideFilterModel filter) {
+          context.read<TourGuideBloc>().add(FilterTourGuideEvent(filter));
+        },
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,8 +87,11 @@ class TourGuideScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  Icon(Icons.notifications_none,
-                      size: 7.w, color: Colors.grey[600]),
+                  IconButton(
+                    icon: Icon(Icons.filter_alt_outlined, size: 7.w),
+                    color: ColorPalette.primaryColor,
+                    onPressed: _openFilterSheet,
+                  )
                 ],
               ),
               SizedBox(height: 3.h),
@@ -146,19 +179,36 @@ class TourGuideScreen extends StatelessWidget {
               ),
               SizedBox(height: 2.h),
 
-              // Masonry Grid
+              // BlocBuilder
               Expanded(
-                child: MasonryGridView.count(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 2.h,
-                  crossAxisSpacing: 4.w,
-                  itemCount: mockTourGuides.length,
-                  itemBuilder: (context, index) {
-                    final guide = mockTourGuides[index];
-                    return Padding(
-                      padding: EdgeInsets.only(bottom: 1.h),
-                      child: TourGuideCard(guide: guide),
-                    );
+                child: BlocBuilder<TourGuideBloc, TourGuideState>(
+                  builder: (context, state) {
+                    if (state is TourGuideLoading) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    if (state is TourGuideLoaded) {
+                      final guides = state.guides;
+                      return MasonryGridView.count(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 2.h,
+                        crossAxisSpacing: 4.w,
+                        itemCount: guides.length,
+                        itemBuilder: (context, index) {
+                          final guide = guides[index];
+                          return Padding(
+                            padding: EdgeInsets.only(bottom: 1.h),
+                            child: TourGuideCard(guide: guide),
+                          );
+                        },
+                      );
+                    }
+
+                    if (state is TourGuideError) {
+                      return Center(child: Text(state.message));
+                    }
+
+                    return const SizedBox();
                   },
                 ),
               ),

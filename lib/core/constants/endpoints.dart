@@ -31,4 +31,16 @@ class Endpoints {
 
   //Tour
   static const tour = 'api/tour';
+
+  //Tour Guide
+  static const tourGuide = 'api/tour-guide';
+
+  //Tour Guide Filter
+  static const String tourGuideFilter = "/api/tour-guide/filter";
+
+  //Booking Tour
+  static const String createBookingTour = '/api/booking/create-booking-tour';
+
+  //Create Payment Link
+  static const String createPaymentLink = 'api/booking/create-payment-link';
 }

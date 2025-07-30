@@ -31,6 +31,9 @@ class StorageKey {
   // Box ExperienceA
   static const String experiences = 'experiences';
 
-  //Tour Experience
+  //Tour 
   static const String tours = 'tours';
+
+  //Tour Guide
+   static const String tourGuides = 'tourGuides';
 }

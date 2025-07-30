@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
-import 'package:travelogue_mobile/model/tour/tour_guide_model.dart';
+import 'package:travelogue_mobile/model/tour_guide/tour_guide_model.dart';
 
 class TourGuideProfile extends StatelessWidget {
   final TourGuideModel guide;

@@ -67,14 +67,15 @@ Future<List<LocationModel>> getAllLocation() async {
     return [];
   }
 
-  Future<bool> updateLikedLocation({required String locationId}) async {
-    final Response response = await BaseRepository().postRoute(
-      '${Endpoints.location}/$locationId/favorite',
-      {},
-    );
+Future<bool> updateLikedLocation({required String locationId}) async {
+  final Response response = await BaseRepository().postRoute(
+    gateway: '${Endpoints.location}/$locationId/favorite',
+    data: {}, 
+  );
 
-    return response.statusCode == StatusCode.ok;
-  }
+  return response.statusCode == StatusCode.ok;
+}
+
 
   Future<bool> deletedLikedLocation({required String locationId}) async {
     final Response response = await BaseRepository().deleteRoute(

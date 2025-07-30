@@ -21,6 +21,7 @@ class BaseLocalData {
       Hive.openBox(StorageKey.boxHome),
       Hive.openBox(StorageKey.boxExperience),
       Hive.openBox(StorageKey.boxTour),
+      Hive.openBox(StorageKey.tourGuides),
     ]);
   }
 

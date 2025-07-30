@@ -192,5 +192,7 @@ class AssetHelper {
 
   static const String img_default = 'assets/images/img_default.png';
 
+  static const String img_payment = 'assets/images/img_payment.png';
+
 
 }
