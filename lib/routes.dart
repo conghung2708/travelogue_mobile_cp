@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:travelogue_mobile/core/blocs/booking/booking_bloc.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
+import 'package:travelogue_mobile/core/repository/booking_repository.dart';
 import 'package:travelogue_mobile/model/args/reviews_screen_args.dart';
 import 'package:travelogue_mobile/model/args/tour_calendar_args.dart';
 import 'package:travelogue_mobile/model/composite/tour_detail_composite_model.dart';
@@ -122,17 +125,18 @@ final Map<String, WidgetBuilder> routes = {
   },
   SelectTourGuideScreen.routeName: (_) => const SelectTourGuideScreen(),
 
-TourDetailScreen.routeName: (context) {
-  final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+  TourDetailScreen.routeName: (context) {
+    final args =
+        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
 
-  return TourDetailScreen(
-    tour: args['tour'] as TourModel,
-    image: args['image'] as String? ?? AssetHelper.img_default,
-    departureDate: args['departureDate'] as DateTime?,
-    isBooked: args['isBooked'] ?? false,
-    readOnly: args['readOnly'] ?? false,
-  );
-},
+    return TourDetailScreen(
+      tour: args['tour'] as TourModel,
+      image: args['image'] as String? ?? AssetHelper.img_default,
+      departureDate: args['departureDate'] as DateTime?,
+      isBooked: args['isBooked'] ?? false,
+      readOnly: args['readOnly'] ?? false,
+    );
+  },
 
   TourTypeSelector.routeName: (context) {
     final args =
@@ -144,19 +148,6 @@ TourDetailScreen.routeName: (context) {
 
   TourScheduleCalendarScreen.routeName: (_) =>
       const TourScheduleCalendarScreen(),
-
-  TourPaymentConfirmationScreen.routeName: (context) {
-    final args =
-        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
-    return TourPaymentConfirmationScreen(
-      tour: args['tour'] as TourModel,
-      schedule: args['schedule'] as TourScheduleModel,
-      media: args['media'] as String? ?? AssetHelper.img_default,
-      adults: args['adults'] as int? ?? 1,
-      children: args['children'] as int? ?? 0,
-      departureDate: args['departureDate'] as DateTime?,
-    );
-  },
 
   TourQrPaymentScreen.routeName: (context) {
     final args = ModalRoute.of(context)?.settings.arguments;
@@ -183,6 +174,7 @@ TourDetailScreen.routeName: (context) {
         startTime: args['startTime'] is DateTime
             ? args['startTime']
             : DateTime.parse(args['startTime']),
+        // checkoutUrl: args['checkoutUrl'] as String?,
       );
     } catch (e) {
       return Scaffold(
@@ -192,6 +184,20 @@ TourDetailScreen.routeName: (context) {
   },
 
   TourScreen.routeName: (_) => const TourScreen(),
+
+  TourPaymentConfirmationScreen.routeName: (context) {
+    final args =
+        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+    return TourPaymentConfirmationScreen(
+      tour: args['tour'],
+      schedule: args['schedule'],
+      media: args['media'],
+      departureDate: args['departureDate'],
+      adults: args['adults'],
+      children: args['children'],
+      bookingId: args['bookingId'],
+    );
+  },
 
   TourTeamSelectorScreen.routeName: (context) {
     final args =

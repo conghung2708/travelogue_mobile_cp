@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:showcaseview/showcaseview.dart';
 import 'package:travelogue_mobile/core/blocs/app_bloc.dart';
+import 'package:travelogue_mobile/core/blocs/home/home_bloc.dart';
 import 'package:travelogue_mobile/core/constants/color_constants.dart';
 import 'package:travelogue_mobile/data/data_local/base_local_data.dart';
 import 'package:sizer/sizer.dart';
@@ -15,6 +16,7 @@ import 'package:travelogue_mobile/representation/hobby/screens/hobby_screen.dart
 import 'package:travelogue_mobile/representation/home/screens/home_screen.dart';
 import 'package:travelogue_mobile/representation/main_screen.dart';
 import 'package:travelogue_mobile/representation/tour/screens/tour_screen.dart';
+import 'package:travelogue_mobile/representation/tour_guide/screens/tour_guide_screen.dart';
 import 'package:travelogue_mobile/routes.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator/geolocator.dart';
@@ -121,7 +123,7 @@ void dispose() {
               ],
               locale: const Locale('vi', 'VN'),
               routes: routes,
-              home: const HomeScreen(), 
+              home: const TourScreen(), 
             ),
           );
         },

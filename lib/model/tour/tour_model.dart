@@ -1,5 +1,5 @@
 import 'package:travelogue_mobile/model/tour/tour_day_model.dart';
-import 'package:travelogue_mobile/model/tour/tour_guide_model.dart';
+import 'package:travelogue_mobile/model/tour_guide/tour_guide_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_media_test_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_schedule_model.dart';
 

@@ -12,8 +12,8 @@ class AuthenicationRepository {
     required String password,
   }) async {
     final Response response = await BaseRepository().postRoute(
-      Endpoints.login,
-      {
+      gateway: Endpoints.login,
+      data: {
         'email': email,
         'password': password,
       },
@@ -21,7 +21,6 @@ class AuthenicationRepository {
 
     if (response.statusCode == StatusCode.ok) {
       final dataJson = response.data['data'];
-
       final String token = dataJson['verificationToken'];
       final String refreshToken = dataJson['refreshTokens'];
 
@@ -40,7 +39,6 @@ class AuthenicationRepository {
     required String password,
     required String fullName,
   }) async {
-    // Construct the request body using only email, password, and fullname.
     final Map<String, dynamic> body = {
       'email': email,
       'password': password,
@@ -48,10 +46,9 @@ class AuthenicationRepository {
       'confirmPassword': password,
     };
 
-    // Make the API call to the registration endpoint.
     final Response response = await BaseRepository().postRoute(
-      Endpoints.register,
-      body,
+      gateway: Endpoints.register,
+      data: body,
     );
 
     if (response.statusCode == StatusCode.ok) {
@@ -66,8 +63,8 @@ class AuthenicationRepository {
     required String email,
   }) async {
     final Response response = await BaseRepository().postRoute(
-      Endpoints.sendOTPEmail,
-      {
+      gateway: Endpoints.sendOTPEmail,
+      data: {
         'email': email,
       },
     );
@@ -85,10 +82,10 @@ class AuthenicationRepository {
     required String otp,
   }) async {
     final Response response = await BaseRepository().postRoute(
-      Endpoints.checkValidOTP,
-      {
-        "token": otp,
-        "email": email,
+      gateway: Endpoints.checkValidOTP,
+      data: {
+        'token': otp,
+        'email': email,
       },
     );
 
@@ -106,12 +103,12 @@ class AuthenicationRepository {
     required String password,
   }) async {
     final Response response = await BaseRepository().postRoute(
-      Endpoints.resetPassword,
-      {
-        "token": otp,
-        "email": email,
-        "newPassword": password,
-        "confirmPassword": password,
+      gateway: Endpoints.resetPassword,
+      data: {
+        'token': otp,
+        'email': email,
+        'newPassword': password,
+        'confirmPassword': password,
       },
     );
 
@@ -128,15 +125,14 @@ class AuthenicationRepository {
     required User user,
   }) async {
     final Response response = await BaseRepository().postRoute(
-      Endpoints.loginGoogle,
-      {
+      gateway: Endpoints.loginGoogle,
+      data: {
         'token': token,
       },
     );
 
     if (response.statusCode == StatusCode.ok) {
       final dataJson = response.data['data'];
-
       final String token = dataJson['verificationToken'];
       final String refreshToken = dataJson['refreshTokens'];
 
@@ -157,8 +153,8 @@ class AuthenicationRepository {
     required String message,
   }) async {
     final Response response = await BaseRepository().postRoute(
-      Endpoints.sendContactSupport,
-      {
+      gateway: Endpoints.sendContactSupport,
+      data: {
         'email': email,
         'message': message,
       },

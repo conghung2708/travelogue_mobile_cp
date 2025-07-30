@@ -5,7 +5,7 @@ import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
 
 import 'package:travelogue_mobile/model/tour/tour_day_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_model.dart';
-import 'package:travelogue_mobile/model/tour/tour_guide_model.dart';
+import 'package:travelogue_mobile/model/tour_guide/tour_guide_model.dart';
 import 'package:travelogue_mobile/representation/tour/widgets/timeline_card_tour_item.dart';
 import 'package:travelogue_mobile/representation/tour/widgets/tour_guide_profile.dart';
 import 'package:travelogue_mobile/representation/tour/widgets/tour_overview_header.dart';

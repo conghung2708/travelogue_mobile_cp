@@ -3,7 +3,7 @@ import 'package:travelogue_mobile/core/constants/endpoints.dart';
 import 'package:travelogue_mobile/core/constants/status_code.dart';
 import 'package:travelogue_mobile/core/repository/base_repository.dart';
 import 'package:travelogue_mobile/model/composite/tour_detail_composite_model.dart';
-import 'package:travelogue_mobile/model/tour/tour_guide_model.dart';
+import 'package:travelogue_mobile/model/tour_guide/tour_guide_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_model.dart';
 
 class TourRepository {
@@ -31,23 +31,27 @@ class TourRepository {
   }
 
 
-  Future<bool> createTour(Map<String, dynamic> body) async {
-    final Response response = await BaseRepository().postRoute(
-      Endpoints.tour,
-      body,
-    );
 
-    return response.statusCode == StatusCode.created;
-  }
 
-  Future<bool> updateTour(String tourId, Map<String, dynamic> body) async {
-    final Response response = await BaseRepository().putRoute(
-      '${Endpoints.tour}/$tourId',
-      body,
-    );
+Future<bool> createTour(Map<String, dynamic> body) async {
+  final Response response = await BaseRepository().postRoute(
+    gateway: Endpoints.tour,
+    data: body,
+  );
 
-    return response.statusCode == StatusCode.ok;
-  }
+  return response.statusCode == StatusCode.created;
+}
+
+Future<bool> updateTour(String tourId, Map<String, dynamic> body) async {
+  final Response response = await BaseRepository().putRoute(
+    gateway: '${Endpoints.tour}/$tourId',
+    data: body,
+  );
+
+  return response.statusCode == StatusCode.ok;
+}
+
+
 
   Future<bool> deleteTour(String tourId) async {
     final Response response = await BaseRepository().deleteRoute(

@@ -4,7 +4,8 @@ import 'package:sizer/sizer.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:travelogue_mobile/core/constants/color_constants.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
-import 'package:travelogue_mobile/model/composite/tour_detail_composite_model.dart';
+import 'package:travelogue_mobile/core/repository/booking_repository.dart';
+import 'package:travelogue_mobile/model/booking/create_booking_tour_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_schedule_model.dart';
 import 'package:travelogue_mobile/representation/home/widgets/title_widget.dart';
@@ -22,6 +23,7 @@ class TourPaymentConfirmationScreen extends StatefulWidget {
   final DateTime? departureDate;
   final int adults;
   final int children;
+  final String? bookingId;
 
   const TourPaymentConfirmationScreen({
     super.key,
@@ -31,6 +33,7 @@ class TourPaymentConfirmationScreen extends StatefulWidget {
     this.departureDate,
     this.adults = 1,
     this.children = 0,
+    this.bookingId,
   });
 
   @override
@@ -45,10 +48,8 @@ class _TourPaymentConfirmationScreenState
   @override
   Widget build(BuildContext context) {
     final formatter = NumberFormat('#,###');
-    final mediaUrl = widget.media;
     final double adultPrice = widget.schedule.adultPrice?.toDouble() ?? 0;
     final double childrenPrice = widget.schedule.childrenPrice?.toDouble() ?? 0;
-
     final double adultTotal = widget.adults * adultPrice;
     final double childrenTotal = widget.children * childrenPrice;
     final double totalPrice = adultTotal + childrenTotal;
@@ -59,7 +60,7 @@ class _TourPaymentConfirmationScreenState
         child: Column(
           children: [
             _buildHeader(),
-            _buildTourInfoCard(mediaUrl),
+            _buildTourInfoCard(widget.media),
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
@@ -110,13 +111,11 @@ class _TourPaymentConfirmationScreenState
           Expanded(
             child: Column(
               children: [
-                Text(
-                  'Thông tin thanh toán',
-                  style: TextStyle(
-                      fontSize: 17.sp,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white),
-                ),
+                Text('Thông tin thanh toán',
+                    style: TextStyle(
+                        fontSize: 17.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white)),
                 SizedBox(height: 0.5.h),
                 Text(
                   DateFormat('EEEE, dd MMMM yyyy', 'vi_VN')
@@ -169,13 +168,11 @@ class _TourPaymentConfirmationScreenState
                     style: TextStyle(
                         fontSize: 14.sp, color: Colors.grey.shade600)),
                 SizedBox(height: 0.5.h),
-                Text(
-                  widget.tour.name ?? '',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style:
-                      TextStyle(fontSize: 15.sp, fontWeight: FontWeight.bold),
-                ),
+                Text(widget.tour.name ?? '',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        fontSize: 15.sp, fontWeight: FontWeight.bold)),
                 SizedBox(height: 1.h),
                 GestureDetector(
                   onTap: () {
@@ -363,26 +360,61 @@ class _TourPaymentConfirmationScreenState
       width: double.infinity,
       child: ElevatedButton(
         onPressed: _agreed
-            ? () {
-                print('🧪 tour: ${widget.tour}');
-                print('🧪 schedule: ${widget.schedule}');
-                print('🧪 departureDate: ${widget.departureDate}');
-                print('🧪 adults: ${widget.adults}');
-                print('🧪 children: ${widget.children}');
+            ? () async {
+                String? bookingId = widget.bookingId;
 
-                Navigator.pushNamed(
-                  context,
-                  TourQrPaymentScreen.routeName,
-                  arguments: {
-                    'tour': widget.tour,
-                    'schedule': widget.schedule,
-                    'departureDate': widget.departureDate!,
-                    'adults': widget.adults,
-                    'children': widget.children,
-                    'totalPrice': totalPrice,
-                    'startTime': DateTime.now(),
-                  },
-                );
+                // Nếu chưa có bookingId, gọi API tạo booking
+                if (bookingId == null) {
+                  final booking = await BookingRepository().createBooking(
+                    CreateBookingTourModel(
+                      tourId: widget.tour.tourId!,
+                      scheduledId: widget.schedule.scheduleId!,
+                      promotionCode: null,
+                      adultCount: widget.adults,
+                      childrenCount: widget.children,
+                    ),
+                  );
+
+                  if (booking == null || booking.id == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Tạo booking thất bại.')),
+                    );
+                    return;
+                  }
+
+                  bookingId = booking.id;
+                }
+
+                // Gọi API tạo payment link
+                final paymentUrl =
+                    await BookingRepository().createPaymentLink(bookingId);
+
+                if (paymentUrl != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => TourQrPaymentScreen(
+                        tour: widget.tour,
+                        schedule: widget.schedule,
+                        departureDate: widget.departureDate ?? DateTime.now(),
+                        adults: widget.adults,
+                        children: widget.children,
+                        totalPrice: (widget.adults *
+                                (widget.schedule.adultPrice ?? 0).toDouble()) +
+                            (widget.children *
+                                (widget.schedule.childrenPrice ?? 0)
+                                    .toDouble()),
+                        startTime: DateTime.now(),
+                        checkoutUrl: paymentUrl,
+                      ),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text('Tạo liên kết thanh toán thất bại.')),
+                  );
+                }
               }
             : null,
         style: ElevatedButton.styleFrom(
@@ -391,11 +423,14 @@ class _TourPaymentConfirmationScreenState
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
-        child: Text("Xác nhận và thanh toán",
-            style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 13.sp,
-                color: Colors.white)),
+        child: Text(
+          "Xác nhận và thanh toán",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 13.sp,
+            color: Colors.white,
+          ),
+        ),
       ),
     );
   }

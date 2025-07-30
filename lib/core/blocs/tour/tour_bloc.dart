@@ -2,7 +2,7 @@ import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:travelogue_mobile/core/repository/tour_repository.dart';
 import 'package:travelogue_mobile/model/composite/tour_detail_composite_model.dart';
-import 'package:travelogue_mobile/model/tour/tour_guide_model.dart';
+import 'package:travelogue_mobile/model/tour_guide/tour_guide_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_model.dart';
 
 part 'tour_event.dart';

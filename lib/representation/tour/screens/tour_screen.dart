@@ -40,27 +40,42 @@ context.read<TourBloc>().add(const GetAllToursEvent());
 
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_hasShownShowcase) return;
+@override
+void didChangeDependencies() {
+  super.didChangeDependencies();
+  if (_hasShownShowcase) return;
 
-    final args = ModalRoute.of(context)?.settings.arguments;
-    if (args is Map<String, dynamic>) {
-      if (args['justBooked'] == true) {
-        Future.delayed(const Duration(milliseconds: 800), () {
-          if (mounted && _folderKey.currentContext != null) {
-            ShowCaseWidget.of(context).startShowCase([_folderKey]);
-            _hasShownShowcase = true;
-          }
-        });
-      }
+  final args = ModalRoute.of(context)?.settings.arguments;
+  if (args is Map<String, dynamic>) {
+    if (args['justBooked'] == true) {
+      Future.delayed(const Duration(milliseconds: 800), () {
+        if (mounted && _folderKey.currentContext != null) {
+          ShowCaseWidget.of(context).startShowCase([_folderKey]);
+          _hasShownShowcase = true;
+        }
+      });
+    }
 
-      if (args['pendingPayment'] == true) {
+    if (args['pendingPayment'] == true) {
+      final DateTime startTime = DateTime.tryParse(args['startTime']) ?? DateTime.now();
+      final Duration diff = DateTime.now().difference(startTime);
+
+      if (diff.inMinutes < 5) {
         _pendingPayment = args;
+      } else {
+        _pendingPayment = null;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Liên kết thanh toán đã hết hạn. Vui lòng đặt lại.'),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        });
       }
     }
   }
+}
 
   @override
   void dispose() {
@@ -155,6 +170,8 @@ context.read<TourBloc>().add(const GetAllToursEvent());
                     children: _pendingPayment!['children'],
                     totalPrice: _pendingPayment!['totalPrice'],
                      startTime: DateTime.parse(_pendingPayment!['startTime']),
+                     checkoutUrl: _pendingPayment!['paymentLink'], 
+                     
                   ),
                 ),
               );

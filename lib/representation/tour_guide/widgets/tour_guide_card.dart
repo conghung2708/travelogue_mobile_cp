@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import 'package:sizer/sizer.dart';
-import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
-import 'package:travelogue_mobile/model/enums/tour_guide_status_enum.dart';
-import 'package:travelogue_mobile/model/tour_guide_test_model.dart';
-import 'package:travelogue_mobile/core/constants/color_constants.dart';
-import 'package:travelogue_mobile/representation/home/widgets/title_widget.dart';
 import 'package:intl/intl.dart';
+import 'package:sizer/sizer.dart';
+import 'package:travelogue_mobile/core/constants/color_constants.dart';
+import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
+import 'package:travelogue_mobile/model/tour_guide/tour_guide_model.dart';
 
 class TourGuideCard extends StatelessWidget {
-  final TourGuideTestModel guide;
+  final TourGuideModel guide;
+
   const TourGuideCard({super.key, required this.guide});
 
   @override
@@ -36,12 +34,19 @@ class TourGuideCard extends StatelessWidget {
               topLeft: Radius.circular(4.w),
               topRight: Radius.circular(4.w),
             ),
-            child: Image.asset(
-              guide.avatarUrl,
-              height: 18.h,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            ),
+            child: guide.avatarUrl != null && guide.avatarUrl!.isNotEmpty
+                ? Image.network(
+                    guide.avatarUrl!,
+                    height: 18.h,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  )
+                : Image.asset(
+                    AssetHelper.img_default,
+                    height: 18.h,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
           ),
           Padding(
             padding: EdgeInsets.all(3.w),
@@ -49,7 +54,7 @@ class TourGuideCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  guide.name,
+                  guide.userName ?? "Không rõ tên",
                   style: TextStyle(
                     fontSize: 15.sp,
                     fontWeight: FontWeight.bold,
@@ -57,45 +62,67 @@ class TourGuideCard extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: 0.5.h),
-                Row(
-                  children: [
-                    Icon(Icons.star, size: 11.sp, color: Colors.amber),
-                    SizedBox(width: 1.w),
-                    Text(
-                      "${guide.rating} • ${guide.reviewsCount} đánh giá",
-                      style: TextStyle(color: Colors.black54, fontSize: 12.sp),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 0.5.h),
-                Text(
-                  "${currencyFormat.format(guide.price)} / ngày",
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    color: Colors.green[700],
-                    fontWeight: FontWeight.w600,
+                if (guide.sexText != null || guide.sex != null)
+                  Row(
+                    children: [
+                      Icon(
+                        guide.sex == 1 ? Icons.female : Icons.male,
+                        size: 13.sp,
+                        color: guide.sex == 1 ? Colors.pinkAccent : Colors.blue,
+                      ),
+                      SizedBox(width: 1.w),
+                      Text(
+                        guide.sexText ??
+                            (guide.sex == 1 ? "Nữ" : "Nam"),
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
+
+                SizedBox(height: 0.5.h),
+                if (guide.rating != null)
+                  Row(
+                    children: [
+                      Icon(Icons.star, size: 11.sp, color: Colors.amber),
+                      SizedBox(width: 1.w),
+                      Text(
+                        "${guide.rating!.toStringAsFixed(1)} điểm đánh giá",
+                        style: TextStyle(
+                          color: Colors.black54,
+                          fontSize: 12.sp,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                SizedBox(height: 0.5.h),
+                if (guide.price != null)
+                  Text(
+                    "${currencyFormat.format(guide.price)} / ngày",
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      color: Colors.green[700],
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+
                 SizedBox(height: 0.8.h),
-                Wrap(
-                  spacing: 2.w,
-                  runSpacing: 0.5.h,
-                  children: guide.tags.map((tag) {
-                    return Container(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 3.w, vertical: 0.6.h),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        tag,
-                        style:
-                            TextStyle(fontSize: 12.sp, color: Colors.black87),
-                      ),
-                    );
-                  }).toList(),
-                ),
+                if (guide.introduction != null &&
+                    guide.introduction!.isNotEmpty)
+                  Text(
+                    guide.introduction!,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: Colors.black54,
+                      height: 1.4,
+                    ),
+                  ),
+
                 SizedBox(height: 1.5.h),
                 SizedBox(
                   width: double.infinity,
@@ -113,7 +140,6 @@ class TourGuideCard extends StatelessWidget {
                     ),
                     child: ElevatedButton(
                       onPressed: () {
-                        // TODO: Thêm logic điều hướng
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.transparent,
@@ -138,7 +164,7 @@ class TourGuideCard extends StatelessWidget {
                 ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );
