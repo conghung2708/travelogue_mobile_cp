@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sizer/sizer.dart';
 import 'package:showcaseview/showcaseview.dart';
+import 'package:travelogue_mobile/core/blocs/booking/booking_bloc.dart';
+import 'package:travelogue_mobile/core/blocs/booking/booking_event.dart';
+import 'package:travelogue_mobile/core/blocs/booking/booking_state.dart';
 import 'package:travelogue_mobile/core/blocs/tour/tour_bloc.dart';
 import 'package:travelogue_mobile/core/constants/color_constants.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
+import 'package:travelogue_mobile/core/helpers/auth_helper.dart';
 import 'package:travelogue_mobile/model/tour/tour_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_schedule_model.dart';
+import 'package:travelogue_mobile/representation/auth/screens/login_screen.dart';
 import 'package:travelogue_mobile/representation/home/widgets/title_widget.dart';
-import 'package:travelogue_mobile/representation/order/screens/order_screen.dart';
+import 'package:travelogue_mobile/representation/booking/screens/my_booking_screen.dart';
 import 'package:travelogue_mobile/representation/tour/screens/tour_qr_payment_screen.dart';
 import 'package:travelogue_mobile/representation/tour/widgets/tour_mansory_grid.dart';
 import 'package:travelogue_mobile/representation/trip_plan/screens/my_trip_plan_screen.dart';
@@ -36,46 +42,52 @@ class _TourScreenState extends State<TourScreen>
       duration: const Duration(seconds: 3),
     )..repeat();
 
-context.read<TourBloc>().add(const GetAllToursEvent());
-
+    context.read<TourBloc>().add(const GetAllToursEvent());
+    _checkAndShowShowcase();
   }
 
-@override
-void didChangeDependencies() {
-  super.didChangeDependencies();
-  if (_hasShownShowcase) return;
+  Future<void> _checkAndShowShowcase() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hasShown = prefs.getBool('hasShownTourShowcase') ?? false;
 
-  final args = ModalRoute.of(context)?.settings.arguments;
-  if (args is Map<String, dynamic>) {
-    if (args['justBooked'] == true) {
+    if (!hasShown && mounted) {
       Future.delayed(const Duration(milliseconds: 800), () {
-        if (mounted && _folderKey.currentContext != null) {
+        if (_folderKey.currentContext != null) {
           ShowCaseWidget.of(context).startShowCase([_folderKey]);
-          _hasShownShowcase = true;
+          prefs.setBool('hasShownTourShowcase', true);
         }
       });
     }
+  }
 
-    if (args['pendingPayment'] == true) {
-      final DateTime startTime = DateTime.tryParse(args['startTime']) ?? DateTime.now();
-      final Duration diff = DateTime.now().difference(startTime);
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
 
-      if (diff.inMinutes < 5) {
-        _pendingPayment = args;
-      } else {
-        _pendingPayment = null;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Liên kết thanh toán đã hết hạn. Vui lòng đặt lại.'),
-              backgroundColor: Colors.redAccent,
-            ),
-          );
-        });
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is Map<String, dynamic>) {
+      if (args['pendingPayment'] == true) {
+        final DateTime startTime =
+            DateTime.tryParse(args['startTime']) ?? DateTime.now();
+        final Duration diff = DateTime.now().difference(startTime);
+
+        if (diff.inMinutes < 5) {
+          _pendingPayment = args;
+        } else {
+          _pendingPayment = null;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text(
+                    'Liên kết thanh toán đã hết hạn. Vui lòng đặt lại.'),
+                backgroundColor: Colors.redAccent,
+              ),
+            );
+          });
+        }
       }
     }
   }
-}
 
   @override
   void dispose() {
@@ -116,10 +128,9 @@ void didChangeDependencies() {
                     if (state is TourLoading) {
                       return const Center(child: CircularProgressIndicator());
                     } else if (state is GetToursSuccess) {
-  final tours = state.tours;
-  return TourMasonryGrid(tours: tours); 
-}
- else if (state is TourError) {
+                      final tours = state.tours;
+                      return TourMasonryGrid(tours: tours);
+                    } else if (state is TourError) {
                       return Center(child: Text(state.message));
                     } else {
                       return const SizedBox();
@@ -130,65 +141,6 @@ void didChangeDependencies() {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildPendingPaymentBanner() {
-    return Container(
-      margin: EdgeInsets.only(top: 1.h, bottom: 2.h),
-      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
-      decoration: BoxDecoration(
-        color: Colors.orange.shade100.withOpacity(0.9),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.orange.shade300),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.warning_amber_rounded, color: Colors.deepOrange),
-          SizedBox(width: 3.w),
-          Expanded(
-            child: Text(
-              "Bạn còn một tour chưa thanh toán.\nNhấn để tiếp tục hoàn tất đặt chỗ ✨",
-              style: TextStyle(
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w500,
-                height: 1.5,
-              ),
-            ),
-          ),
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => TourQrPaymentScreen(
-                    tour: TourModel.fromJson(_pendingPayment!['tour']),
-                    schedule: TourScheduleModel.fromJson(_pendingPayment!['schedule']),
-                    departureDate: DateTime.parse(_pendingPayment!['departureDate']),
-                    adults: _pendingPayment!['adults'],
-                    children: _pendingPayment!['children'],
-                    totalPrice: _pendingPayment!['totalPrice'],
-                     startTime: DateTime.parse(_pendingPayment!['startTime']),
-                     checkoutUrl: _pendingPayment!['paymentLink'], 
-                     
-                  ),
-                ),
-              );
-            },
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
-              decoration: BoxDecoration(
-                color: Colors.orange,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                "Tiếp tục",
-                style: TextStyle(color: Colors.white, fontSize: 12.sp),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -230,7 +182,48 @@ void didChangeDependencies() {
           disableMovingAnimation: true,
           targetPadding: const EdgeInsets.all(4),
           child: GestureDetector(
-            onTap: () {},
+            onTap: () {
+              if (!isLoggedIn()) {
+                Navigator.pushNamed(
+                  context,
+                  LoginScreen.routeName,
+                  arguments: {'redirectRoute': TourScreen.routeName},
+                );
+                return;
+              }
+
+              context.read<BookingBloc>().add(GetAllMyBookingsEvent());
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => BlocBuilder<BookingBloc, BookingState>(
+                    builder: (context, state) {
+                      if (state is BookingListSuccess) {
+                        return MyBookingScreen(
+                          bookings: state.bookings
+                              .where((b) => b.bookingType == '1')
+                              .toList(),
+                        );
+                      } else if (state is BookingFailure) {
+                        return Scaffold(
+                          appBar: AppBar(title: const Text('Lịch sử đặt tour')),
+                          body: Center(
+                            child: Text('Đã xảy ra lỗi: ${state.error}'),
+                          ),
+                        );
+                      } else {
+                        return const Scaffold(
+                          body: Center(child: CircularProgressIndicator()),
+                        );
+                      }
+                    },
+                  ),
+                  settings:
+                      const RouteSettings(arguments: {'bookingType': '1'}),
+                ),
+              );
+            },
             child: _buildShowcaseButton(),
           ),
         )
@@ -437,6 +430,17 @@ void didChangeDependencies() {
                       SizedBox(height: 1.2.h),
                       GestureDetector(
                         onTap: () {
+                          if (!isLoggedIn()) {
+                            Navigator.pushNamed(
+                              context,
+                              LoginScreen.routeName,
+                              arguments: {
+                                'redirectRoute': TourScreen.routeName
+                              },
+                            );
+                            return;
+                          }
+
                           Navigator.pushNamed(
                               context, MyTripPlansScreen.routeName);
                         },
@@ -474,6 +478,66 @@ void didChangeDependencies() {
                   ),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPendingPaymentBanner() {
+    return Container(
+      margin: EdgeInsets.only(top: 1.h, bottom: 2.h),
+      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
+      decoration: BoxDecoration(
+        color: Colors.orange.shade100.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange.shade300),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.warning_amber_rounded, color: Colors.deepOrange),
+          SizedBox(width: 3.w),
+          Expanded(
+            child: Text(
+              "Bạn còn một tour chưa thanh toán.\nNhấn để tiếp tục hoàn tất đặt chỗ ✨",
+              style: TextStyle(
+                fontSize: 13.sp,
+                fontWeight: FontWeight.w500,
+                height: 1.5,
+              ),
+            ),
+          ),
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => TourQrPaymentScreen(
+                    tour: TourModel.fromJson(_pendingPayment!['tour']),
+                    schedule: TourScheduleModel.fromJson(
+                        _pendingPayment!['schedule']),
+                    departureDate:
+                        DateTime.parse(_pendingPayment!['departureDate']),
+                    adults: _pendingPayment!['adults'],
+                    children: _pendingPayment!['children'],
+                    totalPrice: _pendingPayment!['totalPrice'],
+                    startTime: DateTime.parse(_pendingPayment!['startTime']),
+                    checkoutUrl: _pendingPayment!['paymentLink'],
+                  ),
+                ),
+              );
+            },
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+              decoration: BoxDecoration(
+                color: Colors.orange,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                "Tiếp tục",
+                style: TextStyle(color: Colors.white, fontSize: 12.sp),
+              ),
             ),
           ),
         ],

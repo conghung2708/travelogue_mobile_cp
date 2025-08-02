@@ -3,9 +3,12 @@ import 'package:sizer/sizer.dart';
 import 'package:travelogue_mobile/core/constants/color_constants.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
 import 'package:travelogue_mobile/representation/tour/screens/tour_screen.dart';
+import 'package:travelogue_mobile/representation/tour_guide/screens/tour_guide_screen.dart';
 
 class PaymentSuccessScreen extends StatelessWidget {
-  const PaymentSuccessScreen({super.key});
+  final bool fromGuide;
+
+  const PaymentSuccessScreen({super.key, this.fromGuide = false});
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +48,8 @@ class PaymentSuccessScreen extends StatelessWidget {
                   ),
                   SizedBox(height: 2.5.h),
                   Container(
-                    padding: EdgeInsets.symmetric(vertical: 1.h, horizontal: 4.w),
+                    padding:
+                        EdgeInsets.symmetric(vertical: 1.h, horizontal: 4.w),
                     decoration: BoxDecoration(
                       color: Colors.green.shade50,
                       borderRadius: BorderRadius.circular(16),
@@ -78,15 +82,17 @@ class PaymentSuccessScreen extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(
-                        builder: (_) => const TourScreen(),
-                        settings: const RouteSettings(
-                          arguments: {'justBooked': true},
-                        ),
-                      ),
-                      (route) => false,
-                    );
+                    if (fromGuide) {
+                      Navigator.of(context).pushNamedAndRemoveUntil(
+                        TourGuideScreen.routeName,
+                        (route) => false,
+                      );
+                    } else {
+                      Navigator.of(context).pushNamedAndRemoveUntil(
+                        TourScreen.routeName,
+                        (route) => false,
+                      );
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: ColorPalette.primaryColor,

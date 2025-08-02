@@ -8,11 +8,13 @@ class OnCheckAccountEvent extends AuthenicateEvent {}
 class LoginEvent extends AuthenicateEvent {
   final String email;
   final String password;
-  BuildContext context;
+  final BuildContext context;
+  final String? redirectRoute;
   LoginEvent({
     required this.context,
     required this.email,
     required this.password,
+    this.redirectRoute,
   });
 }
 
@@ -83,8 +85,10 @@ class ResetPasswordEvent extends AuthenicateEvent {
 
 class LoginWithSocialEvent extends AuthenicateEvent {
   final BuildContext context;
+  final String? redirectRoute;
   LoginWithSocialEvent({
     required this.context,
+    this.redirectRoute,
   });
 }
 

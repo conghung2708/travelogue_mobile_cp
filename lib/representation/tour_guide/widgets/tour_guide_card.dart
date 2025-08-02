@@ -7,8 +7,13 @@ import 'package:travelogue_mobile/model/tour_guide/tour_guide_model.dart';
 
 class TourGuideCard extends StatelessWidget {
   final TourGuideModel guide;
+  final VoidCallback? onBookNow;
 
-  const TourGuideCard({super.key, required this.guide});
+  const TourGuideCard({
+    super.key,
+    required this.guide,
+    this.onBookNow,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -29,6 +34,7 @@ class TourGuideCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Ảnh đại diện
           ClipRRect(
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(4.w),
@@ -48,11 +54,13 @@ class TourGuideCard extends StatelessWidget {
                     fit: BoxFit.cover,
                   ),
           ),
+
           Padding(
             padding: EdgeInsets.all(3.w),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Tên
                 Text(
                   guide.userName ?? "Không rõ tên",
                   style: TextStyle(
@@ -61,7 +69,10 @@ class TourGuideCard extends StatelessWidget {
                     color: Colors.black87,
                   ),
                 ),
+
                 SizedBox(height: 0.5.h),
+
+                // Giới tính
                 if (guide.sexText != null || guide.sex != null)
                   Row(
                     children: [
@@ -72,8 +83,7 @@ class TourGuideCard extends StatelessWidget {
                       ),
                       SizedBox(width: 1.w),
                       Text(
-                        guide.sexText ??
-                            (guide.sex == 1 ? "Nữ" : "Nam"),
+                        guide.sexText ?? (guide.sex == 1 ? "Nữ" : "Nam"),
                         style: TextStyle(
                           fontSize: 12.sp,
                           color: Colors.black54,
@@ -82,6 +92,7 @@ class TourGuideCard extends StatelessWidget {
                     ],
                   ),
 
+                // Rating
                 SizedBox(height: 0.5.h),
                 if (guide.rating != null)
                   Row(
@@ -98,6 +109,7 @@ class TourGuideCard extends StatelessWidget {
                     ],
                   ),
 
+                // Giá
                 SizedBox(height: 0.5.h),
                 if (guide.price != null)
                   Text(
@@ -109,21 +121,35 @@ class TourGuideCard extends StatelessWidget {
                     ),
                   ),
 
-                SizedBox(height: 0.8.h),
+                // Divider nhẹ để tách mô tả
                 if (guide.introduction != null &&
-                    guide.introduction!.isNotEmpty)
-                  Text(
-                    guide.introduction!,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: Colors.black54,
-                      height: 1.4,
-                    ),
+                    guide.introduction!.isNotEmpty) ...[
+                  SizedBox(height: 1.5.h),
+                  Divider(color: Colors.grey.shade200, thickness: 1),
+                  SizedBox(height: 0.8.h),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.format_quote, color: Colors.grey, size: 16.sp),
+                      SizedBox(width: 2.w),
+                      Expanded(
+                        child: Text(
+                          guide.introduction!,
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: Colors.black87,
+                            height: 1.5,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
+                ],
 
-                SizedBox(height: 1.5.h),
+                SizedBox(height: 2.h),
                 SizedBox(
                   width: double.infinity,
                   child: Container(
@@ -139,8 +165,7 @@ class TourGuideCard extends StatelessWidget {
                       ],
                     ),
                     child: ElevatedButton(
-                      onPressed: () {
-                      },
+                      onPressed: onBookNow ?? () {},
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.transparent,
                         shadowColor: Colors.transparent,

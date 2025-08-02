@@ -43,4 +43,10 @@ class Endpoints {
 
   //Create Payment Link
   static const String createPaymentLink = 'api/booking/create-payment-link';
+
+  //Booking Tour Guide
+  static const String createBookingTourGuide = 'api/booking/create-booking-tour-guide';
+
+  //Get My Bookings
+  static const String getMyBookings = '/api/booking/my-bookings';
 }

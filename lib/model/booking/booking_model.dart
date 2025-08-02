@@ -1,3 +1,5 @@
+import 'package:travelogue_mobile/model/tour/tour_model.dart';
+
 class BookingModel {
   final String id;
   final String userId;
@@ -19,6 +21,8 @@ class BookingModel {
   final double discountAmount;
   final double finalPrice;
 
+  TourModel? tour;
+
   BookingModel({
     required this.id,
     required this.userId,
@@ -39,35 +43,40 @@ class BookingModel {
     required this.originalPrice,
     required this.discountAmount,
     required this.finalPrice,
+
+    this.tour, 
   });
 
-factory BookingModel.fromJson(Map<String, dynamic> json) {
-  return BookingModel(
-    id: json['id']?.toString() ?? '',
-    userId: json['userId']?.toString() ?? '',
-    tourId: json['tourId']?.toString(),
-    tourScheduleId: json['tourScheduleId']?.toString(),
-    tourGuideId: json['tourGuideId']?.toString(),
-    tripPlanId: json['tripPlanId']?.toString(),
-    workshopId: json['workshopId']?.toString(),
-    workshopScheduleId: json['workshopScheduleId']?.toString(),
-    paymentLinkId: json['paymentLinkId']?.toString(),
-    status: json['status']?.toString() ?? 'UNKNOWN',
-    statusText: json['statusText']?.toString(),
-    bookingType: json['bookingType']?.toString() ?? 'UNKNOWN',
-    bookingTypeText: json['bookingTypeText']?.toString(),
-   bookingDate: json['bookingDate'] != null
-    ? DateTime.parse(json['bookingDate'])
-    : throw const FormatException('bookingDate is missing'), 
-    cancelledAt: json['cancelledAt'] != null
-        ? DateTime.parse(json['cancelledAt'])
-        : null,
-    promotionId: json['promotionId']?.toString(),
-    originalPrice: (json['originalPrice'] ?? 0).toDouble(),
-    discountAmount: (json['discountAmount'] ?? 0).toDouble(),
-    finalPrice: (json['finalPrice'] ?? 0).toDouble(),
-  );
-}
+  factory BookingModel.fromJson(Map<String, dynamic> json) {
+    return BookingModel(
+      id: json['id']?.toString() ?? '',
+      userId: json['userId']?.toString() ?? '',
+      tourId: json['tourId']?.toString(),
+      tourScheduleId: json['tourScheduleId']?.toString(),
+      tourGuideId: json['tourGuideId']?.toString(),
+      tripPlanId: json['tripPlanId']?.toString(),
+      workshopId: json['workshopId']?.toString(),
+      workshopScheduleId: json['workshopScheduleId']?.toString(),
+      paymentLinkId: json['paymentLinkId']?.toString(),
+      status: json['status']?.toString() ?? 'UNKNOWN',
+      statusText: json['statusText']?.toString(),
+      bookingType: json['bookingType']?.toString() ?? 'UNKNOWN',
+      bookingTypeText: json['bookingTypeText']?.toString(),
+      bookingDate: json['bookingDate'] != null
+          ? DateTime.parse(json['bookingDate'])
+          : throw const FormatException('bookingDate is missing'),
+      cancelledAt: json['cancelledAt'] != null
+          ? DateTime.parse(json['cancelledAt'])
+          : null,
+      promotionId: json['promotionId']?.toString(),
+      originalPrice: (json['originalPrice'] ?? 0).toDouble(),
+      discountAmount: (json['discountAmount'] ?? 0).toDouble(),
+      finalPrice: (json['finalPrice'] ?? 0).toDouble(),
+
+
+      tour: null,
+    );
+  }
 
   Map<String, dynamic> toJson() {
     return {
@@ -90,6 +99,7 @@ factory BookingModel.fromJson(Map<String, dynamic> json) {
       'originalPrice': originalPrice,
       'discountAmount': discountAmount,
       'finalPrice': finalPrice,
+    
     };
   }
 }

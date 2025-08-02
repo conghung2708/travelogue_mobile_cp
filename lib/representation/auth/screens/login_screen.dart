@@ -9,6 +9,7 @@ import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
 import 'package:travelogue_mobile/core/utils/validator_utils.dart';
 import 'package:travelogue_mobile/representation/auth/screens/forgot_password_screen.dart';
 
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -29,6 +30,17 @@ class _LoginScreenState extends State<LoginScreen> {
       TextEditingController();
   final TextEditingController _fullNameController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+
+  late String? _redirectRoute;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    _redirectRoute = args != null && args['redirectRoute'] is String
+        ? args['redirectRoute'] as String
+        : null;
+  }
 
   void _toggleAuthMode() {
     setState(() {
@@ -84,11 +96,13 @@ class _LoginScreenState extends State<LoginScreen> {
             context: context,
             email: _emailController.text.trim(),
             password: _passwordController.text.trim(),
+            redirectRoute: _redirectRoute,
           ),
         );
       }
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

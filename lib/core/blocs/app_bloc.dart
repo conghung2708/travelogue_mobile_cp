@@ -69,17 +69,23 @@ class AppBloc {
     ),
   ];
 
-  void initial() {
-    if (UserLocal().getAccessToken.isNotEmpty) {
-      initialLoggedin();
-    }
-    homeBloc.add(GetLocationTypeEvent());
-    homeBloc.add(GetAllLocationEvent());
-    homeBloc.add(GetEventHomeEvent());
-    newsBloc.add(GetAllNewsEvent());
-    festivalBloc.add(GetAllFestivalEvent());
-    experienceBloc.add(GetAllExperienceEvent());
+ void initial() {
+  final token = UserLocal().getAccessToken;
+  print('AccessToken tại AppBloc.initial: $token');
+
+  authenicateBloc.add(OnCheckAccountEvent()); 
+
+  if (token.isNotEmpty) {
+    initialLoggedin();
   }
+
+  homeBloc.add(GetLocationTypeEvent());
+  homeBloc.add(GetAllLocationEvent());
+  homeBloc.add(GetEventHomeEvent());
+  newsBloc.add(GetAllNewsEvent());
+  festivalBloc.add(GetAllFestivalEvent());
+  experienceBloc.add(GetAllExperienceEvent());
+}
 
   void initialLoggedin() {
     homeBloc.add(GetLocationFavoriteEvent());

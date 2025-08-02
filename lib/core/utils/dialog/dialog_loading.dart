@@ -3,16 +3,15 @@ import 'package:sizer/sizer.dart';
 
 void showDialogLoading(BuildContext context, {String? title}) {
   showDialog(
-    routeSettings: const RouteSettings(name: "Dialog_Loading_Route"),
-    builder: (context) {
-      return PopScope(
-        canPop: false,
-        child: CircleLoading(title: title),
-      );
-    },
-    barrierColor: const Color(0x80000000),
-    barrierDismissible: false,
     context: context,
+    barrierDismissible: false,
+    barrierColor: const Color(0x80000000),
+    useRootNavigator: true,
+    routeSettings: const RouteSettings(name: "Dialog_Loading_Route"),
+    builder: (_) => PopScope(
+      canPop: false,
+      child: CircleLoading(title: title),
+    ),
   );
 }
 

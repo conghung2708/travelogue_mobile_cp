@@ -1,7 +1,10 @@
-part of 'main_bloc.dart';
+import 'package:equatable/equatable.dart';
 
-abstract class MainState {
-  List<Object> get props => [int];
+abstract class MainState extends Equatable {
+  const MainState();
+
+  @override
+  List<Object> get props => [];
 }
 
 class MainInitial extends MainState {
@@ -11,7 +14,7 @@ class MainInitial extends MainState {
 
 class MainDone extends MainState {
   final int currentScreen;
-  MainDone({required this.currentScreen});
+  const MainDone({required this.currentScreen});
 
   @override
   List<Object> get props => [currentScreen];
