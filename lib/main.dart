@@ -1,58 +1,55 @@
 import 'dart:async';
 import 'dart:ui';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:showcaseview/showcaseview.dart';
+import 'package:sizer/sizer.dart';
+
 import 'package:travelogue_mobile/core/blocs/app_bloc.dart';
-import 'package:travelogue_mobile/core/blocs/home/home_bloc.dart';
 import 'package:travelogue_mobile/core/constants/color_constants.dart';
 import 'package:travelogue_mobile/data/data_local/base_local_data.dart';
-import 'package:sizer/sizer.dart';
-import 'package:travelogue_mobile/representation/auth/screens/login_screen.dart';
-import 'package:travelogue_mobile/representation/hobby/screens/hobby_screen.dart';
-import 'package:travelogue_mobile/representation/home/screens/home_screen.dart';
-import 'package:travelogue_mobile/representation/main_screen.dart';
-import 'package:travelogue_mobile/representation/tour/screens/tour_screen.dart';
-import 'package:travelogue_mobile/representation/tour_guide/screens/tour_guide_screen.dart';
 import 'package:travelogue_mobile/routes.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:intl/date_symbol_data_local.dart';
+import 'package:travelogue_mobile/representation/main_screen.dart';
+
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+// ✅ Khai báo navigatorKey toàn cục
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 void main() async {
-  await runZonedGuarded(
-    () async {
-      final WidgetsBinding widgetsBinding =
-          WidgetsFlutterBinding.ensureInitialized();
-      await initializeDateFormatting('vi', null);
+  await runZonedGuarded(() async {
+    final WidgetsBinding widgetsBinding =
+        WidgetsFlutterBinding.ensureInitialized();
 
-      widgetsBinding.requestPerformanceMode(DartPerformanceMode.latency);
+    await initializeDateFormatting('vi', null);
 
-     
-      PaintingBinding.instance.imageCache.maximumSizeBytes =
-          1024 * 1024 * 100; 
+    widgetsBinding.requestPerformanceMode(DartPerformanceMode.latency);
 
-      SystemChrome.setSystemUIOverlayStyle(
-        const SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
-        ),
-      );
+    PaintingBinding.instance.imageCache.maximumSizeBytes = 1024 * 1024 * 100;
 
-      await Future.wait([
-        Firebase.initializeApp(),
-        Hive.initFlutter(),
-        BaseLocalData().initialBox(),
-      ]);
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+      ),
+    );
 
-     
-      runApp(const MyApp());
-    },
-    (error, stackTrace) async {},
-  );
+    await Future.wait([
+      Firebase.initializeApp(),
+      Hive.initFlutter(),
+      BaseLocalData().initialBox(),
+    ]);
+
+    runApp(const MyApp());
+  }, (error, stackTrace) async {
+    // Optional: log error here
+  });
 }
 
 Future<void> requestLocationPermission() async {
@@ -80,24 +77,24 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
- AppBloc.instance.initial();
+    AppBloc.instance.initial();
   }
 
- @override
-void dispose() {
-  super.dispose();
-  AppBloc.instance.cleanData();
-}
-
+  @override
+  void dispose() {
+    AppBloc.instance.cleanData();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
-    providers: AppBloc.instance.providers,
+      providers: AppBloc.instance.providers,
       child: Sizer(
         builder: (context, orientation, deviceType) {
           return ShowCaseWidget(
             builder: (context) => MaterialApp(
+              navigatorKey: navigatorKey, // ✅ dùng global key ở đây
               title: 'Travelogue',
               theme: ThemeData(
                 fontFamily: 'Roboto',
@@ -123,7 +120,7 @@ void dispose() {
               ],
               locale: const Locale('vi', 'VN'),
               routes: routes,
-              home: const TourScreen(), 
+              home: const MainScreen(),
             ),
           );
         },
@@ -131,10 +128,3 @@ void dispose() {
     );
   }
 }
-//TRO LY AO, AI
-//So thich (yen tinh, co nhieu canh xay, mon an ngon, di bao nhieu ngay)
-// ==> nen di dau
-//goi y lich trinh (khong can follow)
-//Tour guide (phai co chung nhan, biet tieng anh ==> kiem duyet (ben phia tay ninh))
-//Quan an , hotel, co so san xuat, dac san (gioi thieu, tiep khach booking) => optional nhung bat buoc.
-//Luu su kien ghi bam chi tiet

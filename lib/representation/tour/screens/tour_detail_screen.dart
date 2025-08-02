@@ -9,7 +9,7 @@ import 'package:travelogue_mobile/core/repository/tour_repository.dart';
 class TourDetailScreen extends StatefulWidget {
   static const routeName = '/tour_detail';
 
-  final TourModel tour; // từ danh sách lite
+  final TourModel tour; 
   final String image;
   final bool readOnly;
   final DateTime? departureDate;

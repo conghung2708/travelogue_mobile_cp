@@ -9,12 +9,12 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
   BookingBloc(this.bookingRepository) : super(BookingInitial()) {
     on<CreateBookingTourEvent>(_onCreateBooking);
+    on<CreateTourGuideBookingEvent>(_onCreateTourGuideBooking);
     on<CreatePaymentLinkEvent>(_onCreatePaymentLink);
-    on<CreateBookingAndPaymentEvent>(_onCreateBookingAndPayment);
+    on<GetAllMyBookingsEvent>(_onGetAllMyBookings);
 
   }
 
-  /// Xử lý tạo booking tour
   Future<void> _onCreateBooking(
     CreateBookingTourEvent event,
     Emitter<BookingState> emit,
@@ -22,77 +22,69 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     emit(BookingLoading());
 
     try {
-      print('[📢 Bloc] Booking started...');
       final BookingModel? booking = await bookingRepository.createBooking(event.model);
-
       if (booking != null) {
-        print('[✅ Bloc] Booking success: ${booking.id}');
         emit(BookingSuccess(booking));
       } else {
-        print('[❌ Bloc] Booking failed: null returned');
         emit(const BookingFailure('Đặt tour thất bại. Vui lòng thử lại.'));
       }
     } catch (e) {
-      print('[‼️ Bloc] Exception: $e');
       emit(BookingFailure(e.toString()));
     }
   }
 
+  Future<void> _onCreateTourGuideBooking(
+    CreateTourGuideBookingEvent event,
+    Emitter<BookingState> emit,
+  ) async {
+    emit(BookingLoading());
+
+    try {
+      final BookingModel? booking = await bookingRepository.createGuideBooking(event.model);
+      if (booking != null) {
+        emit(BookingGuideSuccess(booking));
+      } else {
+        emit(const BookingFailure('Đặt hướng dẫn viên thất bại. Vui lòng thử lại.'));
+      }
+    } catch (e) {
+      emit(BookingFailure(e.toString()));
+    }
+  }
 
   Future<void> _onCreatePaymentLink(
     CreatePaymentLinkEvent event,
     Emitter<BookingState> emit,
   ) async {
-    emit(BookingLoading()); 
+    emit(BookingLoading());
 
     try {
-      print('[📢 Bloc] Creating payment link for bookingId: ${event.bookingId}');
       final String? paymentUrl = await bookingRepository.createPaymentLink(event.bookingId);
 
       if (paymentUrl != null) {
-        print('[✅ Bloc] Payment link success: $paymentUrl');
-        emit(PaymentLinkSuccess(paymentUrl));
+        if (event.fromGuide) {
+          emit(PaymentLinkGuideSuccess(paymentUrl));
+        } else {
+          emit(PaymentLinkSuccess(paymentUrl));
+        }
       } else {
-        print('[❌ Bloc] Payment link failed');
         emit(const BookingFailure('Tạo liên kết thanh toán thất bại.'));
       }
     } catch (e) {
-      print('[‼️ Bloc] Exception while creating payment link: $e');
       emit(BookingFailure(e.toString()));
     }
   }
 
-  Future<void> _onCreateBookingAndPayment(
-  CreateBookingAndPaymentEvent event,
+  Future<void> _onGetAllMyBookings(
+  GetAllMyBookingsEvent event,
   Emitter<BookingState> emit,
 ) async {
-  emit(BookingLoading());
+  emit(BookingListLoading());
 
   try {
-    print('[📢] Bắt đầu tạo booking...');
-    final booking = await bookingRepository.createBooking(event.model);
-
-    if (booking == null) {
-      emit(const BookingFailure('Tạo booking thất bại.'));
-      return;
-    }
-
-    print('[✅] Booking thành công. ID = ${booking.id}');
-    print('[📢] Tiếp tục tạo liên kết thanh toán...');
-
-    final paymentUrl = await bookingRepository.createPaymentLink(booking.id);
-
-    if (paymentUrl == null) {
-      emit(const BookingFailure('Tạo liên kết thanh toán thất bại.'));
-      return;
-    }
-
-    print('[✅] Payment link thành công: $paymentUrl');
-    emit(BookingWithPaymentSuccess(booking, paymentUrl));
+    final bookings = await bookingRepository.getAllMyBookings();
+    emit(BookingListSuccess(bookings));
   } catch (e) {
-    print('[‼️] Lỗi khi tạo booking và thanh toán: $e');
     emit(BookingFailure(e.toString()));
   }
 }
-
 }

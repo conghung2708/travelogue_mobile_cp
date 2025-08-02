@@ -167,7 +167,7 @@ class _FilterGuideSheetState extends State<FilterGuideSheet> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Hiển thị min-max nổi bật
+             
                         Row(
                           children: [
                             Container(
@@ -240,7 +240,6 @@ class _FilterGuideSheetState extends State<FilterGuideSheet> {
               ),
             ),
             _divider(),
-            // Rating ngoài slider, nâng giao diện
             Padding(
               padding: EdgeInsets.only(bottom: 0.5.h),
               child: Column(

@@ -46,7 +46,6 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
         _endDate = picked.end;
       });
 
-      // ✅ Dùng pushNamed thay vì pushReplacementNamed
       final result = await Navigator.pushNamed(
         context,
         SelectTripDayScreen.routeName,

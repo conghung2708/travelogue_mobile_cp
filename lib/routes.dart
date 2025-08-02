@@ -5,6 +5,7 @@ import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
 import 'package:travelogue_mobile/core/repository/booking_repository.dart';
 import 'package:travelogue_mobile/model/args/reviews_screen_args.dart';
 import 'package:travelogue_mobile/model/args/tour_calendar_args.dart';
+import 'package:travelogue_mobile/model/booking/booking_model.dart';
 import 'package:travelogue_mobile/model/composite/tour_detail_composite_model.dart';
 import 'package:travelogue_mobile/model/craft_village/workshop_test_model.dart';
 import 'package:travelogue_mobile/model/event_model.dart';
@@ -15,6 +16,7 @@ import 'package:travelogue_mobile/model/tour/tour_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_schedule_model.dart';
 import 'package:travelogue_mobile/representation/auth/screens/forgot_password_screen.dart';
 import 'package:travelogue_mobile/representation/auth/screens/login_screen.dart';
+import 'package:travelogue_mobile/representation/booking/screens/my_booking_screen.dart';
 import 'package:travelogue_mobile/representation/craft_village/screens/craft_village_detail_screen.dart';
 import 'package:travelogue_mobile/representation/event/screens/event_detail.dart';
 import 'package:travelogue_mobile/representation/event/screens/event_screen.dart';
@@ -23,7 +25,6 @@ import 'package:travelogue_mobile/representation/experience/screens/experience_s
 import 'package:travelogue_mobile/representation/festival/screens/festival_detail_screen.dart';
 import 'package:travelogue_mobile/representation/festival/screens/festival_screen.dart';
 import 'package:travelogue_mobile/representation/home/screens/home_screen.dart';
-import 'package:travelogue_mobile/representation/order/screens/order_screen.dart';
 import 'package:travelogue_mobile/representation/review/screens/reviews_screen.dart';
 import 'package:travelogue_mobile/representation/hotel/screens/hotel_detail_screen.dart';
 import 'package:travelogue_mobile/representation/intro/screens/intro_screen.dart';
@@ -41,6 +42,8 @@ import 'package:travelogue_mobile/representation/tour/screens/tour_schedule_cale
 import 'package:travelogue_mobile/representation/tour/screens/tour_screen.dart';
 import 'package:travelogue_mobile/representation/tour/screens/tour_team_selector_screen.dart';
 import 'package:travelogue_mobile/representation/tour/screens/tour_type_selector.dart';
+import 'package:travelogue_mobile/representation/tour_guide/screens/tour_guide_booking_confirmation_screen.dart';
+import 'package:travelogue_mobile/representation/tour_guide/screens/tour_guide_qr_payment_screen.dart';
 import 'package:travelogue_mobile/representation/trip_plan/screens/create_trip_screen.dart';
 import 'package:travelogue_mobile/representation/trip_plan/screens/select_place_for_day_screen.dart';
 import 'package:travelogue_mobile/representation/trip_plan/screens/select_tour_guide_screen.dart';
@@ -219,4 +222,47 @@ final Map<String, WidgetBuilder> routes = {
         workshop:
             ModalRoute.of(context)!.settings.arguments as WorkshopTestModel,
       ),
+
+  GuideBookingConfirmationScreen.routeName: (context) {
+  final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+  return GuideBookingConfirmationScreen(
+    guide: args['guide'],
+    startDate: args['startDate'],
+    endDate: args['endDate'],
+    adults: args['adults'],
+    children: args['children'],
+  );
+},
+
+TourGuideQrPaymentScreen.routeName: (context) {
+  final args = ModalRoute.of(context)?.settings.arguments;
+  if (args == null || args is! Map<String, dynamic>) {
+    return const Scaffold(
+      body: Center(child: Text('Thiếu dữ liệu thanh toán hướng dẫn viên')),
+    );
+  }
+
+  try {
+    return TourGuideQrPaymentScreen(
+      guide: args['guide'],
+      startDate: args['startDate'],
+      endDate: args['endDate'],
+      adults: args['adults'],
+      children: args['children'],
+      startTime: args['startTime'],
+      paymentUrl: args['paymentUrl'],
+    );
+  } catch (e) {
+    return Scaffold(
+      body: Center(child: Text('Lỗi dữ liệu: ${e.toString()}')),
+    );
+  }
+},
+
+MyBookingScreen.routeName: (context) {
+  final args = ModalRoute.of(context)!.settings.arguments
+      as List<BookingModel>;
+  return MyBookingScreen(bookings: args);
+},
+
 };

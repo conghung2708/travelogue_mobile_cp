@@ -52,4 +52,6 @@ class UserLocal {
       _box.put(StorageKey.account, accountModel.toJson());
     }
   }
+
+   bool get isLoggedIn => getAccessToken.isNotEmpty;
 }

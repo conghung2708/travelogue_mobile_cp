@@ -1,12 +1,16 @@
-part of 'main_bloc.dart';
+import 'package:equatable/equatable.dart';
 
-abstract class MainEvent {}
+abstract class MainEvent extends Equatable {
+  const MainEvent();
+
+  @override
+  List<Object?> get props => [];
+}
 
 class OnChangeIndexEvent extends MainEvent {
   final int indexChange;
-  final BuildContext context;
-  OnChangeIndexEvent({
-    required this.indexChange,
-    required this.context,
-  });
+  const OnChangeIndexEvent({required this.indexChange});
+
+  @override
+  List<Object> get props => [indexChange];
 }
