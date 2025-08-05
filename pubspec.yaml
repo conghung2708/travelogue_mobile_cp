@@ -78,6 +78,8 @@ dependencies:
   webview_flutter: ^4.7.0
   webview_flutter_wkwebview: ^3.16.1
   shared_preferences: ^2.5.3
+  flutter_tts: ^4.2.3
+  avatar_glow: ^3.0.1
 
   # Caching
   hive: ^2.2.3
