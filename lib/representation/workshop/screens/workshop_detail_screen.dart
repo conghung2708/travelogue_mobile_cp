@@ -200,7 +200,7 @@ class _WorkshopDetailScreenState extends State<WorkshopDetailScreen>
                                 s.scheduleId == widget.selectedScheduleId)
                             .toList()
                         : workshop.schedules,
-                    readOnly: widget.readOnly,
+                    readOnly: widget.readOnly, //Nhớ lọc theo ngày hiện tại
                   ),
                   // Hoạt động
                   WorkshopActivityTimeline(workshop.days),

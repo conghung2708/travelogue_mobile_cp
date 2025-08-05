@@ -59,6 +59,7 @@ import 'package:travelogue_mobile/representation/user/screens/otp_vertification_
 import 'package:travelogue_mobile/representation/user/screens/privacy_screen.dart';
 import 'package:travelogue_mobile/representation/user/screens/support_screen.dart';
 import 'package:travelogue_mobile/representation/user/screens/tay_ninh_predictor_screen.dart';
+import 'package:travelogue_mobile/representation/user/screens/tour_guide_request_screen.dart';
 import 'package:travelogue_mobile/representation/user/screens/travel_guide_screen.dart';
 import 'package:travelogue_mobile/representation/user/screens/user_profile_screen.dart';
 import 'package:travelogue_mobile/representation/workshop/screens/workshop_detail_screen.dart';
@@ -265,5 +266,9 @@ MyBookingScreen.routeName: (context) {
       as List<BookingModel>;
   return MyBookingScreen(bookings: args);
 },
+
+
+
+  TourGuideRequestScreen.routeName: (_) => const TourGuideRequestScreen(),
 
 };
