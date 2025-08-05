@@ -1,47 +1,65 @@
-// workshop_schedule_card.dart  – COMPACT PLUS v5 (human-touch dialog)
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sizer/sizer.dart';
 
 import 'package:travelogue_mobile/core/constants/color_constants.dart';
-import 'package:travelogue_mobile/model/craft_village/workshop_schedule_test_model.dart';
-import 'package:travelogue_mobile/model/craft_village/workshop_test_model.dart';
+import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
+import 'package:travelogue_mobile/model/workshop/schedule_model.dart';
+import 'package:travelogue_mobile/model/workshop/workshop_detail_model.dart';
 import 'package:travelogue_mobile/representation/workshop/screens/workshop_booking_screen.dart';
 
 class WorkshopScheduleCard extends StatelessWidget {
-  final WorkshopScheduleTestModel s;
-  final WorkshopTestModel w;
+  final WorkshopDetailModel workshop;
+  final ScheduleModel schedule;
+  final String workshopName;
+  final bool readOnly; 
+
   const WorkshopScheduleCard({
     super.key,
-    required this.s,
-    required this.w,
+    required this.workshop,
+    required this.schedule,
+    required this.workshopName,
+    this.readOnly = false, 
   });
 
-  /* ---------- GETTERS ---------- */
-  int  get _remain => s.maxParticipant - (s.currentBooked ?? 0);
-  bool get _full   => _remain <= 0;
-  double get _pct  => (s.currentBooked ?? 0) / s.maxParticipant;
-  DateTime get _st => DateTime.parse(s.startTime);
-  DateTime get _end=> DateTime.parse(s.endTime);
+  int get _remain =>
+      (schedule.maxParticipant ?? 0) - (schedule.currentBooked ?? 0);
+  bool get _full => _remain <= 0;
+  double get _pct =>
+      (schedule.currentBooked ?? 0) / (schedule.maxParticipant ?? 1);
+  DateTime? get _st => schedule.startTime;
+  DateTime? get _end => schedule.endTime;
 
   @override
   Widget build(BuildContext context) {
-    /* --- COMMON STRINGS --- */
-    final dateStr = DateFormat('dd/MM/yyyy').format(_st);
-    final timeStr = '${DateFormat.Hm().format(_st)} – ${DateFormat.Hm().format(_end)}';
+    if (_st == null || _end == null) {
+      return const SizedBox();
+    }
+
+    final fmt = NumberFormat("#,###");
+    final dateStr = DateFormat('dd/MM/yyyy').format(_st!);
+    final timeStr =
+        '${DateFormat.Hm().format(_st!)} – ${DateFormat.Hm().format(_end!)}';
+    final adultPriceStr = schedule.adultPrice != null
+        ? '${fmt.format(schedule.adultPrice)}đ'
+        : 'Liên hệ';
+    final childPriceStr = schedule.childrenPrice != null
+        ? '${fmt.format(schedule.childrenPrice)}đ'
+        : 'Liên hệ';
+
     final humanMsg = _full
         ? 'Rất tiếc, ca này đã đủ người.'
         : (_remain <= 5
             ? '👐 Mỗi đôi tay thêm vào là một câu chuyện mới.\n'
-              'Còn $_remain chỗ trống – bạn sẽ là phần ký ức tiếp theo?'
+                'Còn $_remain chỗ trống – bạn sẽ là phần ký ức tiếp theo?'
             : '🌾 Bạn sắp hoà mình vào nhịp sống làng nghề – '
-              'chúng tôi rất háo hức được đón bạn.\n\n'
-              'Bạn xác nhận tham gia ca này chứ?');
+                'chúng tôi rất háo hức được đón bạn.\n\n'
+                'Bạn xác nhận tham gia ca này chứ?');
 
     return InkWell(
       borderRadius: BorderRadius.circular(10),
       onTap: () async {
-        if (_full) return;                               // ngăn bấm ca full
+        if (_full || readOnly) return; 
 
         final ok = await showDialog<bool>(
           context: context,
@@ -52,7 +70,7 @@ class WorkshopScheduleCard extends StatelessWidget {
             date: dateStr,
             time: timeStr,
             onConfirm: () => Navigator.pop(context, true),
-            onCancel : () => Navigator.pop(context, false),
+            onCancel: () => Navigator.pop(context, false),
           ),
         );
 
@@ -60,65 +78,94 @@ class WorkshopScheduleCard extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => WorkshopBookingScreen(workshop: w, schedule: s),
+              builder: (_) => WorkshopBookingScreen(
+                workshop: workshop,
+                schedule: schedule,
+                workshopName: workshopName,
+              ),
             ),
           );
         }
       },
-
-      /* ---------- CARD UI ---------- */
       child: Container(
-        height: 12.h,
+        height: 14.h,
         padding: EdgeInsets.all(2.w),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(10),
           boxShadow: [
             BoxShadow(
-              blurRadius: 4, offset: const Offset(0, 2),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
               color: Colors.black.withOpacity(.08),
             )
           ],
         ),
         child: Row(
           children: [
-            /* ICON + LINE */
+            // Icon + line
             Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(Icons.calendar_today_rounded,
                     size: 14.sp, color: ColorPalette.primaryColor),
                 Container(
-                  width: .5.w, height: 7.h, margin: EdgeInsets.only(top: .3.h),
+                  width: .5.w,
+                  height: 8.h,
+                  margin: EdgeInsets.only(top: .3.h),
                   color: ColorPalette.primaryColor,
                 ),
               ],
             ),
             SizedBox(width: 3.w),
 
-            /* THUMB */
+            // Ảnh
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Image.asset(
-                w.imageList.first, width: 22.w, height: double.infinity,
-                fit: BoxFit.cover,
-              ),
+              child: (schedule.imageUrl ?? '').startsWith('http')
+                  ? Image.network(
+                      schedule.imageUrl ?? '',
+                      width: 22.w,
+                      height: double.infinity,
+                      fit: BoxFit.cover,
+                    )
+                  : Image.asset(
+                      (schedule.imageUrl != null &&
+                              schedule.imageUrl!.isNotEmpty)
+                          ? schedule.imageUrl!
+                          : AssetHelper.img_default,
+                      width: 22.w,
+                      height: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
             ),
             SizedBox(width: 3.w),
 
-            /* TEXT BLOCK */
+            // Text
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(dateStr,
-                      style: Theme.of(context).textTheme.labelLarge!
+                      style: Theme.of(context)
+                          .textTheme
+                          .labelLarge!
                           .copyWith(fontWeight: FontWeight.bold)),
-                  Text(w.name,
-                      maxLines: 1, overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodyMedium!
+                  Text(workshopName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyMedium!
                           .copyWith(fontWeight: FontWeight.w600)),
+                  Row(
+                    children: [
+                      _priceTag('Người lớn', adultPriceStr, Colors.orange[700]!),
+                      SizedBox(width: 2.w),
+                      _priceTag('Trẻ em', childPriceStr, Colors.green[700]!),
+                    ],
+                  ),
                   Row(
                     children: [
                       Text(timeStr,
@@ -126,7 +173,10 @@ class WorkshopScheduleCard extends StatelessWidget {
                       const Spacer(),
                       Text(
                         _full ? 'Hết chỗ' : 'Còn $_remain chỗ',
-                        style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodySmall!
+                            .copyWith(
                               fontWeight: FontWeight.w600,
                               color: _full
                                   ? Colors.redAccent
@@ -139,7 +189,7 @@ class WorkshopScheduleCard extends StatelessWidget {
               ),
             ),
 
-            /* PROGRESS CIRCLE */
+            // Progress
             SizedBox(
               width: 14.w,
               child: TweenAnimationBuilder<double>(
@@ -149,16 +199,23 @@ class WorkshopScheduleCard extends StatelessWidget {
                   alignment: Alignment.center,
                   children: [
                     SizedBox(
-                      width: 12.w, height: 12.w,
+                      width: 12.w,
+                      height: 12.w,
                       child: CircularProgressIndicator(
-                        value: value, strokeWidth: 2.5,
+                        value: value,
+                        strokeWidth: 2.5,
                         backgroundColor: Colors.grey.shade300,
                         valueColor: AlwaysStoppedAnimation(
-                          _full ? Colors.redAccent : ColorPalette.primaryColor),
+                          _full
+                              ? Colors.redAccent
+                              : ColorPalette.primaryColor,
+                        ),
                       ),
                     ),
                     Text('${(value * 100).round()}%',
-                        style: Theme.of(ctx).textTheme.bodySmall!
+                        style: Theme.of(ctx)
+                            .textTheme
+                            .bodySmall!
                             .copyWith(fontWeight: FontWeight.bold)),
                   ],
                 ),
@@ -169,9 +226,34 @@ class WorkshopScheduleCard extends StatelessWidget {
       ),
     );
   }
+
+  Widget _priceTag(String label, String price, Color color) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 0.4.h),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withOpacity(0.5)),
+      ),
+      child: Row(
+        children: [
+          Text(label,
+              style: TextStyle(
+                  fontSize: 10.5.sp,
+                  fontWeight: FontWeight.w500,
+                  color: color)),
+          SizedBox(width: 1.w),
+          Text(price,
+              style: TextStyle(
+                  fontSize: 10.5.sp,
+                  fontWeight: FontWeight.bold,
+                  color: color)),
+        ],
+      ),
+    );
+  }
 }
 
-/* ---------- BEAUTIFIED DIALOG ---------- */
 class _NiceDialog extends StatelessWidget {
   final String title, message, date, time;
   final VoidCallback onConfirm, onCancel;
@@ -194,17 +276,19 @@ class _NiceDialog extends StatelessWidget {
             borderRadius: BorderRadius.circular(18),
             gradient: LinearGradient(
               colors: [Colors.white, Colors.grey.shade50],
-              begin: Alignment.topLeft, end: Alignment.bottomRight,
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black12, blurRadius: 12, offset: Offset(0, 6))
+                  color: Colors.black12,
+                  blurRadius: 12,
+                  offset: Offset(0, 6))
             ],
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              /* TITLE */
               Row(
                 children: [
                   Icon(Icons.handshake_rounded,
@@ -221,7 +305,6 @@ class _NiceDialog extends StatelessWidget {
               ),
               SizedBox(height: 2.h),
 
-              /* CONTENT */
               Text(message,
                   style: TextStyle(fontSize: 12.5.sp, color: Colors.black87)),
               SizedBox(height: 1.5.h),
@@ -245,7 +328,6 @@ class _NiceDialog extends StatelessWidget {
               ),
               SizedBox(height: 2.h),
 
-              /* ACTIONS */
               Row(
                 children: [
                   Expanded(

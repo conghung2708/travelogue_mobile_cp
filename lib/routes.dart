@@ -218,10 +218,11 @@ final Map<String, WidgetBuilder> routes = {
   //   return OrderScreen(orders: args['orders'], isBooked: args['isBooked']);
   // },
 
-  WorkshopDetailScreen.routeName: (context) => WorkshopDetailScreen(
-        workshop:
-            ModalRoute.of(context)!.settings.arguments as WorkshopTestModel,
-      ),
+WorkshopDetailScreen.routeName: (context) {
+  final workshopId = ModalRoute.of(context)!.settings.arguments as String;
+  return WorkshopDetailScreen(workshopId: workshopId);
+},
+
 
   GuideBookingConfirmationScreen.routeName: (context) {
   final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;

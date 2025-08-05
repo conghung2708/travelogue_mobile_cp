@@ -13,11 +13,12 @@ class LocationModel {
   final int? rating;
   final String? openTime;
   final String? closeTime;
-  final String? category; 
+  final String? category;
   final String? districtId;
   final String? districtName;
   final List<MediaModel>? medias;
   final bool isLiked;
+  final String? address;
 
   LocationModel({
     this.id,
@@ -34,6 +35,7 @@ class LocationModel {
     this.districtName,
     this.medias,
     this.isLiked = false,
+    this.address,
   });
 
   LocationModel copyWith({
@@ -51,6 +53,7 @@ class LocationModel {
     String? districtName,
     List<MediaModel>? medias,
     bool? isLiked,
+    String? address,
   }) {
     return LocationModel(
       id: id ?? this.id,
@@ -67,6 +70,7 @@ class LocationModel {
       districtName: districtName ?? this.districtName,
       medias: medias ?? this.medias,
       isLiked: isLiked ?? this.isLiked,
+      address: address ?? this.address,
     );
   }
 
@@ -83,14 +87,13 @@ class LocationModel {
           : int.tryParse(map['rating']?.toString() ?? ''),
       openTime: map['openTime']?.toString(),
       closeTime: map['closeTime']?.toString(),
-      category: map['category']?.toString(), 
+      category: map['category']?.toString(),
       districtId: map['districtId']?.toString(),
       districtName: map['districtName']?.toString(),
       medias: (map['medias'] != null && map['medias'] is List)
-          ? (map['medias'] as List)
-              .map((e) => MediaModel.fromMap(e))
-              .toList()
+          ? (map['medias'] as List).map((e) => MediaModel.fromMap(e)).toList()
           : [],
+      address: map['address']?.toString(),
     );
   }
 
@@ -109,6 +112,7 @@ class LocationModel {
       'districtId': districtId,
       'districtName': districtName,
       'medias': medias?.map((e) => e.toMap()).toList(),
+      'address': address,
     };
   }
 
@@ -140,6 +144,7 @@ class LocationModel {
             other.districtName == districtName &&
             listEquals(other.medias, medias) &&
             other.isLiked == isLiked);
+            
   }
 
   @override
@@ -161,10 +166,8 @@ class LocationModel {
   }
 
   String get imgUrlFirst => (medias?.isNotEmpty ?? false)
-      ? (medias!.firstWhere(
-              (e) => e.mediaUrl?.isNotEmpty ?? false,
-              orElse: () => MediaModel(mediaUrl: '')))
-          .mediaUrl ??
+      ? (medias!.firstWhere((e) => e.mediaUrl?.isNotEmpty ?? false,
+              orElse: () => MediaModel(mediaUrl: ''))).mediaUrl ??
           ''
       : '';
 

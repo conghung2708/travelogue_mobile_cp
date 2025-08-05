@@ -43,7 +43,7 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
-     AppBloc.homeBloc.add(GetAllLocationEvent());
+    AppBloc.homeBloc.add(GetAllLocationEvent());
     wf = WeatherFactory(apiKey, language: Language.VIETNAMESE);
     _getWeather();
     _sunController = AnimationController(
@@ -237,10 +237,10 @@ class _HomeScreenState extends State<HomeScreen>
                     child: BlocBuilder<HomeBloc, HomeState>(
                       builder: (context, state) {
                         if (state is GetHomeSuccess) {
-                        
                           final List<LocationModel> listLocation =
                               state.locations;
-                              print('🏡 UI nhận được địa điểm: ${state.locations.length}');
+                          print(
+                              '🏡 UI nhận được địa điểm: ${state.locations.length}');
                           final List<EventModel> listEvents = state.events;
                           // final Set<String> uniqueCategories =
                           //     listLocation.expan d((e) {
@@ -256,69 +256,83 @@ class _HomeScreenState extends State<HomeScreen>
                               Padding(
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: kMediumPadding),
-                           child: placeCategories.isNotEmpty
-    ? SizedBox(
-        height: 100,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(),
-          itemCount: placeCategories.length,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          separatorBuilder: (context, index) => const SizedBox(width: 12),
-          itemBuilder: (context, index) {
-            final category = placeCategories[index];
-            return GestureDetector(
-              onTap: () {
-                AppBloc.homeBloc.add(
-                  FilterLocationByCategoryEvent(category: category.title),
-                );
-                setState(() {
-                  indexTypeLocation = index;
-                });
-              },
-              child: Container(
-                width: 120,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: category.color.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: indexTypeLocation == index
-                        ? category.color
-                        : Colors.transparent,
-                    width: 2,
-                  ),
-                ),
-                padding: const EdgeInsets.all(8),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Image.asset(
-                      category.image,
-                      width: 28,
-                      height: 28,
-                      fit: BoxFit.contain,
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      category.title,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        ),
-      )
-    : const Center(child: Text('Không có danh mục địa điểm')),
-
+                                child: placeCategories.isNotEmpty
+                                    ? SizedBox(
+                                        height: 100,
+                                        child: ListView.separated(
+                                          scrollDirection: Axis.horizontal,
+                                          physics:
+                                              const BouncingScrollPhysics(),
+                                          itemCount: placeCategories.length,
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 16),
+                                          separatorBuilder: (context, index) =>
+                                              const SizedBox(width: 12),
+                                          itemBuilder: (context, index) {
+                                            final category =
+                                                placeCategories[index];
+                                            return GestureDetector(
+                                              onTap: () {
+                                                AppBloc.homeBloc.add(
+                                                  FilterLocationByCategoryEvent(
+                                                      category: category.title),
+                                                );
+                                                setState(() {
+                                                  indexTypeLocation = index;
+                                                });
+                                              },
+                                              child: Container(
+                                                width: 120,
+                                                height: 80,
+                                                decoration: BoxDecoration(
+                                                  color: category.color
+                                                      .withOpacity(0.2),
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                  border: Border.all(
+                                                    color: indexTypeLocation ==
+                                                            index
+                                                        ? category.color
+                                                        : Colors.transparent,
+                                                    width: 2,
+                                                  ),
+                                                ),
+                                                padding:
+                                                    const EdgeInsets.all(8),
+                                                child: Column(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    Image.asset(
+                                                      category.image,
+                                                      width: 28,
+                                                      height: 28,
+                                                      fit: BoxFit.contain,
+                                                    ),
+                                                    const SizedBox(height: 6),
+                                                    Text(
+                                                      category.title,
+                                                      style: const TextStyle(
+                                                        fontSize: 11,
+                                                        fontWeight:
+                                                            FontWeight.w500,
+                                                      ),
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      maxLines: 2,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      )
+                                    : const Center(
+                                        child:
+                                            Text('Không có danh mục địa điểm')),
                               ),
                               const SizedBox(height: kDefaultPadding),
                               HotLocations(places: listLocation),

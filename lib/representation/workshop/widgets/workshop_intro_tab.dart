@@ -2,18 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:sizer/sizer.dart';
 
-import 'package:travelogue_mobile/model/craft_village/workshop_test_model.dart';
-import 'package:travelogue_mobile/model/craft_village/craft_village_model.dart';
-
+import 'package:travelogue_mobile/model/workshop/workshop_detail_model.dart';
 
 class WorkshopIntroTab extends StatefulWidget {
-  final WorkshopTestModel workshop;
-  final CraftVillageModel? village;
+  final WorkshopDetailModel workshop;
 
   const WorkshopIntroTab({
     super.key,
     required this.workshop,
-    this.village,
   });
 
   @override
@@ -27,7 +23,7 @@ class _WorkshopIntroTabState extends State<WorkshopIntroTab> {
   @override
   void initState() {
     super.initState();
-    images = widget.workshop.imageList;
+    images = []; 
   }
 
   @override
@@ -71,6 +67,22 @@ class _WorkshopIntroTabState extends State<WorkshopIntroTab> {
             SizedBox(height: 3.h),
           ],
 
+          // Mô tả ngắn
+          if (widget.workshop.description != null &&
+              widget.workshop.description!.trim().isNotEmpty)
+            Padding(
+              padding: EdgeInsets.only(bottom: 2.h),
+              child: Text(
+                widget.workshop.description!,
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+
+ 
           Card(
             elevation: 3,
             shape: RoundedRectangleBorder(
@@ -82,7 +94,7 @@ class _WorkshopIntroTabState extends State<WorkshopIntroTab> {
                 data: (widget.workshop.content != null &&
                         widget.workshop.content!.trim().isNotEmpty)
                     ? widget.workshop.content!
-                    : '_Chưa có mô tả_',
+                    : '_Chưa có mô tả chi tiết_',
                 styleSheet: MarkdownStyleSheet(
                   p: TextStyle(fontSize: 14.sp, color: Colors.black87),
                   h1: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.bold),
@@ -94,14 +106,13 @@ class _WorkshopIntroTabState extends State<WorkshopIntroTab> {
           ),
           SizedBox(height: 3.h),
 
-        
-          if (widget.village != null) _buildContactCard(widget.village!),
+          if (widget.workshop.craftVillageName != null)
+            _buildContactCard(widget.workshop.craftVillageName!),
         ],
       ),
     );
   }
 
- 
   Widget _buildImage(String path) {
     final isNetwork = path.startsWith('http');
     return isNetwork
@@ -109,8 +120,7 @@ class _WorkshopIntroTabState extends State<WorkshopIntroTab> {
         : Image.asset(path, fit: BoxFit.cover);
   }
 
-  
-  Widget _buildContactCard(CraftVillageModel village) => Card(
+  Widget _buildContactCard(String villageName) => Card(
         color: Colors.blue.shade50,
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -119,49 +129,18 @@ class _WorkshopIntroTabState extends State<WorkshopIntroTab> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Liên hệ làng nghề',
+              Text('Làng nghề',
                   style: TextStyle(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w700,
                       color: Colors.blue.shade700)),
-              SizedBox(height: 2.h),
-              _ContactRow(icon: Icons.phone, text: village.phoneNumber ?? ''),
-              _ContactRow(icon: Icons.email_rounded, text: village.email ?? ''),
-              if (village.website != null)
-                _ContactRow(icon: Icons.language_rounded, text: village.website!),
-              if (village.address != null)
-                _ContactRow(icon: Icons.location_on_rounded, text: village.address!),
+              SizedBox(height: 1.5.h),
+              Text(
+                villageName,
+                style: TextStyle(fontSize: 14.sp, color: Colors.black87),
+              ),
             ],
           ),
         ),
       );
-}
-
-class _ContactRow extends StatelessWidget {
-  final IconData icon;
-  final String text;
-
-  const _ContactRow({required this.icon, required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 1.2.h),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 20.sp,
-            child: Icon(icon, size: 16.sp, color: Colors.blue),
-          ),
-          SizedBox(width: 2.w),
-          Expanded(
-            child: Text(text,
-                style: TextStyle(fontSize: 14.sp, color: Colors.black87),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis),
-          ),
-        ],
-      ),
-    );
-  }
 }

@@ -10,6 +10,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   BookingBloc(this.bookingRepository) : super(BookingInitial()) {
     on<CreateBookingTourEvent>(_onCreateBooking);
     on<CreateTourGuideBookingEvent>(_onCreateTourGuideBooking);
+    on<CreateWorkshopBookingEvent>(_onCreateWorkshopBooking);
     on<CreatePaymentLinkEvent>(_onCreatePaymentLink);
     on<GetAllMyBookingsEvent>(_onGetAllMyBookings);
 
@@ -87,4 +88,29 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     emit(BookingFailure(e.toString()));
   }
 }
+  Future<void> _onCreateWorkshopBooking(
+    CreateWorkshopBookingEvent event,
+    Emitter<BookingState> emit,
+  ) async {
+    emit(BookingLoading());
+
+    try {
+      final booking = await bookingRepository.createWorkshopBooking(
+        workshopId: event.workshopId,
+        workshopScheduleId: event.workshopScheduleId,
+        promotionCode: event.promotionCode,
+        adultCount: event.adultCount,
+        childrenCount: event.childrenCount,
+      );
+
+      if (booking != null) {
+        emit(WorkshopBookingSuccess(booking));
+      } else {
+        emit(const BookingFailure('Đặt workshop thất bại. Vui lòng thử lại.'));
+      }
+    } catch (e) {
+      emit(BookingFailure(e.toString()));
+    }
+  }
 }
+

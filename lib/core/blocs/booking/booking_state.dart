@@ -61,3 +61,10 @@ class BookingListSuccess extends BookingState {
   List<Object?> get props => [bookings];
 }
 
+class WorkshopBookingSuccess extends BookingState {
+  final BookingModel booking;
+  const WorkshopBookingSuccess(this.booking);
+
+  @override
+  List<Object?> get props => [booking];
+}

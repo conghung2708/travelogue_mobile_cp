@@ -36,3 +36,29 @@ class CreateTourGuideBookingEvent extends BookingEvent {
 }
 
 class GetAllMyBookingsEvent extends BookingEvent {}
+
+
+class CreateWorkshopBookingEvent extends BookingEvent {
+  final String workshopId;
+  final String workshopScheduleId;
+  final String? promotionCode;
+  final int adultCount;
+  final int childrenCount;
+
+  const CreateWorkshopBookingEvent({
+    required this.workshopId,
+    required this.workshopScheduleId,
+    this.promotionCode,
+    required this.adultCount,
+    required this.childrenCount,
+  });
+
+  @override
+  List<Object?> get props => [
+        workshopId,
+        workshopScheduleId,
+        promotionCode,
+        adultCount,
+        childrenCount,
+      ];
+}
