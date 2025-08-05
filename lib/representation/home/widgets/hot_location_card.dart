@@ -10,6 +10,7 @@ import 'package:travelogue_mobile/core/utils/image_network_card.dart';
 import 'package:travelogue_mobile/data/data_local/user_local.dart';
 import 'package:travelogue_mobile/model/location_model.dart';
 import 'package:travelogue_mobile/representation/auth/screens/login_screen.dart';
+import 'package:travelogue_mobile/representation/craft_village/screens/craft_village_detail_screen.dart';
 import 'package:travelogue_mobile/representation/home/screens/place_detail_screen.dart';
 
 class HotLocationCard extends StatefulWidget {
@@ -43,10 +44,17 @@ class _HotLocationCardState extends State<HotLocationCard> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        Navigator.of(context).pushNamed(
-          PlaceDetailScreen.routeName,
-          arguments: widget.place,
-        );
+        if ((widget.place.category ?? '') == "Làng nghề") {
+          Navigator.of(context).pushNamed(
+            CraftVillageDetailScreen.routeName,
+            arguments: widget.place,
+          );
+        } else {
+          Navigator.of(context).pushNamed(
+            PlaceDetailScreen.routeName,
+            arguments: widget.place,
+          );
+        }
       },
       child: Padding(
         padding: EdgeInsets.symmetric(vertical: 15.sp),

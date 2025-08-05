@@ -139,6 +139,57 @@ Future<List<BookingModel>> getAllMyBookings() async {
   }
 }
 
+Future<BookingModel?> createWorkshopBooking({
+  required String workshopId,
+  required String workshopScheduleId,
+  String? promotionCode,
+  required int adultCount,
+  required int childrenCount,
+}) async {
+  final data = {
+    "workshopId": workshopId,
+    "workshopScheduleId": workshopScheduleId,
+    "promotionCode": promotionCode,
+    "adultCount": adultCount,
+    "childrenCount": childrenCount,
+  };
+
+  print('[📤 CREATE WORKSHOP BOOKING] Sending data: $data');
+
+  final response = await BaseRepository().postRoute(
+    gateway: Endpoints.createBookingWorkshop, 
+    data: data,
+  );
+
+  print('[📥 CREATE WORKSHOP BOOKING] Status: ${response.statusCode}');
+  print('[📥 CREATE WORKSHOP BOOKING] Data: ${response.data}');
+
+  if (response.statusCode == StatusCode.ok &&
+      response.data != null &&
+      response.data['data'] != null) {
+    try {
+      final dynamic rawData = response.data['data'];
+      if (rawData is Map<String, dynamic>) {
+        final booking = BookingModel.fromJson(rawData);
+        print('[✅ PARSE SUCCESS - OBJECT] Booking ID: ${booking.id}');
+        return booking;
+      }
+      if (rawData is List && rawData.isNotEmpty) {
+        final booking = BookingModel.fromJson(rawData[0]);
+        print('[✅ PARSE SUCCESS - LIST] Booking ID: ${booking.id}');
+        return booking;
+      }
+      print('[⚠️ Booking Error] Unexpected data format: $rawData');
+      return null;
+    } catch (e) {
+      print('[❌ PARSE ERROR] $e');
+      return null;
+    }
+  } else {
+    print('[⚠️ Booking Error] API response invalid');
+    return null;
+  }
+}
 
 
 

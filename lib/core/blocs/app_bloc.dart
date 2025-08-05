@@ -10,8 +10,10 @@ import 'package:travelogue_mobile/core/blocs/news/news_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/search/search_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/tour/tour_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/tour_guide/tour_guide_bloc.dart';
+import 'package:travelogue_mobile/core/blocs/workshop/workshop_bloc.dart';
 import 'package:travelogue_mobile/core/repository/booking_repository.dart';
 import 'package:travelogue_mobile/core/repository/tour_guide_repository.dart';
+import 'package:travelogue_mobile/core/repository/workshop_repository.dart';
 import 'package:travelogue_mobile/core/trip_plan/bloc/trip_plan_bloc.dart';
 import 'package:travelogue_mobile/data/data_local/user_local.dart';
 import 'package:travelogue_mobile/representation/tour/widgets/tour_confirmed_action_card.dart';
@@ -27,8 +29,10 @@ class AppBloc {
   static final ExperienceBloc experienceBloc = ExperienceBloc();
   static final TripPlanBloc tripPlanBloc = TripPlanBloc();
   static final TourBloc tourBloc = TourBloc();
-  static final TourGuideBloc tourGuideBloc = TourGuideBloc(TourGuideRepository());
+  static final TourGuideBloc tourGuideBloc =
+      TourGuideBloc(TourGuideRepository());
   static final BookingBloc bookingBloc = BookingBloc(BookingRepository());
+  static final WorkshopBloc workshopBloc = WorkshopBloc(WorkshopRepository());
 
   List<BlocProvider> providers = [
     BlocProvider<MainBloc>(
@@ -64,28 +68,31 @@ class AppBloc {
     BlocProvider<TourGuideBloc>(
       create: (context) => tourGuideBloc,
     ),
-     BlocProvider<BookingBloc>(
+    BlocProvider<BookingBloc>(
       create: (context) => bookingBloc,
+    ),
+    BlocProvider<WorkshopBloc>(
+      create: (context) => workshopBloc,
     ),
   ];
 
- void initial() {
-  final token = UserLocal().getAccessToken;
-  print('AccessToken tại AppBloc.initial: $token');
+  void initial() {
+    final token = UserLocal().getAccessToken;
+    print('AccessToken tại AppBloc.initial: $token');
 
-  authenicateBloc.add(OnCheckAccountEvent()); 
+    authenicateBloc.add(OnCheckAccountEvent());
 
-  if (token.isNotEmpty) {
-    initialLoggedin();
+    if (token.isNotEmpty) {
+      initialLoggedin();
+    }
+
+    homeBloc.add(GetLocationTypeEvent());
+    homeBloc.add(GetAllLocationEvent());
+    homeBloc.add(GetEventHomeEvent());
+    newsBloc.add(GetAllNewsEvent());
+    festivalBloc.add(GetAllFestivalEvent());
+    experienceBloc.add(GetAllExperienceEvent());
   }
-
-  homeBloc.add(GetLocationTypeEvent());
-  homeBloc.add(GetAllLocationEvent());
-  homeBloc.add(GetEventHomeEvent());
-  newsBloc.add(GetAllNewsEvent());
-  festivalBloc.add(GetAllFestivalEvent());
-  experienceBloc.add(GetAllExperienceEvent());
-}
 
   void initialLoggedin() {
     homeBloc.add(GetLocationFavoriteEvent());
@@ -110,6 +117,7 @@ class AppBloc {
     tourBloc.close();
     tourGuideBloc.close();
     bookingBloc.close();
+    workshopBloc.close();
   }
 
   ///Singleton factory

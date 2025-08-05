@@ -1,18 +1,22 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:sizer/sizer.dart';
 
-import 'package:travelogue_mobile/model/craft_village/craft_village_model.dart';
-import 'package:travelogue_mobile/model/craft_village/workshop_test_model.dart';
+import 'package:travelogue_mobile/model/location_model.dart';
 import 'package:travelogue_mobile/model/review_craft_village_test.dart';
 import 'package:travelogue_mobile/representation/craft_village/widgets/masonry_item.dart';
 import 'package:travelogue_mobile/representation/home/widgets/rating_button_widget.dart';
 import 'package:travelogue_mobile/representation/home/widgets/title_widget.dart';
 import 'package:travelogue_mobile/representation/review/screens/reviews_screen.dart';
 import 'package:travelogue_mobile/representation/widgets/image_grid_preview.dart';
+
+import 'package:travelogue_mobile/core/blocs/workshop/workshop_bloc.dart';
+import 'package:travelogue_mobile/core/blocs/workshop/workshop_event.dart';
+import 'package:travelogue_mobile/core/blocs/workshop/workshop_state.dart';
 
 class CraftVillageDetailScreen extends StatefulWidget {
   const CraftVillageDetailScreen({super.key});
@@ -25,7 +29,7 @@ class CraftVillageDetailScreen extends StatefulWidget {
 
 class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
     with TickerProviderStateMixin {
-  CraftVillageModel? village;
+  LocationModel? village;
   double currentRating = 4.5;
   late final TabController _tabController;
 
@@ -46,7 +50,14 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
     super.didChangeDependencies();
     if (village == null) {
       final args = ModalRoute.of(context)?.settings.arguments;
-      if (args is CraftVillageModel) setState(() => village = args);
+      if (args is LocationModel) {
+        setState(() => village = args);
+
+        // 🔹 Gọi API workshop ngay khi nhận village
+        context
+            .read<WorkshopBloc>()
+            .add(GetWorkshopsEvent(craftVillageId: args.id));
+      }
     }
   }
 
@@ -62,7 +73,7 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(village!.name,
+                    Text(village!.name ?? '',
                         style: TextStyle(
                             fontSize: 18.sp,
                             fontWeight: FontWeight.bold,
@@ -73,9 +84,12 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
                           color: Colors.redAccent, size: 18.sp),
                       SizedBox(width: 1.w),
                       Expanded(
-                          child: Text(village!.address ?? '',
-                              style: TextStyle(
-                                  fontSize: 14.sp, color: Colors.grey[800]))),
+                        child: Text(
+                          '${village!.address ?? ''}${village!.districtName != null ? ', ${village!.districtName}' : ''}',
+                          style: TextStyle(
+                              fontSize: 14.sp, color: Colors.grey[800]),
+                        ),
+                      ),
                     ]),
                   ],
                 ),
@@ -88,8 +102,7 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
                     MaterialPageRoute(
                         builder: (_) =>
                             ReviewsScreen<ReviewCraftVillageTestModel>(
-                                reviews: mockCraftVillageReviews,
-                                averageRating: currentRating)),
+                                reviews: [], averageRating: currentRating)),
                   );
                   if (res != null) setState(() => currentRating = res);
                 },
@@ -118,7 +131,7 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
             ),
           ),
           SizedBox(height: 1.h),
-          ImageGridPreview(images: village!.imageList),
+          ImageGridPreview(images: village!.listImages),
           SizedBox(height: 2.5.h),
           Padding(
             padding: EdgeInsets.only(right: 45.w),
@@ -126,31 +139,39 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
                 text: 'Thông tin ', text2: 'liên hệ :'),
           ),
           SizedBox(height: 1.h),
-          Text('📞 ${village!.phoneNumber}', style: TextStyle(fontSize: 14.sp)),
-          SizedBox(height: 0.8.h),
-          Text('✉️ ${village!.email}', style: TextStyle(fontSize: 14.sp)),
-          if (village!.website != null) ...[
-            SizedBox(height: 0.8.h),
-            Text('🌐 ${village!.website}', style: TextStyle(fontSize: 14.sp)),
-          ],
+          if (village!.openTime != null)
+            Text('🕒 Giờ mở cửa: ${village!.openTime}',
+                style: TextStyle(fontSize: 14.sp)),
+          if (village!.closeTime != null)
+            Text('🕒 Giờ đóng cửa: ${village!.closeTime}',
+                style: TextStyle(fontSize: 14.sp)),
           SizedBox(height: 4.h),
         ],
       );
 
   Widget _buildWorkshopTab(ScrollController sc) {
-    final list =
-        workshops.where((w) => w.craftVillageId == village!.id).toList();
-
-    if (list.isEmpty) return const Center(child: Text('Chưa có workshop nào.'));
-
-    return MasonryGridView.count(
-      controller: sc,
-      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
-      crossAxisCount: 2,
-      mainAxisSpacing: 2.h,
-      crossAxisSpacing: 3.w,
-      itemCount: list.length,
-      itemBuilder: (_, i) => MasonryItem(workshop: list[i]),
+    return BlocBuilder<WorkshopBloc, WorkshopState>(
+      builder: (context, state) {
+        if (state is WorkshopLoading) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (state is WorkshopLoaded) {
+          if (state.workshops.isEmpty) {
+            return const Center(child: Text('Chưa có workshop nào.'));
+          }
+          return MasonryGridView.count(
+            controller: sc,
+            padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+            crossAxisCount: 2,
+            mainAxisSpacing: 2.h,
+            crossAxisSpacing: 3.w,
+            itemCount: state.workshops.length,
+            itemBuilder: (_, i) => MasonryItem(workshop: state.workshops[i]),
+          );
+        } else if (state is WorkshopError) {
+          return Center(child: Text("Lỗi: ${state.message}"));
+        }
+        return const SizedBox();
+      },
     );
   }
 
@@ -162,9 +183,15 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
 
     return Scaffold(
       body: Stack(children: [
-        Positioned.fill(
-            child: Image.asset(village!.imageList.first, fit: BoxFit.cover)),
-        Positioned(top: 4.h, left: 4.w, child: _BackButton()),
+        if (village!.listImages.isNotEmpty)
+          Positioned.fill(
+              child:
+                  Image.network(village!.listImages.first, fit: BoxFit.cover)),
+        Positioned(
+          top: 0,
+          left: 0,
+          child: _BackButton(),
+        ),
         DraggableScrollableSheet(
           initialChildSize: 0.4,
           maxChildSize: 0.93,
@@ -208,14 +235,22 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
 
 class _BackButton extends StatelessWidget {
   @override
-  Widget build(BuildContext context) => GestureDetector(
-        onTap: () => Navigator.pop(context),
-        child: Container(
-          padding: EdgeInsets.all(2.w),
-          decoration: BoxDecoration(
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.all(8),
+        child: GestureDetector(
+          onTap: () => Navigator.pop(context),
+          child: Container(
+            padding: EdgeInsets.all(8),
+            decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.85),
-              borderRadius: BorderRadius.circular(4.w)),
-          child: Icon(FontAwesomeIcons.arrowLeft, size: 16.sp),
+              borderRadius: BorderRadius.circular(30),
+            ),
+            child: Icon(FontAwesomeIcons.arrowLeft, size: 20),
+          ),
         ),
-      );
+      ),
+    );
+  }
 }

@@ -1,17 +1,24 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sizer/sizer.dart';
+
 import 'package:travelogue_mobile/core/constants/color_constants.dart';
-import 'package:travelogue_mobile/model/craft_village/workshop_schedule_test_model.dart';
-import 'package:travelogue_mobile/model/craft_village/workshop_test_model.dart';
+import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
+import 'package:travelogue_mobile/model/workshop/schedule_model.dart';
+import 'package:travelogue_mobile/model/workshop/workshop_detail_model.dart';
+import 'package:travelogue_mobile/representation/workshop/screens/workshop_payment_confirmation_screen.dart';
 
 class WorkshopBookingScreen extends StatefulWidget {
-  final WorkshopTestModel workshop;
-  final WorkshopScheduleTestModel schedule;
+  final String workshopName;
+  final ScheduleModel schedule;
+    final WorkshopDetailModel workshop; 
+
   const WorkshopBookingScreen({
     super.key,
-    required this.workshop,
+    required this.workshopName,
     required this.schedule,
+    required this.workshop,
   });
 
   @override
@@ -22,17 +29,17 @@ class _WorkshopBookingScreenState extends State<WorkshopBookingScreen> {
   int adultCount = 1;
   int childrenCount = 0;
 
-  int get maxSlot     => widget.schedule.maxParticipant;
-  int get booked      => widget.schedule.currentBooked ?? 0;
-  int get available   => maxSlot - booked;
+  int get maxSlot => widget.schedule.maxParticipant ?? 0;
+  int get booked => widget.schedule.currentBooked ?? 0;
+  int get available => maxSlot - booked;
   int get totalPeople => adultCount + childrenCount;
-  int get remaining   => available - totalPeople;
+  int get remaining => available - totalPeople;
 
   final fmt = NumberFormat('#,###');
 
   double get totalPrice =>
-      (adultCount * widget.schedule.adultPrice) +
-      (childrenCount * widget.schedule.childrenPrice);
+      (adultCount * (widget.schedule.adultPrice ?? 0)) +
+      (childrenCount * (widget.schedule.childrenPrice ?? 0));
 
   bool canAdd() => totalPeople < available;
 
@@ -49,8 +56,7 @@ class _WorkshopBookingScreenState extends State<WorkshopBookingScreen> {
   Widget build(BuildContext context) => Scaffold(
         body: Stack(
           children: [
-            Image.asset(widget.workshop.imageList.first,
-                height: 100.h, width: double.infinity, fit: BoxFit.cover),
+            _buildBackgroundImage(),
             Container(color: Colors.black.withOpacity(.55)),
             SafeArea(
               child: Padding(
@@ -64,7 +70,7 @@ class _WorkshopBookingScreenState extends State<WorkshopBookingScreen> {
                         style:
                             TextStyle(fontSize: 18.sp, color: Colors.white)),
                     SizedBox(height: 0.5.h),
-                    Text(widget.workshop.name,
+                    Text(widget.workshopName,
                         style: TextStyle(
                             fontSize: 15.sp,
                             fontWeight: FontWeight.bold,
@@ -73,11 +79,11 @@ class _WorkshopBookingScreenState extends State<WorkshopBookingScreen> {
                     SizedBox(height: 2.h),
                     _counter('Người lớn', adultCount, (v) {
                       setState(() => adultCount = v);
-                    }, widget.schedule.adultPrice, minAdult: 1),
+                    }, widget.schedule.adultPrice ?? 0, minAdult: 1),
                     SizedBox(height: 1.5.h),
                     _counter('Trẻ em', childrenCount, (v) {
                       setState(() => childrenCount = v);
-                    }, widget.schedule.childrenPrice, minAdult: 0),
+                    }, widget.schedule.childrenPrice ?? 0, minAdult: 0),
                     SizedBox(height: 1.5.h),
                     Text(
                       remaining >= 0
@@ -99,138 +105,133 @@ class _WorkshopBookingScreenState extends State<WorkshopBookingScreen> {
         ),
       );
 
+  Widget _buildBackgroundImage() {
+    final img = widget.schedule.imageUrl;
+    if (img != null && img.isNotEmpty && img.startsWith('http')) {
+      return Image.network(img,
+          height: 100.h, width: double.infinity, fit: BoxFit.cover);
+    }
+    return Image.asset(AssetHelper.img_lang_nghe_04_04,
+        height: 100.h, width: double.infinity, fit: BoxFit.cover);
+  }
 
   Widget _backBtn(BuildContext ctx) => Align(
         alignment: Alignment.centerLeft,
         child: CircleAvatar(
           backgroundColor: Colors.white24,
           child: IconButton(
-            icon:
-                const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                color: Colors.white),
             onPressed: () => Navigator.pop(ctx),
           ),
         ),
       );
 
- Widget _summaryCard() {
-  final d = DateFormat('dd/MM/yyyy')
-      .format(DateTime.parse(widget.schedule.startTime));
-  final t = '${DateFormat.Hm().format(DateTime.parse(widget.schedule.startTime))} – '
-      '${DateFormat.Hm().format(DateTime.parse(widget.schedule.endTime))}';
-  final note = widget.schedule.notes;
+  Widget _summaryCard() {
+    final d = widget.schedule.startTime != null
+        ? DateFormat('dd/MM/yyyy').format(widget.schedule.startTime!)
+        : '';
+    final t = (widget.schedule.startTime != null &&
+            widget.schedule.endTime != null)
+        ? '${DateFormat.Hm().format(widget.schedule.startTime!)} – ${DateFormat.Hm().format(widget.schedule.endTime!)}'
+        : '';
+    final note = widget.schedule.notes;
 
-  return Container(
-    margin: EdgeInsets.symmetric(vertical: 2.h),
-    padding: EdgeInsets.all(4.w),
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(20),
-      gradient: LinearGradient(
-        colors: [
-          Colors.white.withOpacity(0.70),
-          Colors.white.withOpacity(0.35)
-        ],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ),
-      border: Border.all(
-        width: .4.w,
-        color: ColorPalette.primaryColor.withOpacity(.3),
-      ),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(.12),
-          blurRadius: 14,
-          offset: const Offset(0, 5),
-        )
-      ],
-    ),
-    child: Row(
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: Image.asset(
-            widget.workshop.imageList.first,
-            width: 24.w,
-            height: 11.h,
-            fit: BoxFit.cover,
-          ),
-        ),
-        SizedBox(width: 4.w),
-
- 
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-       
-              _chip(Icons.location_on_rounded,  'Làng nghề'),
-
-              SizedBox(height: .6.h),
-
-              Row(
-                children: [
-                  const Icon(Icons.calendar_month, size: 12, color: Colors.black54),
-                  SizedBox(width: 1.w),
-                  Text(d, style: TextStyle(fontSize: 11.5.sp)),
-                ],
-              ),
-              SizedBox(height: .3.h),
-              Row(
-                children: [
-                  const Icon(Icons.schedule, size: 12, color: Colors.black54),
-                  SizedBox(width: 1.w),
-                  Text(t, style: TextStyle(fontSize: 11.5.sp)),
-                ],
-              ),
-              SizedBox(height: .3.h),
-
-              if (note != null && note.isNotEmpty) ...[
-                SizedBox(height: .5.h),
-                _chip(Icons.sticky_note_2_outlined, note, light: true),
-              ],
-            ],
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-
-Widget _chip(IconData icon, String text, {bool light = false}) => Container(
-      padding: EdgeInsets.symmetric(horizontal: 2.2.w, vertical: .6.h),
+    return Container(
+      margin: EdgeInsets.symmetric(vertical: 2.h),
+      padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
-        color: light
-            ? Colors.white.withOpacity(.85)               // sáng rõ
-            : ColorPalette.primaryColor.withOpacity(.85), 
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white24, width: .4.w), 
+        borderRadius: BorderRadius.circular(20),
+        color: Colors.white.withOpacity(0.85),
+        border: Border.all(
+          width: .4.w,
+          color: ColorPalette.primaryColor.withOpacity(.3),
+        ),
         boxShadow: [
-          BoxShadow(                                     
-            color: Colors.black26,
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+          BoxShadow(
+            color: Colors.black.withOpacity(.15),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           )
         ],
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon,
-              size: 12.sp,
-              color: light ? Colors.black87 : Colors.white),
-          SizedBox(width: 1.w),
-          Text(
-            text,
-            style: TextStyle(
-              fontSize: 11.5.sp,
-              fontWeight: FontWeight.w600,
-              color: light ? Colors.black87 : Colors.white,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: _buildScheduleImage(),
+              ),
+              SizedBox(width: 4.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _iconText(Icons.location_on_rounded, 'Làng nghề'),
+                    SizedBox(height: .6.h),
+                    _iconText(Icons.calendar_month, d),
+                    _iconText(Icons.schedule, t),
+                    SizedBox(height: 0.5.h),
+                    if (widget.schedule.adultPrice != null)
+                      _iconText(Icons.person,
+                          '${fmt.format(widget.schedule.adultPrice)}đ / người lớn',
+                          color: Colors.orange),
+                    if (widget.schedule.childrenPrice != null)
+                      _iconText(Icons.child_care,
+                          '${fmt.format(widget.schedule.childrenPrice)}đ / trẻ em',
+                          color: Colors.green),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (note != null && note.isNotEmpty) ...[
+            Divider(height: 3.h, color: Colors.grey.shade300),
+            _iconText(Icons.sticky_note_2_outlined, note,
+                color: Colors.blueGrey, multiLine: true),
+          ]
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScheduleImage() {
+    final img = widget.schedule.imageUrl;
+    if (img != null && img.isNotEmpty && img.startsWith('http')) {
+      return Image.network(img, width: 24.w, height: 11.h, fit: BoxFit.cover);
+    }
+    return Image.asset(AssetHelper.img_default,
+        width: 24.w, height: 11.h, fit: BoxFit.cover);
+  }
+
+  Widget _iconText(IconData icon, String text,
+      {Color? color, bool multiLine = false}) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 0.5.h),
+      child: Row(
+        crossAxisAlignment:
+            multiLine ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+        children: [
+          Icon(icon, size: 14.sp, color: color ?? Colors.black87),
+          SizedBox(width: 1.5.w),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 11.5.sp,
+                fontWeight: FontWeight.w500,
+                color: color ?? Colors.black87,
+              ),
+              softWrap: true,
             ),
           ),
         ],
       ),
     );
+  }
 
   Widget _counter(String label, int value, Function(int) onChanged,
       double unitPrice,
@@ -238,7 +239,7 @@ Widget _chip(IconData icon, String text, {bool light = false}) => Container(
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 1.6.h),
       decoration: BoxDecoration(
-        color: Colors.white12,
+        color: Colors.white.withOpacity(0.08),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white24),
       ),
@@ -247,23 +248,31 @@ Widget _chip(IconData icon, String text, {bool light = false}) => Container(
         children: [
           Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('$label – ${fmt.format(unitPrice)}đ',
-                style: TextStyle(fontSize: 14.sp, color: Colors.white)),
+                style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white)),
             SizedBox(height: 0.3.h),
             Text(
               label == 'Người lớn'
                   ? '(Từ 12 tuổi trở lên)'
                   : '(1 – dưới 12 tuổi)',
-              style:
-                  TextStyle(fontSize: 12.sp, color: Colors.white70, fontStyle: FontStyle.italic),
+              style: TextStyle(
+                  fontSize: 12.sp,
+                  color: Colors.white70,
+                  fontStyle: FontStyle.italic),
             ),
           ]),
           Row(children: [
-            _roundBtn(Icons.remove, (value > minAdult)
-                ? () => onChanged(value - 1)
-                : null),
+            _roundBtn(Icons.remove,
+                (value > minAdult) ? () => onChanged(value - 1) : null),
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 3.w),
-              child: Text('$value', style: TextStyle(fontSize: 15.sp, color: Colors.white)),
+              padding: EdgeInsets.symmetric(horizontal: 4.w),
+              child: Text('$value',
+                  style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white)),
             ),
             _roundBtn(Icons.add, canAdd()
                 ? () => onChanged(value + 1)
@@ -274,44 +283,78 @@ Widget _chip(IconData icon, String text, {bool light = false}) => Container(
     );
   }
 
-  Widget _roundBtn(IconData icon, VoidCallback? onTap) => GestureDetector(
+  Widget _roundBtn(IconData icon, VoidCallback? onTap) => InkWell(
         onTap: onTap,
+        borderRadius: BorderRadius.circular(50),
         child: Container(
-          padding: const EdgeInsets.all(8),
+          padding: EdgeInsets.all(1.8.h),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: onTap == null ? Colors.grey.withOpacity(.2) : Colors.white24,
+            color: onTap == null
+                ? Colors.grey.withOpacity(.2)
+                : Colors.white.withOpacity(.15),
+            boxShadow: [
+              if (onTap != null)
+                BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 6,
+                    offset: const Offset(0, 2))
+            ],
           ),
           child: Icon(icon, color: Colors.white),
         ),
       );
 
-  Widget _totalBar() => Row(
+Widget _totalBar() => Padding(
+      padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 1.h),
+      child: Row(
         children: [
           Expanded(
             child: Text(
               'Tổng: ${fmt.format(totalPrice)}đ',
               style: TextStyle(
-                  fontSize: 16.sp,
+                  fontSize: 17.sp,
                   fontWeight: FontWeight.bold,
                   color: Colors.white),
             ),
           ),
-          ElevatedButton(
-            onPressed: remaining >= 0
-                ? () {
-                 
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text('Đặt chỗ Workshop thành công!')));
-                  }
-                : null,
-            style: ElevatedButton.styleFrom(
-                backgroundColor: ColorPalette.primaryColor,
-                padding:
-                    EdgeInsets.symmetric(horizontal: 8.w, vertical: 1.8.h)),
-            child: const Text('Xác nhận'),
-          )
+         InkWell(
+  onTap: remaining >= 0
+      ? () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => WorkshopPaymentConfirmationScreen(
+                workshop: widget.workshop,
+                schedule: widget.schedule,
+                adults: adultCount,
+                children: childrenCount,
+              ),
+            ),
+          );
+        }
+      : null,
+  borderRadius: BorderRadius.circular(50),
+  child: Container(
+    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 1.5.h),
+    decoration: BoxDecoration(
+      gradient: Gradients.defaultGradientBackground,
+      borderRadius: BorderRadius.circular(50),
+      boxShadow: [
+        BoxShadow(
+            color: Colors.black26, blurRadius: 6, offset: const Offset(0, 3))
+      ],
+    ),
+    child: const Text(
+      'Xác nhận',
+      style: TextStyle(
+          color: Colors.white, fontWeight: FontWeight.bold),
+    ),
+  ),
+)
+
         ],
-      );
+      ),
+    );
+
 }
