@@ -5,11 +5,12 @@ import 'package:flutter/gestures.dart';
 import 'package:sizer/sizer.dart';
 import 'package:intl/intl.dart';
 import 'package:marquee/marquee.dart';
+import 'package:travelogue_mobile/core/blocs/app_bloc.dart';
+import 'package:travelogue_mobile/core/blocs/main/main_event.dart';
+import 'package:travelogue_mobile/representation/main_screen.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
-
 import 'package:travelogue_mobile/core/constants/color_constants.dart';
-import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
 import 'package:travelogue_mobile/model/tour/tour_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_schedule_model.dart';
 import 'package:travelogue_mobile/model/booking/create_booking_tour_model.dart';
@@ -100,7 +101,8 @@ class _TourQrPaymentScreenState extends State<TourQrPaymentScreen> {
         return;
       }
 
-      final paymentUrl = await BookingRepository().createPaymentLink(booking.id);
+      final paymentUrl =
+          await BookingRepository().createPaymentLink(booking.id);
       if (paymentUrl == null) {
         _showErrorDialog('Không tạo được liên kết thanh toán.');
         return;
@@ -128,12 +130,14 @@ class _TourQrPaymentScreenState extends State<TourQrPaymentScreen> {
           } else if (url.contains("status=CANCELLED")) {
             Future.delayed(const Duration(seconds: 3), () {
               Navigator.of(context).pushNamedAndRemoveUntil(
-                TourScreen.routeName,
+                MainScreen.routeName,
                 (route) => false,
               );
+              AppBloc.mainBloc.add(OnChangeIndexEvent(indexChange: 2));
             });
             return NavigationDecision.prevent;
           }
+
           return NavigationDecision.navigate;
         },
       ));
@@ -181,10 +185,11 @@ class _TourQrPaymentScreenState extends State<TourQrPaymentScreen> {
   }
 
   void _completePayment() {
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const PaymentSuccessScreen()),
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      MainScreen.routeName,
       (route) => false,
     );
+    AppBloc.mainBloc.add(OnChangeIndexEvent(indexChange: 2));
   }
 
   Future<bool> _onWillPop() async {
@@ -207,22 +212,11 @@ class _TourQrPaymentScreenState extends State<TourQrPaymentScreen> {
     );
 
     if (result == true) {
-      final currentUrl = await _webViewController.currentUrl();
       Navigator.of(context).pushNamedAndRemoveUntil(
-        TourScreen.routeName,
+        MainScreen.routeName,
         (route) => false,
-        arguments: {
-          "pendingPayment": true,
-          "tour": widget.tour.toJson(),
-          "schedule": widget.schedule.toJson(),
-          "departureDate": widget.departureDate.toIso8601String(),
-          "adults": widget.adults,
-          "children": widget.children,
-          "totalPrice": widget.totalPrice,
-          "startTime": widget.startTime.toIso8601String(),
-          "paymentLink": currentUrl,
-        },
       );
+      AppBloc.mainBloc.add(OnChangeIndexEvent(indexChange: 2));
     }
 
     return false;
@@ -256,14 +250,16 @@ class _TourQrPaymentScreenState extends State<TourQrPaymentScreen> {
                 padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
                 decoration: const BoxDecoration(
                   gradient: Gradients.defaultGradientBackground,
-                  borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+                  borderRadius:
+                      BorderRadius.vertical(bottom: Radius.circular(24)),
                 ),
                 child: Column(
                   children: [
                     Row(
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+                          icon: const Icon(Icons.arrow_back_ios,
+                              color: Colors.white),
                           onPressed: () async {
                             final confirm = await _onWillPop();
                             if (confirm) Navigator.pop(context);
@@ -281,7 +277,8 @@ class _TourQrPaymentScreenState extends State<TourQrPaymentScreen> {
                             color: Colors.white)),
                     SizedBox(height: 0.6.h),
                     Text('$tourName – $price',
-                        style: TextStyle(fontSize: 15.sp, color: Colors.white70)),
+                        style:
+                            TextStyle(fontSize: 15.sp, color: Colors.white70)),
                     SizedBox(height: 1.h),
                     _buildCountdownClock(),
                   ],

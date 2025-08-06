@@ -34,7 +34,9 @@ class _EventContentState extends State<EventContent> {
   Widget build(BuildContext context) {
     return BlocBuilder<NewsBloc, NewsState>(
       builder: (context, state) {
-        final List<NewsModel> listNews = state.props[0] as List<NewsModel>;
+        final List<NewsModel> listNews = (state.props[0] as List<NewsModel>)
+            .where((news) => news.newsCategory == 1)
+            .toList();
 
         return SingleChildScrollView(
           child: Column(

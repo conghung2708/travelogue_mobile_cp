@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:flutter_html/flutter_html.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
@@ -7,11 +8,9 @@ import 'package:sizer/sizer.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
 import 'package:travelogue_mobile/core/utils/image_network_card.dart';
 import 'package:travelogue_mobile/model/location_model.dart';
-import 'package:travelogue_mobile/representation/craft_village/screens/craft_village.dart';
 import 'package:travelogue_mobile/representation/map/screens/viet_map_location_screen.dart';
-import 'package:travelogue_mobile/representation/restaurent/widgets/restaurents.dart';
-import 'package:vietmap_flutter_gl/vietmap_flutter_gl.dart';
 import 'package:avatar_glow/avatar_glow.dart';
+import 'package:vietmap_flutter_gl/vietmap_flutter_gl.dart' as vietmap;
 
 class PlaceBottomBar extends StatefulWidget {
   final LocationModel place;
@@ -23,7 +22,7 @@ class PlaceBottomBar extends StatefulWidget {
 }
 
 class _PlaceBottomBarState extends State<PlaceBottomBar> {
-  VietmapController? _controller;
+  vietmap.VietmapController? _controller;
   FlutterTts flutterTts = FlutterTts();
   bool isSpeaking = false;
 
@@ -116,8 +115,6 @@ class _PlaceBottomBarState extends State<PlaceBottomBar> {
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 10),
-
-                      // Hàng "Tỉnh đoàn Tây Ninh" + Nút loa
                       Row(
                         children: [
                           const CircleAvatar(
@@ -175,7 +172,6 @@ class _PlaceBottomBarState extends State<PlaceBottomBar> {
                           ),
                         ],
                       ),
-
                       if (isSpeaking)
                         Padding(
                           padding: const EdgeInsets.only(top: 4),
@@ -191,24 +187,40 @@ class _PlaceBottomBarState extends State<PlaceBottomBar> {
                             ),
                           ),
                         ),
-
                       const SizedBox(height: 15),
-
-                      // Nội dung địa điểm
-                      Text(
-                        widget.place.content ?? '',
-                        style: const TextStyle(
-                          color: Colors.black54,
-                          fontSize: 15,
-                          height: 1.4,
-                        ),
-                        textAlign: TextAlign.justify,
-                      ),
+                      Html(
+                        data: widget.place.content ?? '',
+                        style: {
+                          "body": Style(
+                            fontSize: FontSize(15),
+                            color: Colors.black54,
+                            lineHeight: LineHeight(1.4),
+                            textAlign: TextAlign.justify,
+                          ),
+                        },
+                        extensions: [
+                          TagExtension(
+                            tagsToExtend: {"img"},
+                            builder: (extensionContext) {
+                              final src =
+                                  extensionContext.attributes['src'] ?? '';
+                              return Builder(
+                                builder: (ctx) {
+                                  return GestureDetector(
+                                    onTap: () {
+                                      _openPhotoGallery(ctx, [src], 0);
+                                    },
+                                    child: Image.network(src),
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        ],
+                      )
                     ],
                   ),
                 ),
-
-                // Hình ảnh
                 if (widget.place.listImages.isNotEmpty)
                   Container(
                     margin: const EdgeInsets.only(top: 20),
@@ -237,12 +249,7 @@ class _PlaceBottomBarState extends State<PlaceBottomBar> {
                       },
                     ),
                   ),
-
-                // const CraftVillages(),
-                // const Restaurents(),
                 SizedBox(height: 20.sp),
-
-                // Map
                 Container(
                   width: double.infinity,
                   height: 60.sp,
@@ -256,7 +263,7 @@ class _PlaceBottomBarState extends State<PlaceBottomBar> {
                     borderRadius: BorderRadius.circular(20),
                     child: Stack(
                       children: [
-                        VietmapGL(
+                        vietmap.VietmapGL(
                           myLocationEnabled: false,
                           trackCameraPosition: true,
                           rotateGesturesEnabled: false,
@@ -265,8 +272,8 @@ class _PlaceBottomBarState extends State<PlaceBottomBar> {
                           tiltGesturesEnabled: false,
                           styleString:
                               'https://maps.vietmap.vn/api/maps/light/styles.json?apikey=840f8a8247cb32578fc81fec50af42b8ede321173a31804b',
-                          initialCameraPosition: CameraPosition(
-                            target: LatLng(
+                          initialCameraPosition: vietmap.CameraPosition(
+                            target: vietmap.LatLng(
                               widget.place.latitude ?? 10.762622,
                               widget.place.longitude ?? 106.660172,
                             ),
@@ -281,7 +288,7 @@ class _PlaceBottomBarState extends State<PlaceBottomBar> {
                             Navigator.pushNamed(
                               context,
                               VietMapLocationScreen.routeName,
-                              arguments: LatLng(
+                              arguments: vietmap.LatLng(
                                 widget.place.latitude ?? 10.762622,
                                 widget.place.longitude ?? 106.660172,
                               ),
@@ -289,9 +296,9 @@ class _PlaceBottomBarState extends State<PlaceBottomBar> {
                           },
                         ),
                         if (_controller != null)
-                          MarkerLayer(
+                          vietmap.MarkerLayer(
                             markers: [
-                              Marker(
+                              vietmap.Marker(
                                 alignment: Alignment.bottomCenter,
                                 height: 30,
                                 width: 30,
@@ -300,7 +307,7 @@ class _PlaceBottomBarState extends State<PlaceBottomBar> {
                                   color: Colors.red,
                                   size: 30,
                                 ),
-                                latLng: LatLng(
+                                latLng: vietmap.LatLng(
                                   widget.place.latitude ?? 10.762622,
                                   widget.place.longitude ?? 106.660172,
                                 ),

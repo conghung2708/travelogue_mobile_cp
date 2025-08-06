@@ -1,10 +1,15 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:sizer/sizer.dart';
+import 'package:avatar_glow/avatar_glow.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:travelogue_mobile/representation/map/screens/viet_map_location_screen.dart';
+import 'package:vietmap_flutter_gl/vietmap_flutter_gl.dart' as vietmap;
 
 import 'package:travelogue_mobile/model/location_model.dart';
 import 'package:travelogue_mobile/model/review_craft_village_test.dart';
@@ -15,7 +20,6 @@ import 'package:travelogue_mobile/representation/review/screens/reviews_screen.d
 import 'package:travelogue_mobile/representation/widgets/image_grid_preview.dart';
 
 import 'package:travelogue_mobile/core/blocs/workshop/workshop_bloc.dart';
-import 'package:travelogue_mobile/core/blocs/workshop/workshop_event.dart';
 import 'package:travelogue_mobile/core/blocs/workshop/workshop_state.dart';
 
 class CraftVillageDetailScreen extends StatefulWidget {
@@ -33,10 +37,23 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
   double currentRating = 4.5;
   late final TabController _tabController;
 
+  // FlutterTTS & Map controller
+  FlutterTts flutterTts = FlutterTts();
+  bool isSpeaking = false;
+  vietmap.VietmapController? _mapController;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _requestLocationPermission();
+  }
+
+  Future<void> _requestLocationPermission() async {
+    var status = await Permission.location.status;
+    if (!status.isGranted) {
+      await Permission.location.request();
+    }
   }
 
   @override
@@ -52,12 +69,25 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
       final args = ModalRoute.of(context)?.settings.arguments;
       if (args is LocationModel) {
         setState(() => village = args);
-
-        // 🔹 Gọi API workshop ngay khi nhận village
-        context
-            .read<WorkshopBloc>()
-            .add(GetWorkshopsEvent(craftVillageId: args.id));
       }
+    }
+  }
+
+  Future<void> _speakContent() async {
+    if (isSpeaking) {
+      await flutterTts.stop();
+      setState(() => isSpeaking = false);
+      return;
+    }
+    if (village?.content?.isNotEmpty == true) {
+      await flutterTts.setLanguage("vi-VN");
+      await flutterTts.setSpeechRate(0.45);
+      await flutterTts.setPitch(1.0);
+      setState(() => isSpeaking = true);
+      await flutterTts.speak(village!.content!);
+      flutterTts.setCompletionHandler(() {
+        setState(() => isSpeaking = false);
+      });
     }
   }
 
@@ -109,7 +139,64 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
               ),
             ],
           ),
+
           SizedBox(height: 2.h),
+
+          // Nút Loa đọc
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              AvatarGlow(
+                animate: isSpeaking,
+                glowColor:
+                    isSpeaking ? Colors.redAccent : Colors.blueAccent,
+                child: InkWell(
+                  onTap: _speakContent,
+                  borderRadius: BorderRadius.circular(30),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: isSpeaking
+                            ? [Colors.redAccent, Colors.red]
+                            : [Colors.blueAccent, Colors.blue],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 4,
+                          offset: Offset(0, 2),
+                        )
+                      ],
+                    ),
+                    child: Icon(
+                      isSpeaking ? Icons.stop : Icons.volume_up,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (isSpeaking)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  "Đang đọc...",
+                  style: TextStyle(
+                    color: Colors.blueAccent,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+
+          SizedBox(height: 1.h),
           Padding(
             padding: EdgeInsets.only(right: 55.w),
             child: TitleWithCustoneUnderline(text: 'Giới ', text2: 'thiệu : '),
@@ -122,6 +209,7 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
               listBullet: TextStyle(fontSize: 14.sp),
             ),
           ),
+
           SizedBox(height: 2.5.h),
           Padding(
             padding: EdgeInsets.only(right: 55.w),
@@ -132,6 +220,7 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
           ),
           SizedBox(height: 1.h),
           ImageGridPreview(images: village!.listImages),
+
           SizedBox(height: 2.5.h),
           Padding(
             padding: EdgeInsets.only(right: 45.w),
@@ -145,6 +234,78 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
           if (village!.closeTime != null)
             Text('🕒 Giờ đóng cửa: ${village!.closeTime}',
                 style: TextStyle(fontSize: 14.sp)),
+
+          SizedBox(height: 3.h),
+
+          // Bản đồ
+        Container(
+  width: double.infinity,
+  height: 40.h,
+  decoration: BoxDecoration(
+    border: Border.all(color: Colors.grey),
+    borderRadius: BorderRadius.circular(20),
+  ),
+  child: ClipRRect(
+    borderRadius: BorderRadius.circular(20),
+    child: Stack(
+      children: [
+        vietmap.VietmapGL(
+          myLocationEnabled: false,
+          trackCameraPosition: true,
+          rotateGesturesEnabled: false,
+          scrollGesturesEnabled: false,
+          zoomGesturesEnabled: false,
+          tiltGesturesEnabled: false,
+          styleString:
+              'https://maps.vietmap.vn/api/maps/light/styles.json?apikey=840f8a8247cb32578fc81fec50af42b8ede321173a31804b',
+          initialCameraPosition: vietmap.CameraPosition(
+            target: vietmap.LatLng(
+              village!.latitude ?? 10.762622,
+              village!.longitude ?? 106.660172,
+            ),
+            zoom: 12,
+          ),
+          onMapCreated: (controller) {
+            setState(() {
+              _mapController = controller;
+            });
+          },
+          onMapClick: (point, latlng) {
+            Navigator.pushNamed(
+              context,
+              VietMapLocationScreen.routeName,
+              arguments: vietmap.LatLng(
+                village!.latitude ?? 10.762622,
+                village!.longitude ?? 106.660172,
+              ),
+            );
+          },
+        ),
+        if (_mapController != null)
+          vietmap.MarkerLayer(
+            markers: [
+              vietmap.Marker(
+                alignment: Alignment.bottomCenter,
+                height: 30,
+                width: 30,
+                child: const Icon(
+                  Icons.location_on,
+                  color: Colors.red,
+                  size: 30,
+                ),
+                latLng: vietmap.LatLng(
+                  village!.latitude ?? 10.762622,
+                  village!.longitude ?? 106.660172,
+                ),
+              ),
+            ],
+            mapController: _mapController!,
+          ),
+      ],
+    ),
+  ),
+),
+
           SizedBox(height: 4.h),
         ],
       );

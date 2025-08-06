@@ -1,11 +1,15 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:sizer/sizer.dart';
 import 'package:travelogue_mobile/core/blocs/app_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/home/home_bloc.dart';
+import 'package:travelogue_mobile/core/blocs/workshop/workshop_bloc.dart';
+import 'package:travelogue_mobile/core/blocs/workshop/workshop_event.dart';
 import 'package:travelogue_mobile/core/constants/dimension_constants.dart';
+import 'package:travelogue_mobile/core/repository/workshop_repository.dart';
 import 'package:travelogue_mobile/core/utils/image_network_card.dart';
 import 'package:travelogue_mobile/data/data_local/user_local.dart';
 import 'package:travelogue_mobile/model/location_model.dart';
@@ -43,19 +47,27 @@ class _HotLocationCardState extends State<HotLocationCard> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        if ((widget.place.category ?? '') == "Làng nghề") {
-          Navigator.of(context).pushNamed(
-            CraftVillageDetailScreen.routeName,
-            arguments: widget.place,
-          );
-        } else {
-          Navigator.of(context).pushNamed(
-            PlaceDetailScreen.routeName,
-            arguments: widget.place,
-          );
-        }
-      },
+onTap: () {
+  if ((widget.place.category ?? '') == "Làng nghề") {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => BlocProvider(
+          create: (_) => WorkshopBloc(
+            WorkshopRepository(), 
+          )..add(GetWorkshopsEvent(craftVillageId: widget.place.id ?? '')),
+          child: CraftVillageDetailScreen(),
+        ),
+        settings: RouteSettings(arguments: widget.place),
+      ),
+    );
+  } else {
+    Navigator.of(context).pushNamed(
+      PlaceDetailScreen.routeName,
+      arguments: widget.place,
+    );
+  }
+},
+
       child: Padding(
         padding: EdgeInsets.symmetric(vertical: 15.sp),
         child: Stack(

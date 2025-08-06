@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:travelogue_mobile/model/event_model.dart';
+import 'package:travelogue_mobile/model/news_model.dart';
 
 class FestivalDetailScreenBackground extends StatelessWidget {
   const FestivalDetailScreenBackground({super.key});
@@ -9,20 +9,20 @@ class FestivalDetailScreenBackground extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
-    final festival = Provider.of<EventModel>(context);
+    final festival = Provider.of<NewsModel>(context);
 
     return Align(
       alignment: Alignment.topCenter,
       child: ClipPath(
         clipper: ImageClipper(),
         child: Image.network(
-          festival.imgUrlFirst,
+          festival.imgUrlFirst ?? '',
           fit: BoxFit.cover,
           width: screenWidth,
           color: const Color(0x99000000),
           colorBlendMode: BlendMode.darken,
           height: screenHeight * 0.5,
-          errorBuilder: (context, url, error) => Container(
+          errorBuilder: (context, error, stackTrace) => Container(
             color: Colors.blue,
             width: screenWidth,
             height: screenHeight * 0.5,

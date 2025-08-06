@@ -9,6 +9,7 @@ import 'package:travelogue_mobile/representation/user/screens/location_favorite_
 import 'package:travelogue_mobile/representation/user/screens/privacy_screen.dart';
 import 'package:travelogue_mobile/representation/user/screens/support_screen.dart';
 import 'package:travelogue_mobile/representation/user/screens/tay_ninh_predictor_screen.dart';
+import 'package:travelogue_mobile/representation/user/screens/tour_guide_request_screen.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 class UserProfileScreen extends StatelessWidget {
@@ -49,6 +50,16 @@ class UserProfileScreen extends StatelessWidget {
                         Navigator.pushNamed(context, PrivacyScreen.routeName);
                       },
                     ),
+                    _buildMenuItem(
+                      Icons.badge_outlined,
+                      "Đăng ký hướng dẫn viên",
+                      context: context,
+                      onTap: () {
+                        Navigator.pushNamed(
+                            context, TourGuideRequestScreen.routeName);
+                      },
+                    ),
+
                     _buildMenuItem(
                       Icons.favorite_border,
                       "Địa điểm yêu thích",

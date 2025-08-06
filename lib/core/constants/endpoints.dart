@@ -59,4 +59,7 @@ class Endpoints {
 
   //Booking Workshop
   static const String createBookingWorkshop = 'api/booking/create-booking-workshop';
+
+  //Tour Guide Request
+  static const String tourGuideRequest = 'api/user/tour-guide-request';
 }

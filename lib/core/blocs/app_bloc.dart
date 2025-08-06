@@ -10,13 +10,14 @@ import 'package:travelogue_mobile/core/blocs/news/news_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/search/search_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/tour/tour_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/tour_guide/tour_guide_bloc.dart';
+import 'package:travelogue_mobile/core/blocs/user/user_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/workshop/workshop_bloc.dart';
 import 'package:travelogue_mobile/core/repository/booking_repository.dart';
 import 'package:travelogue_mobile/core/repository/tour_guide_repository.dart';
+import 'package:travelogue_mobile/core/repository/user_repository.dart';
 import 'package:travelogue_mobile/core/repository/workshop_repository.dart';
 import 'package:travelogue_mobile/core/trip_plan/bloc/trip_plan_bloc.dart';
 import 'package:travelogue_mobile/data/data_local/user_local.dart';
-import 'package:travelogue_mobile/representation/tour/widgets/tour_confirmed_action_card.dart';
 
 class AppBloc {
   static final MainBloc mainBloc = MainBloc();
@@ -33,6 +34,7 @@ class AppBloc {
       TourGuideBloc(TourGuideRepository());
   static final BookingBloc bookingBloc = BookingBloc(BookingRepository());
   static final WorkshopBloc workshopBloc = WorkshopBloc(WorkshopRepository());
+  static final UserBloc userBloc = UserBloc(UserRepository());
 
   List<BlocProvider> providers = [
     BlocProvider<MainBloc>(
@@ -73,6 +75,9 @@ class AppBloc {
     ),
     BlocProvider<WorkshopBloc>(
       create: (context) => workshopBloc,
+    ),
+    BlocProvider<UserBloc>(
+      create: (context) => userBloc,
     ),
   ];
 
@@ -118,6 +123,7 @@ class AppBloc {
     tourGuideBloc.close();
     bookingBloc.close();
     workshopBloc.close();
+    userBloc.close();
   }
 
   ///Singleton factory

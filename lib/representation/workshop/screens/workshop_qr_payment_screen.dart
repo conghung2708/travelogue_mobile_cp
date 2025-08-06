@@ -5,7 +5,10 @@ import 'package:flutter/gestures.dart';
 import 'package:sizer/sizer.dart';
 import 'package:intl/intl.dart';
 import 'package:marquee/marquee.dart';
+import 'package:travelogue_mobile/core/blocs/app_bloc.dart';
+import 'package:travelogue_mobile/core/blocs/main/main_event.dart';
 import 'package:travelogue_mobile/representation/home/screens/home_screen.dart';
+import 'package:travelogue_mobile/representation/main_screen.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 
@@ -38,7 +41,8 @@ class WorkshopQrPaymentScreen extends StatefulWidget {
   });
 
   @override
-  State<WorkshopQrPaymentScreen> createState() => _WorkshopQrPaymentScreenState();
+  State<WorkshopQrPaymentScreen> createState() =>
+      _WorkshopQrPaymentScreenState();
 }
 
 class _WorkshopQrPaymentScreenState extends State<WorkshopQrPaymentScreen> {
@@ -120,13 +124,14 @@ class _WorkshopQrPaymentScreenState extends State<WorkshopQrPaymentScreen> {
             return NavigationDecision.prevent;
           } else if (url.contains("status=CANCELLED")) {
             Future.delayed(const Duration(seconds: 3), () {
-              Navigator.of(context).pushNamedAndRemoveUntil(
-                HomeScreen.routeName,
-                (route) => false,
+              Navigator.of(context).popUntil(
+                (route) => route.settings.name == MainScreen.routeName,
               );
+              AppBloc.mainBloc.add(OnChangeIndexEvent(indexChange: 0));
             });
             return NavigationDecision.prevent;
           }
+
           return NavigationDecision.navigate;
         },
       ));
@@ -173,12 +178,19 @@ class _WorkshopQrPaymentScreenState extends State<WorkshopQrPaymentScreen> {
     );
   }
 
-  void _completePayment() {
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const PaymentSuccessScreen()),
-      (route) => false,
-    );
-  }
+  // void _completePayment() {
+  //   Navigator.of(context).pushAndRemoveUntil(
+  //     MaterialPageRoute(builder: (_) => const PaymentSuccessScreen()),
+  //     (route) => false,
+  //   );
+  // }
+void _completePayment() {
+  Navigator.of(context).pushNamedAndRemoveUntil(
+    MainScreen.routeName,
+    (route) => false,
+  );
+  AppBloc.mainBloc.add(OnChangeIndexEvent(indexChange: 0));
+}
 
   Future<bool> _onWillPop() async {
     final result = await showDialog<bool>(
@@ -199,23 +211,13 @@ class _WorkshopQrPaymentScreenState extends State<WorkshopQrPaymentScreen> {
       ),
     );
 
-    if (result == true) {
-      final currentUrl = await _webViewController.currentUrl();
-      Navigator.of(context).pushNamedAndRemoveUntil(
-        HomeScreen.routeName,
-        (route) => false,
-        arguments: {
-          "pendingPayment": true,
-          "workshop": widget.workshop.toJson(),
-          "schedule": widget.schedule.toJson(),
-          "adults": widget.adults,
-          "children": widget.children,
-          "totalPrice": widget.totalPrice,
-          "startTime": widget.startTime.toIso8601String(),
-          "paymentLink": currentUrl,
-        },
-      );
-    }
+if (result == true) {
+  Navigator.of(context).pushNamedAndRemoveUntil(
+    MainScreen.routeName,
+    (route) => false,
+  );
+  AppBloc.mainBloc.add(OnChangeIndexEvent(indexChange: 0));
+}
 
     return false;
   }
@@ -248,14 +250,16 @@ class _WorkshopQrPaymentScreenState extends State<WorkshopQrPaymentScreen> {
                 padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
                 decoration: const BoxDecoration(
                   gradient: Gradients.defaultGradientBackground,
-                  borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+                  borderRadius:
+                      BorderRadius.vertical(bottom: Radius.circular(24)),
                 ),
                 child: Column(
                   children: [
                     Row(
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+                          icon: const Icon(Icons.arrow_back_ios,
+                              color: Colors.white),
                           onPressed: () async {
                             final confirm = await _onWillPop();
                             if (confirm) Navigator.pop(context);
@@ -273,7 +277,8 @@ class _WorkshopQrPaymentScreenState extends State<WorkshopQrPaymentScreen> {
                             color: Colors.white)),
                     SizedBox(height: 0.6.h),
                     Text('$workshopName – $price',
-                        style: TextStyle(fontSize: 15.sp, color: Colors.white70)),
+                        style:
+                            TextStyle(fontSize: 15.sp, color: Colors.white70)),
                     SizedBox(height: 1.h),
                     _buildCountdownClock(),
                   ],
