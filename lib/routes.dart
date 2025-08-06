@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
 import 'package:travelogue_mobile/core/blocs/booking/booking_bloc.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
 import 'package:travelogue_mobile/core/repository/booking_repository.dart';
@@ -11,6 +12,7 @@ import 'package:travelogue_mobile/model/craft_village/workshop_test_model.dart';
 import 'package:travelogue_mobile/model/event_model.dart';
 import 'package:travelogue_mobile/model/experience_model.dart';
 import 'package:travelogue_mobile/model/location_model.dart';
+import 'package:travelogue_mobile/model/news_model.dart';
 import 'package:travelogue_mobile/model/review_test_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_schedule_model.dart';
@@ -81,13 +83,19 @@ final Map<String, WidgetBuilder> routes = {
   LoginScreen.routeName: (_) => const LoginScreen(),
   UserProfileScreen.routeName: (_) => const UserProfileScreen(),
   FestivalScreen.routeName: (_) => const FestivalScreen(),
-  FestivalDetailScreen.routeName: (context) {
-    final festival = ModalRoute.of(context)!.settings.arguments as EventModel;
-    return FestivalDetailScreen(festival: festival);
-  },
+
+FestivalDetailScreen.routeName: (context) {
+  final festival = ModalRoute.of(context)!.settings.arguments as NewsModel;
+  return Provider<NewsModel>.value(
+    value: festival,
+    child: const FestivalDetailScreen(),
+  );
+},
+
   ExperienceScreen.routeName: (_) => const ExperienceScreen(),
+
   ExperienceDetailScreen.routeName: (context) {
-    final args = ModalRoute.of(context)!.settings.arguments as ExperienceModel;
+    final args = ModalRoute.of(context)!.settings.arguments as NewsModel;
     return ExperienceDetailScreen(experience: args);
   },
   PrivacyScreen.routeName: (_) => const PrivacyScreen(),
@@ -219,56 +227,53 @@ final Map<String, WidgetBuilder> routes = {
   //   return OrderScreen(orders: args['orders'], isBooked: args['isBooked']);
   // },
 
-WorkshopDetailScreen.routeName: (context) {
-  final workshopId = ModalRoute.of(context)!.settings.arguments as String;
-  return WorkshopDetailScreen(workshopId: workshopId);
-},
-
+  WorkshopDetailScreen.routeName: (context) {
+    final workshopId = ModalRoute.of(context)!.settings.arguments as String;
+    return WorkshopDetailScreen(workshopId: workshopId);
+  },
 
   GuideBookingConfirmationScreen.routeName: (context) {
-  final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
-  return GuideBookingConfirmationScreen(
-    guide: args['guide'],
-    startDate: args['startDate'],
-    endDate: args['endDate'],
-    adults: args['adults'],
-    children: args['children'],
-  );
-},
-
-TourGuideQrPaymentScreen.routeName: (context) {
-  final args = ModalRoute.of(context)?.settings.arguments;
-  if (args == null || args is! Map<String, dynamic>) {
-    return const Scaffold(
-      body: Center(child: Text('Thiếu dữ liệu thanh toán hướng dẫn viên')),
-    );
-  }
-
-  try {
-    return TourGuideQrPaymentScreen(
+    final args =
+        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+    return GuideBookingConfirmationScreen(
       guide: args['guide'],
       startDate: args['startDate'],
       endDate: args['endDate'],
       adults: args['adults'],
       children: args['children'],
-      startTime: args['startTime'],
-      paymentUrl: args['paymentUrl'],
     );
-  } catch (e) {
-    return Scaffold(
-      body: Center(child: Text('Lỗi dữ liệu: ${e.toString()}')),
-    );
-  }
-},
+  },
 
-MyBookingScreen.routeName: (context) {
-  final args = ModalRoute.of(context)!.settings.arguments
-      as List<BookingModel>;
-  return MyBookingScreen(bookings: args);
-},
+  TourGuideQrPaymentScreen.routeName: (context) {
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args == null || args is! Map<String, dynamic>) {
+      return const Scaffold(
+        body: Center(child: Text('Thiếu dữ liệu thanh toán hướng dẫn viên')),
+      );
+    }
 
+    try {
+      return TourGuideQrPaymentScreen(
+        guide: args['guide'],
+        startDate: args['startDate'],
+        endDate: args['endDate'],
+        adults: args['adults'],
+        children: args['children'],
+        startTime: args['startTime'],
+        paymentUrl: args['paymentUrl'],
+      );
+    } catch (e) {
+      return Scaffold(
+        body: Center(child: Text('Lỗi dữ liệu: ${e.toString()}')),
+      );
+    }
+  },
 
+  MyBookingScreen.routeName: (context) {
+    final args =
+        ModalRoute.of(context)!.settings.arguments as List<BookingModel>;
+    return MyBookingScreen(bookings: args);
+  },
 
   TourGuideRequestScreen.routeName: (_) => const TourGuideRequestScreen(),
-
 };

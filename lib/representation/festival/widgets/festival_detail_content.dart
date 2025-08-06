@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
 import 'package:travelogue_mobile/core/utils/html_widget.dart';
 import 'package:travelogue_mobile/model/event_model.dart';
+import 'package:travelogue_mobile/model/news_model.dart';
 import 'package:travelogue_mobile/representation/widgets/image_grid_preview.dart';
 
 class FestivalDetailContent extends StatelessWidget {
@@ -12,7 +13,7 @@ class FestivalDetailContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final festival = Provider.of<EventModel>(context);
+    final festival = Provider.of<NewsModel>(context);
     final screenWidth = MediaQuery.of(context).size.width;
 
     String formatDate(DateTime date) {
@@ -28,39 +29,39 @@ class FestivalDetailContent extends StatelessWidget {
           padding: EdgeInsets.only(
               left: screenWidth * 0.05, right: screenWidth * 0.05),
           child: Text(
-            formatTitle(festival.name ?? ''),
+            formatTitle(festival.title ?? ''),
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontFamily: 'Pattaya',
-              fontSize: (festival.name ?? '').length >= 35 ? 23.sp : 25.sp,
+              fontSize: (festival.title ?? '').length >= 35 ? 23.sp : 25.sp,
               fontWeight: FontWeight.bold,
               color: Colors.white,
             ),
           ),
         ),
         SizedBox(height: 2.h),
-        Padding(
-          padding: EdgeInsets.only(left: 25.sp),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.event, color: Colors.red, size: 18.sp),
-              SizedBox(width: 2.w),
-              Text(
-                "${formatDate(festival.startDate ?? DateTime.now())} - ${formatDate(festival.endDate ?? DateTime.now())}",
-                style: TextStyle(
-                  fontSize: 17.sp,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-        ),
+        // Padding(
+        //   padding: EdgeInsets.only(left: 25.sp),
+        //   child: Row(
+        //     mainAxisAlignment: MainAxisAlignment.center,
+        //     children: [
+        //       Icon(Icons.event, color: Colors.red, size: 18.sp),
+        //       SizedBox(width: 2.w),
+        //       Text(
+        //         "${formatDate(festival.startDate ?? DateTime.now())} - ${formatDate(festival.endDate ?? DateTime.now())}",
+        //         style: TextStyle(
+        //           fontSize: 17.sp,
+        //           fontWeight: FontWeight.w500,
+        //           color: Colors.white,
+        //         ),
+        //       ),
+        //     ],
+        //   ),
+        // ),
 
-        SizedBox(height: 10.h),
+        SizedBox(height: 13.h),
 
         // Thông tin tổ chức
         Expanded(

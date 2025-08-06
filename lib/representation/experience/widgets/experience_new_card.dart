@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import 'package:travelogue_mobile/core/utils/image_network_card.dart';
-import 'package:travelogue_mobile/model/experience_category_model.dart';
-import 'package:travelogue_mobile/model/experience_model.dart';
+import 'package:travelogue_mobile/model/news_model.dart';
 
 class ExperienceNewsCard extends StatelessWidget {
-  final ExperienceModel experience;
-  final ExperienceCategory category;
+  final NewsModel news;
+  final String categoryName;
+  final IconData? categoryIcon;
   final VoidCallback? onTap;
 
   const ExperienceNewsCard({
     super.key,
-    required this.experience,
-    required this.category,
+    required this.news,
+    required this.categoryName,
+    this.categoryIcon,
     this.onTap,
   });
 
@@ -28,9 +29,7 @@ class ExperienceNewsCard extends StatelessWidget {
         highlightColor: Colors.blue.withOpacity(0.05),
         child: Container(
           margin: EdgeInsets.only(bottom: 2.h).add(
-            EdgeInsets.symmetric(
-              horizontal: 15.sp,
-            ),
+            EdgeInsets.symmetric(horizontal: 15.sp),
           ),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
@@ -47,12 +46,13 @@ class ExperienceNewsCard extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Text content
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      experience.title ?? '',
+                      news.title ?? '',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 15.sp,
@@ -63,7 +63,7 @@ class ExperienceNewsCard extends StatelessWidget {
                     ),
                     SizedBox(height: 0.8.h),
                     Text(
-                      experience.description ?? '',
+                      news.description ?? '',
                       style: TextStyle(
                         fontSize: 13.sp,
                         color: Colors.grey[800],
@@ -82,14 +82,16 @@ class ExperienceNewsCard extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
-                            category.icon,
-                            color: Colors.white,
-                            size: 12.sp,
-                          ),
-                          const SizedBox(width: 6),
+                          if (categoryIcon != null) ...[
+                            Icon(
+                              categoryIcon,
+                              color: Colors.white,
+                              size: 12.sp,
+                            ),
+                            const SizedBox(width: 6),
+                          ],
                           Text(
-                            category.name,
+                            categoryName,
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 12.sp,
@@ -103,12 +105,13 @@ class ExperienceNewsCard extends StatelessWidget {
                 ),
               ),
               SizedBox(width: 3.w),
+              // Image
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: Stack(
                   children: [
                     ImageNetworkCard(
-                      url: experience.imgUrlFirst,
+                      url: news.imgUrlFirst,
                       width: 30.w,
                       height: 30.w,
                       fit: BoxFit.cover,

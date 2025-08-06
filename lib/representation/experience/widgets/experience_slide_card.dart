@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import 'package:travelogue_mobile/core/utils/image_network_card.dart';
-import 'package:travelogue_mobile/model/experience_model.dart';
+import 'package:travelogue_mobile/model/news_model.dart';
 import 'package:travelogue_mobile/representation/experience/screens/experience_detail_screen.dart';
 
 class ExperienceSlideCard extends StatelessWidget {
-  final ExperienceModel exp;
+  final NewsModel news;
   final String categoryName;
   const ExperienceSlideCard({
     super.key,
-    required this.exp,
+    required this.news,
     required this.categoryName,
   });
 
@@ -20,7 +20,7 @@ class ExperienceSlideCard extends StatelessWidget {
         Navigator.pushNamed(
           context,
           ExperienceDetailScreen.routeName,
-          arguments: exp,
+          arguments: news,
         );
       },
       child: Container(
@@ -40,11 +40,12 @@ class ExperienceSlideCard extends StatelessWidget {
           child: Stack(
             children: [
               ImageNetworkCard(
-                url: exp.imgUrlFirst,
+                url: news.imgUrlFirst,
                 width: double.infinity,
                 height: 23.h,
                 fit: BoxFit.cover,
               ),
+              // Category badge
               Positioned(
                 top: 10,
                 left: 10,
@@ -65,6 +66,7 @@ class ExperienceSlideCard extends StatelessWidget {
                   ),
                 ),
               ),
+              // Title background overlay
               Positioned(
                 left: 0,
                 right: 0,
@@ -79,7 +81,7 @@ class ExperienceSlideCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        exp.title ?? '',
+                        news.title ?? '',
                         style: TextStyle(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.bold,

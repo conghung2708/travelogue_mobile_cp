@@ -2,107 +2,58 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:sizer/sizer.dart';
+import 'package:provider/provider.dart';
 
-import 'package:travelogue_mobile/core/blocs/festival/festival_bloc.dart';
+import 'package:travelogue_mobile/core/blocs/news/news_bloc.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
 import 'package:travelogue_mobile/core/helpers/image_helper.dart';
 import 'package:travelogue_mobile/core/utils/image_network_card.dart';
 import 'package:travelogue_mobile/data/data_local/user_local.dart';
-import 'package:travelogue_mobile/model/event_model.dart';
 import 'package:travelogue_mobile/model/month_model.dart';
+import 'package:travelogue_mobile/model/news_model.dart';
 import 'package:travelogue_mobile/representation/event/widgets/arrow_back_button.dart';
 import 'package:travelogue_mobile/representation/festival/screens/festival_detail_screen.dart';
 import 'package:travelogue_mobile/representation/festival/widgets/festival_screen_background.dart';
 import 'package:travelogue_mobile/representation/festival/widgets/month_widget.dart';
 
-class FestivalScreen extends StatelessWidget {
+class FestivalScreen extends StatefulWidget {
   static const routeName = '/festival_screen';
 
   const FestivalScreen({super.key});
 
   @override
+  State<FestivalScreen> createState() => _FestivalScreenState();
+}
+
+class _FestivalScreenState extends State<FestivalScreen> {
+  int monthCurrent = DateTime.now().month;
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: BlocBuilder<FestivalBloc, FestivalState>(
+      body: BlocBuilder<NewsBloc, NewsState>(
         builder: (context, state) {
-          final List<EventModel> festivals = state.props[0] as List<EventModel>;
-          int monthCurrent = state.props[1] as int;
+          final List<NewsModel> allNews = state.props[0] as List<NewsModel>;
+
+          // Tạm thời chỉ lọc category lễ hội (2)
+          final List<NewsModel> festivals = allNews.where((n) {
+            return n.newsCategory == 2;
+          }).toList();
+
           return Stack(
             children: [
               Container(color: Colors.white),
-              FestivalScreenBackground(
-                screenHeight: 100.h,
-              ),
+              FestivalScreenBackground(screenHeight: 100.h),
               SafeArea(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
-                      child: Row(
-                        children: [
-                          ArrowBackButton(onPressed: () {
-                            Navigator.of(context).pop();
-                          }),
-                          Expanded(
-                            child: Text(
-                              "Lễ hội & Sự kiện",
-                              style: TextStyle(
-                                fontFamily: "Pattaya",
-                                fontSize: 20.sp,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                decoration: TextDecoration.none,
-                                shadows: [
-                                  const Shadow(
-                                    color: Colors.black54,
-                                    blurRadius: 4,
-                                    offset: Offset(2, 2),
-                                  ),
-                                ],
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                          if (UserLocal().getAccessToken.isNotEmpty)
-                            DecoratedBox(
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.white.withOpacity(0.5),
-                                    blurRadius: 5,
-                                    spreadRadius: 1,
-                                  ),
-                                ],
-                              ),
-                              child: ClipOval(
-                                child: ImageHelper.loadFromAsset(
-                                  AssetHelper.img_avatar,
-                                  width: 10.w,
-                                  height: 10.w,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
+                    _buildHeader(context),
                     SizedBox(height: 1.5.h),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: months
-                            .map((month) => MonthWidget(
-                                  month: month,
-                                  isSelected: monthCurrent == month.monthId,
-                                ))
-                            .toList(),
-                      ),
-                    ),
+                    _buildMonthSelector(),
                     Expanded(
                       child: festivals.isEmpty
-                          ? _pageEmpty(context, monthCurrent)
+                          ? _pageEmpty(context)
                           : ListView.builder(
                               padding: EdgeInsets.only(top: 1.h),
                               itemCount: festivals.length,
@@ -110,9 +61,13 @@ class FestivalScreen extends StatelessWidget {
                                 final festival = festivals[index];
                                 return GestureDetector(
                                   onTap: () {
-                                    Navigator.of(context).pushNamed(
-                                      FestivalDetailScreen.routeName,
-                                      arguments: festival,
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => Provider<NewsModel>.value(
+                                          value: festival,
+                                          child: const FestivalDetailScreen(),
+                                        ),
+                                      ),
                                     );
                                   },
                                   child: FestivalCard(festival: festival),
@@ -130,11 +85,81 @@ class FestivalScreen extends StatelessWidget {
     );
   }
 
-  Widget _pageEmpty(BuildContext context, int monthCurrent) {
+  Widget _buildHeader(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+      child: Row(
+        children: [
+          ArrowBackButton(onPressed: () => Navigator.of(context).pop()),
+          Expanded(
+            child: Text(
+              "Lễ hội & Sự kiện",
+              style: TextStyle(
+                fontFamily: "Pattaya",
+                fontSize: 20.sp,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                decoration: TextDecoration.none,
+                shadows: const [
+                  Shadow(
+                    color: Colors.black54,
+                    blurRadius: 4,
+                    offset: Offset(2, 2),
+                  ),
+                ],
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          if (UserLocal().getAccessToken.isNotEmpty)
+            DecoratedBox(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.white.withOpacity(0.5),
+                    blurRadius: 5,
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
+              child: ClipOval(
+                child: ImageHelper.loadFromAsset(
+                  AssetHelper.img_avatar,
+                  width: 10.w,
+                  height: 10.w,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMonthSelector() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: months
+            .map((month) => MonthWidget(
+                  month: month,
+                  isSelected: monthCurrent == month.monthId,
+                  onMonthSelected: (selectedMonth) {
+                    setState(() {
+                      monthCurrent = selectedMonth;
+                    });
+                  },
+                ))
+            .toList(),
+      ),
+    );
+  }
+
+  Widget _pageEmpty(BuildContext context) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           ImageHelper.loadFromAsset(
             AssetHelper.img_search_not_found,
@@ -158,15 +183,16 @@ class FestivalScreen extends StatelessWidget {
 }
 
 class FestivalCard extends StatelessWidget {
-  final EventModel festival;
+  final NewsModel festival;
 
   const FestivalCard({super.key, required this.festival});
 
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    final start = festival.startDate ?? now;
-    final end = festival.endDate ?? now;
+    final start = festival.createdTime ?? now;
+    final end = festival.lastUpdatedTime ?? now;
+
     String statusLabel;
     Color statusColor;
 
@@ -210,7 +236,7 @@ class FestivalCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    festival.name ?? '',
+                    festival.title ?? '',
                     style: TextStyle(
                       fontSize: 17.sp,
                       fontWeight: FontWeight.bold,
@@ -219,14 +245,19 @@ class FestivalCard extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 0.5.h),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 2.w, vertical: 0.5.h),
                   decoration: BoxDecoration(
                     color: statusColor,
                     borderRadius: BorderRadius.circular(3.w),
                   ),
                   child: Text(
                     statusLabel,
-                    style: TextStyle(color: Colors.white, fontSize: 12.sp, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
@@ -251,40 +282,33 @@ class FestivalCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Icon(Icons.date_range, color: Colors.blueAccent, size: 18.sp),
-                    SizedBox(width: 2.w),
-                    Text(
-                      _formatDate(start),
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blueAccent,
-                      ),
-                    ),
-                  ],
-                ),
-                Text("đến", style: TextStyle(fontSize: 13.sp, color: Colors.black54)),
-                Row(
-                  children: [
-                    Icon(Icons.event_available, color: Colors.green, size: 18.sp),
-                    SizedBox(width: 2.w),
-                    Text(
-                      _formatDate(end),
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green,
-                      ),
-                    ),
-                  ],
-                ),
+                _dateItem(Icons.date_range, Colors.blueAccent, start),
+                Text("đến",
+                    style: TextStyle(
+                        fontSize: 13.sp, color: Colors.black54)),
+                _dateItem(Icons.event_available, Colors.green, end),
               ],
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _dateItem(IconData icon, Color color, DateTime date) {
+    return Row(
+      children: [
+        Icon(icon, color: color, size: 18.sp),
+        SizedBox(width: 2.w),
+        Text(
+          _formatDate(date),
+          style: TextStyle(
+            fontSize: 13.sp,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+      ],
     );
   }
 

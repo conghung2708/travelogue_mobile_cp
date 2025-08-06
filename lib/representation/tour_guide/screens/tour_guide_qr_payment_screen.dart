@@ -5,7 +5,11 @@ import 'package:flutter/gestures.dart';
 import 'package:sizer/sizer.dart';
 import 'package:intl/intl.dart';
 import 'package:marquee/marquee.dart';
+import 'package:travelogue_mobile/core/blocs/app_bloc.dart';
+import 'package:travelogue_mobile/core/blocs/main/main_event.dart';
+import 'package:travelogue_mobile/representation/main_screen.dart';
 import 'package:travelogue_mobile/representation/tour/screens/tour_screen.dart';
+import 'package:travelogue_mobile/representation/tour_guide/screens/tour_guide_screen.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 import 'package:travelogue_mobile/core/constants/color_constants.dart';
@@ -35,7 +39,8 @@ class TourGuideQrPaymentScreen extends StatefulWidget {
   });
 
   @override
-  State<TourGuideQrPaymentScreen> createState() => _TourGuideQrPaymentScreenState();
+  State<TourGuideQrPaymentScreen> createState() =>
+      _TourGuideQrPaymentScreenState();
 }
 
 class _TourGuideQrPaymentScreenState extends State<TourGuideQrPaymentScreen> {
@@ -74,48 +79,58 @@ class _TourGuideQrPaymentScreenState extends State<TourGuideQrPaymentScreen> {
     });
   }
 
-void _loadWebViewFromUrl(String url) {
-  final uri = Uri.parse(url);
-  _webViewController = WebViewController()
-    ..setJavaScriptMode(JavaScriptMode.unrestricted)
-    ..loadRequest(uri)
-    ..setNavigationDelegate(NavigationDelegate(
-      onPageFinished: (_) => setState(() => _isLoading = false),
-      onPageStarted: (_) => setState(() => _isLoading = true),
-      onNavigationRequest: (request) {
-        final url = request.url;
-        if (url.contains("status=PAID")) {
-          _completePayment();
-          return NavigationDecision.prevent;
-        } else if (url.contains("status=CANCELLED")) {
-          Future.delayed(const Duration(seconds: 2), () {
-            Navigator.of(context).pushNamedAndRemoveUntil(
-              TourScreen.routeName,
-              (route) => false,
-            );
-          });
-          return NavigationDecision.prevent;
-        }
-        return NavigationDecision.navigate;
-      },
-    ));
+  void _loadWebViewFromUrl(String url) {
+    final uri = Uri.parse(url);
+    _webViewController = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..loadRequest(uri)
+      ..setNavigationDelegate(NavigationDelegate(
+        onPageFinished: (_) => setState(() => _isLoading = false),
+        onPageStarted: (_) => setState(() => _isLoading = true),
+        onNavigationRequest: (request) {
+          final url = request.url;
+          if (url.contains("status=PAID")) {
+            _completePayment();
+            return NavigationDecision.prevent;
+          } else if (url.contains("status=CANCELLED")) {
+            Future.delayed(const Duration(seconds: 2), () {
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                MainScreen.routeName,
+                (route) => false,
+              );
+              AppBloc.mainBloc.add(OnChangeIndexEvent(indexChange: 1));
+            });
+            return NavigationDecision.prevent;
+          }
 
-  if (_webViewController.platform is WebKitWebViewController) {
-    (_webViewController.platform as WebKitWebViewController)
-        .setAllowsBackForwardNavigationGestures(true);
+          return NavigationDecision.navigate;
+        },
+      ));
+
+    if (_webViewController.platform is WebKitWebViewController) {
+      (_webViewController.platform as WebKitWebViewController)
+          .setAllowsBackForwardNavigationGestures(true);
+    }
+
+    setState(() => _isLoading = true);
   }
 
-  setState(() => _isLoading = true);
-}
+//  void _completePayment() {
+//   Navigator.of(context).pushAndRemoveUntil(
+//     MaterialPageRoute(
+//       builder: (_) => const PaymentSuccessScreen(fromGuide: true),
+//     ),
+//     (route) => false,
+//   );
+// }
 
- void _completePayment() {
-  Navigator.of(context).pushAndRemoveUntil(
-    MaterialPageRoute(
-      builder: (_) => const PaymentSuccessScreen(fromGuide: true),
-    ),
-    (route) => false,
-  );
-}
+  void _completePayment() {
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      MainScreen.routeName,
+      (route) => false,
+    );
+    AppBloc.mainBloc.add(OnChangeIndexEvent(indexChange: 1));
+  }
 
   void _onCountdownFinished() {
     showDialog(
@@ -153,7 +168,15 @@ void _loadWebViewFromUrl(String url) {
       ),
     );
 
-    return result ?? false;
+    if (result == true) {
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        MainScreen.routeName,
+        (route) => false,
+      );
+      AppBloc.mainBloc.add(OnChangeIndexEvent(indexChange: 1));
+    }
+
+    return false;
   }
 
   @override
@@ -170,7 +193,9 @@ void _loadWebViewFromUrl(String url) {
   @override
   Widget build(BuildContext context) {
     final currency = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
-    final price = widget.guide.price != null ? currency.format(widget.guide.price) : "Không rõ";
+    final price = widget.guide.price != null
+        ? currency.format(widget.guide.price)
+        : "Không rõ";
     final name = widget.guide.userName ?? "Hướng dẫn viên";
 
     return WillPopScope(
@@ -184,14 +209,16 @@ void _loadWebViewFromUrl(String url) {
                 padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
                 decoration: const BoxDecoration(
                   gradient: Gradients.defaultGradientBackground,
-                  borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+                  borderRadius:
+                      BorderRadius.vertical(bottom: Radius.circular(24)),
                 ),
                 child: Column(
                   children: [
                     Row(
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+                          icon: const Icon(Icons.arrow_back_ios,
+                              color: Colors.white),
                           onPressed: () async {
                             final confirm = await _onWillPop();
                             if (confirm) Navigator.pop(context);
@@ -209,7 +236,8 @@ void _loadWebViewFromUrl(String url) {
                             color: Colors.white)),
                     SizedBox(height: 0.6.h),
                     Text('$name – $price/ngày',
-                        style: TextStyle(fontSize: 15.sp, color: Colors.white70)),
+                        style:
+                            TextStyle(fontSize: 15.sp, color: Colors.white70)),
                     SizedBox(height: 1.h),
                     _buildCountdownClock(),
                   ],

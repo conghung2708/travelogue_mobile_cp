@@ -51,13 +51,14 @@ class UserProfileScreen extends StatelessWidget {
                       },
                     ),
                     _buildMenuItem(
-  Icons.badge_outlined,
-  "Đăng ký hướng dẫn viên",
-  context: context,
-  onTap: () {
-    Navigator.pushNamed(context, TourGuideRequestScreen.routeName);
-  },
-),
+                      Icons.badge_outlined,
+                      "Đăng ký hướng dẫn viên",
+                      context: context,
+                      onTap: () {
+                        Navigator.pushNamed(
+                            context, TourGuideRequestScreen.routeName);
+                      },
+                    ),
 
                     _buildMenuItem(
                       Icons.favorite_border,

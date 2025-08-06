@@ -8,19 +8,19 @@ import 'package:travelogue_mobile/model/month_model.dart';
 class MonthWidget extends StatelessWidget {
   final bool isSelected;
   final Month month;
+  final ValueChanged<int> onMonthSelected;
 
   const MonthWidget({
     super.key,
     required this.month,
     required this.isSelected,
+    required this.onMonthSelected,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        AppBloc.festivalBloc.add(FilterFestivalEvent(month: month.monthId));
-      },
+      onTap: () => onMonthSelected(month.monthId),
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 8),
         width: 30.sp,
@@ -30,9 +30,7 @@ class MonthWidget extends StatelessWidget {
             color: isSelected ? Colors.white : const Color(0x99FFFFFF),
             width: 3,
           ),
-          borderRadius: BorderRadius.all(
-            Radius.circular(16.sp),
-          ),
+          borderRadius: BorderRadius.all(Radius.circular(16.sp)),
           color: isSelected ? Colors.white : Colors.transparent,
         ),
         child: Column(
