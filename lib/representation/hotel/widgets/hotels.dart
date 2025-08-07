@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sizer/sizer.dart';
-import 'package:travelogue_mobile/core/blocs/hotel_restaurent/hotel_restaurant_bloc.dart';
-import 'package:travelogue_mobile/model/hotel_model.dart';
+import 'package:travelogue_mobile/core/blocs/nearest_data/nearest_data_bloc.dart';
+import 'package:travelogue_mobile/core/blocs/nearest_data/nearest_data_state.dart';
+import 'package:travelogue_mobile/model/location_model.dart';
 import 'package:travelogue_mobile/representation/hotel/widgets/hotel_card.dart';
 
 class Hotels extends StatelessWidget {
@@ -10,38 +11,45 @@ class Hotels extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<HotelRestaurantBloc, HotelRestaurantState>(
+    return BlocBuilder<NearestDataBloc, NearestDataState>(
       builder: (context, state) {
-        final List<HotelModel> listHotel = state.props[0] as List<HotelModel>;
+        if (state is NearestHistoricalLoaded) {
+          final List<LocationModel> historicalPlaces = state.historicals;
 
-        return listHotel.isEmpty
-            ? const SizedBox()
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 20),
-                  _buildSectionTitle(
-                    Icons.hotel,
-                    "Làng nghề truyền thống",
-                    Colors.blue,
-                  ),
-                  Container(
-                    height: 200,
-                    margin: const EdgeInsets.only(top: 10),
-                    child: ListView.separated(
-                      physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      scrollDirection: Axis.horizontal,
-                      itemBuilder: (context, index) {
-                        return HotelCard(hotelModel: listHotel[index]);
-                      },
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(width: 12),
-                      itemCount: listHotel.length,
-                    ),
-                  ),
-                ],
-              );
+          if (historicalPlaces.isEmpty) return const SizedBox();
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 20),
+              _buildSectionTitle(
+                Icons.museum,
+                "Di tích lịch sử gần bạn",
+                Colors.brown,
+              ),
+              Container(
+                height: 200,
+                margin: const EdgeInsets.only(top: 10),
+                child: ListView.separated(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  scrollDirection: Axis.horizontal,
+                  itemBuilder: (context, index) {
+                    final location = historicalPlaces[index];
+                    return HotelCard(
+                      locationModel: location,
+                    );
+                  },
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(width: 12),
+                  itemCount: historicalPlaces.length,
+                ),
+              ),
+            ],
+          );
+        }
+
+        return const SizedBox();
       },
     );
   }

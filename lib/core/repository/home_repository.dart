@@ -84,4 +84,6 @@ Future<bool> updateLikedLocation({required String locationId}) async {
 
     return response.statusCode == StatusCode.ok;
   }
+
+  
 }

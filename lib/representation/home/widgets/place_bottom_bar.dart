@@ -8,8 +8,10 @@ import 'package:sizer/sizer.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
 import 'package:travelogue_mobile/core/utils/image_network_card.dart';
 import 'package:travelogue_mobile/model/location_model.dart';
+import 'package:travelogue_mobile/representation/hotel/widgets/hotels.dart';
 import 'package:travelogue_mobile/representation/map/screens/viet_map_location_screen.dart';
 import 'package:avatar_glow/avatar_glow.dart';
+import 'package:travelogue_mobile/representation/restaurent/widgets/restaurents.dart';
 import 'package:vietmap_flutter_gl/vietmap_flutter_gl.dart' as vietmap;
 
 class PlaceBottomBar extends StatefulWidget {
@@ -249,6 +251,8 @@ class _PlaceBottomBarState extends State<PlaceBottomBar> {
                       },
                     ),
                   ),
+                  const Hotels(),
+                  const Restaurents(),
                 SizedBox(height: 20.sp),
                 Container(
                   width: double.infinity,
