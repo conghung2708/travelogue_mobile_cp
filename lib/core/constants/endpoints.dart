@@ -58,8 +58,12 @@ class Endpoints {
   static const String getWorkshopDetail = 'api/workshop';
 
   //Booking Workshop
-  static const String createBookingWorkshop = 'api/booking/create-booking-workshop';
+  static const String createBookingWorkshop =
+      'api/booking/create-booking-workshop';
 
   //Tour Guide Request
   static const String tourGuideRequest = 'api/user/tour-guide-request';
+
+  static const String nearestCuisine = '/api/location/nearest-cuisine';
+  static const String nearestHistorical = '/api/location/nearest-historical';
 }

@@ -6,6 +6,7 @@ import 'package:travelogue_mobile/core/blocs/festival/festival_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/home/home_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/hotel_restaurent/hotel_restaurant_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/main/main_bloc.dart';
+import 'package:travelogue_mobile/core/blocs/nearest_data/nearest_data_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/news/news_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/search/search_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/tour/tour_bloc.dart';
@@ -13,6 +14,7 @@ import 'package:travelogue_mobile/core/blocs/tour_guide/tour_guide_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/user/user_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/workshop/workshop_bloc.dart';
 import 'package:travelogue_mobile/core/repository/booking_repository.dart';
+import 'package:travelogue_mobile/core/repository/nearest_data_repository.dart';
 import 'package:travelogue_mobile/core/repository/tour_guide_repository.dart';
 import 'package:travelogue_mobile/core/repository/user_repository.dart';
 import 'package:travelogue_mobile/core/repository/workshop_repository.dart';
@@ -35,6 +37,7 @@ class AppBloc {
   static final BookingBloc bookingBloc = BookingBloc(BookingRepository());
   static final WorkshopBloc workshopBloc = WorkshopBloc(WorkshopRepository());
   static final UserBloc userBloc = UserBloc(UserRepository());
+  static final NearestDataBloc nearestDataBloc = NearestDataBloc(repository: NearestDataRepository());
 
   List<BlocProvider> providers = [
     BlocProvider<MainBloc>(
@@ -79,6 +82,7 @@ class AppBloc {
     BlocProvider<UserBloc>(
       create: (context) => userBloc,
     ),
+    BlocProvider<NearestDataBloc>(create: (context) => nearestDataBloc)
   ];
 
   void initial() {
@@ -124,6 +128,7 @@ class AppBloc {
     bookingBloc.close();
     workshopBloc.close();
     userBloc.close();
+    nearestDataBloc.close();
   }
 
   ///Singleton factory

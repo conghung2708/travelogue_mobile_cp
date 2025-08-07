@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sizer/sizer.dart';
-import 'package:travelogue_mobile/core/blocs/app_bloc.dart';
-import 'package:travelogue_mobile/core/blocs/hotel_restaurent/hotel_restaurant_bloc.dart';
+import 'package:travelogue_mobile/core/blocs/nearest_data/nearest_data_bloc.dart';
+import 'package:travelogue_mobile/core/blocs/nearest_data/nearest_data_event.dart';
 import 'package:travelogue_mobile/model/location_model.dart';
 import 'package:travelogue_mobile/representation/event/widgets/arrow_back_button.dart';
-// import 'package:travelogue_mobile/representation/home/widgets/place_app_bar.dart';
 import 'package:travelogue_mobile/representation/home/widgets/place_bottom_bar.dart';
 
 class PlaceDetailScreen extends StatefulWidget {
@@ -19,15 +19,19 @@ class PlaceDetailScreen extends StatefulWidget {
 }
 
 class _PlaceDetailScreenState extends State<PlaceDetailScreen> {
-  @override
-  void initState() {
-    super.initState();
-    AppBloc.hotelRestaurantBloc.add(
-      GetHotelRestaurantEvent(
-        locationId: widget.place.id ?? '',
-      ),
-    );
-  }
+@override
+void initState() {
+  super.initState();
+
+  final locationId = widget.place.id ?? '';
+
+  // Nếu vẫn cần gọi dữ liệu nhà hàng/khách sạn riêng
+  // AppBloc.hotelRestaurantBloc.add(GetHotelRestaurantEvent(locationId: locationId));
+
+  // Gọi 2 sự kiện từ NearestDataBloc
+  context.read<NearestDataBloc>().add(GetNearestCuisineEvent(locationId));
+  context.read<NearestDataBloc>().add(GetNearestHistoricalEvent(locationId));
+}
 
   @override
   Widget build(BuildContext context) {
