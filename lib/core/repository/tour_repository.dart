@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:travelogue_mobile/core/constants/endpoints.dart';
 import 'package:travelogue_mobile/core/constants/status_code.dart';
@@ -7,7 +9,6 @@ import 'package:travelogue_mobile/model/tour_guide/tour_guide_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_model.dart';
 
 class TourRepository {
-
   Future<List<TourModel>> getAllTours() async {
     final Response response = await BaseRepository().getRoute(Endpoints.tour);
 
@@ -19,39 +20,45 @@ class TourRepository {
     return [];
   }
 
-
   Future<TourModel?> getTourById(String tourId) async {
-    final Response response = await BaseRepository().getRoute('${Endpoints.tour}/$tourId');
+    final Response response =
+        await BaseRepository().getRoute('${Endpoints.tour}/$tourId');
 
     if (response.statusCode == StatusCode.ok) {
-      return TourModel.fromDetailJson(response.data['data'], logSchedules: true);
+      final detailData = response.data['data'];
+
+      print(const JsonEncoder.withIndent('  ').convert(detailData));
+
+      final tour = TourModel.fromDetailJson(detailData);
+
+      for (final s in tour.schedules ?? []) {
+        print(
+            '📅 Schedule ${s.scheduleId} - ${s.startTime} - Guide: ${s.tourGuide?.userName}');
+      }
+
+      return tour;
     }
 
     return null;
   }
 
+  Future<bool> createTour(Map<String, dynamic> body) async {
+    final Response response = await BaseRepository().postRoute(
+      gateway: Endpoints.tour,
+      data: body,
+    );
 
+    return response.statusCode == StatusCode.created;
+  }
 
+  Future<bool> updateTour(String tourId, Map<String, dynamic> body) async {
+    final Response response = await BaseRepository().putRoute(
+      gateway: '${Endpoints.tour}/$tourId',
+      data: body,
+    );
 
-Future<bool> createTour(Map<String, dynamic> body) async {
-  final Response response = await BaseRepository().postRoute(
-    gateway: Endpoints.tour,
-    data: body,
-  );
-
-  return response.statusCode == StatusCode.created;
-}
-
-Future<bool> updateTour(String tourId, Map<String, dynamic> body) async {
-  final Response response = await BaseRepository().putRoute(
-    gateway: '${Endpoints.tour}/$tourId',
-    data: body,
-  );
-
-  return response.statusCode == StatusCode.ok;
-}
-
-
+    return response.statusCode == StatusCode.ok;
+  }
 
   Future<bool> deleteTour(String tourId) async {
     final Response response = await BaseRepository().deleteRoute(
@@ -72,7 +79,8 @@ Future<bool> updateTour(String tourId, Map<String, dynamic> body) async {
         final String? tourId = rawTour['tourId'];
         if (tourId == null) continue;
 
-        final detailResponse = await BaseRepository().getRoute('${Endpoints.tour}/$tourId');
+        final detailResponse =
+            await BaseRepository().getRoute('${Endpoints.tour}/$tourId');
 
         if (detailResponse.statusCode == StatusCode.ok) {
           final detailData = detailResponse.data['data'];

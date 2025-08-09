@@ -1,20 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sizer/sizer.dart';
-import 'package:showcaseview/showcaseview.dart';
-import 'package:travelogue_mobile/core/blocs/booking/booking_bloc.dart';
-import 'package:travelogue_mobile/core/blocs/booking/booking_event.dart';
-import 'package:travelogue_mobile/core/blocs/booking/booking_state.dart';
+import 'package:travelogue_mobile/core/blocs/authenicate/authenicate_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/tour/tour_bloc.dart';
 import 'package:travelogue_mobile/core/constants/color_constants.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
 import 'package:travelogue_mobile/core/helpers/auth_helper.dart';
+import 'package:travelogue_mobile/core/helpers/string_helper.dart';
 import 'package:travelogue_mobile/model/tour/tour_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_schedule_model.dart';
 import 'package:travelogue_mobile/representation/auth/screens/login_screen.dart';
 import 'package:travelogue_mobile/representation/home/widgets/title_widget.dart';
-import 'package:travelogue_mobile/representation/booking/screens/my_booking_screen.dart';
 import 'package:travelogue_mobile/representation/tour/screens/tour_qr_payment_screen.dart';
 import 'package:travelogue_mobile/representation/tour/widgets/tour_mansory_grid.dart';
 import 'package:travelogue_mobile/representation/trip_plan/screens/my_trip_plan_screen.dart';
@@ -30,40 +26,26 @@ class TourScreen extends StatefulWidget {
 class _TourScreenState extends State<TourScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  final GlobalKey _folderKey = GlobalKey();
-  bool _hasShownShowcase = false;
+
   Map<String, dynamic>? _pendingPayment;
 
   @override
   void initState() {
     super.initState();
+
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 3),
     )..repeat();
 
     context.read<TourBloc>().add(const GetAllToursEvent());
-    _checkAndShowShowcase();
-  }
-
-  Future<void> _checkAndShowShowcase() async {
-    final prefs = await SharedPreferences.getInstance();
-    final hasShown = prefs.getBool('hasShownTourShowcase') ?? false;
-
-    if (!hasShown && mounted) {
-      Future.delayed(const Duration(milliseconds: 800), () {
-        if (_folderKey.currentContext != null) {
-          ShowCaseWidget.of(context).startShowCase([_folderKey]);
-          prefs.setBool('hasShownTourShowcase', true);
-        }
-      });
-    }
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
+    // Nhận args để hiển thị banner "pending payment" nếu còn hiệu lực (<5 phút)
     final args = ModalRoute.of(context)?.settings.arguments;
     if (args is Map<String, dynamic>) {
       if (args['pendingPayment'] == true) {
@@ -77,9 +59,9 @@ class _TourScreenState extends State<TourScreen>
           _pendingPayment = null;
           WidgetsBinding.instance.addPostFrameCallback((_) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text(
-                    'Liên kết thanh toán đã hết hạn. Vui lòng đặt lại.'),
+              const SnackBar(
+                content:
+                    Text('Liên kết thanh toán đã hết hạn. Vui lòng đặt lại.'),
                 backgroundColor: Colors.redAccent,
               ),
             );
@@ -145,166 +127,45 @@ class _TourScreenState extends State<TourScreen>
     );
   }
 
-  Widget _buildHeader() {
-    return Row(
-      children: [
-        const CircleAvatar(backgroundImage: AssetImage(AssetHelper.avatar)),
-        SizedBox(width: 3.w),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Xin chào, Hưng",
-              style: TextStyle(
-                fontSize: 17.sp,
-                fontWeight: FontWeight.w700,
-                fontFamily: "Pattaya",
-              ),
-            ),
-            Text(
-              "Khám phá hành trình tuyệt vời",
-              style: TextStyle(
-                fontSize: 11.sp,
-                color: Colors.grey[600],
-              ),
-            )
-          ],
-        ),
-        const Spacer(),
-        Showcase.withWidget(
-          key: _folderKey,
-          height: 140,
-          width: 270,
-          container: _buildShowcasePopup(),
-          overlayColor: Colors.black,
-          overlayOpacity: 0.6,
-          blurValue: 2.5,
-          disableMovingAnimation: true,
-          targetPadding: const EdgeInsets.all(4),
-          child: GestureDetector(
-            onTap: () {
-              if (!isLoggedIn()) {
-                Navigator.pushNamed(
-                  context,
-                  LoginScreen.routeName,
-                  arguments: {'redirectRoute': TourScreen.routeName},
-                );
-                return;
-              }
+Widget _buildHeader() {
+  return BlocBuilder<AuthenicateBloc, AuthenicateState>(
+    builder: (context, state) {
+      final String rawName =
+          (state.props.isNotEmpty ? state.props[0] as String : '');
+      final String displayName =
+          rawName.isEmpty ? 'Bạn' : (StringHelper().formatUserName(rawName) ?? 'Bạn');
 
-              context.read<BookingBloc>().add(GetAllMyBookingsEvent());
-
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => BlocBuilder<BookingBloc, BookingState>(
-                    builder: (context, state) {
-                      if (state is BookingListSuccess) {
-                        return MyBookingScreen(
-                          bookings: state.bookings
-                              .where((b) => b.bookingType == '1')
-                              .toList(),
-                        );
-                      } else if (state is BookingFailure) {
-                        return Scaffold(
-                          appBar: AppBar(title: const Text('Lịch sử đặt tour')),
-                          body: Center(
-                            child: Text('Đã xảy ra lỗi: ${state.error}'),
-                          ),
-                        );
-                      } else {
-                        return const Scaffold(
-                          body: Center(child: CircularProgressIndicator()),
-                        );
-                      }
-                    },
-                  ),
-                  settings:
-                      const RouteSettings(arguments: {'bookingType': '1'}),
-                ),
-              );
-            },
-            child: _buildShowcaseButton(),
-          ),
-        )
-      ],
-    );
-  }
-
-  Widget _buildShowcasePopup() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: Gradients.defaultGradientBackground,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: ColorPalette.primaryColor.withOpacity(0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      return Row(
         children: [
-          Row(
+          const CircleAvatar(backgroundImage: AssetImage(AssetHelper.avatar)),
+          SizedBox(width: 3.w),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.folder_copy,
-                  color: ColorPalette.yellowColor, size: 28),
-              const SizedBox(width: 8),
-              const Text(
-                'Tour đã đặt',
+              Text(
+                "Xin chào, $displayName",
                 style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  letterSpacing: 0.5,
+                  fontSize: 17.sp,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: "Pattaya",
+                ),
+              ),
+              Text(
+                "Khám phá hành trình tuyệt vời",
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  color: Colors.grey[600],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          Text(
-            'Nhấn để xem các tour bạn đã đặt và theo dõi hành trình của mình.',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.white.withOpacity(0.95),
-              height: 1.4,
-            ),
-          ),
+          const Spacer(),
+          if (rawName.isNotEmpty) Icon(Icons.notifications_none, size: 6.w),
         ],
-      ),
-    );
-  }
-
-  Widget _buildShowcaseButton() {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        Container(
-          width: 10.w,
-          height: 10.w,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: Gradients.defaultGradientBackground,
-            boxShadow: [
-              BoxShadow(
-                color: ColorPalette.primaryColor.withOpacity(0.3),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-        ),
-        Icon(
-          Icons.folder_copy_outlined,
-          color: Colors.white,
-          size: 6.w,
-        ),
-      ],
-    );
-  }
+      );
+    },
+  );
+}
 
   Widget _buildSearchField() {
     return DecoratedBox(
@@ -516,13 +377,12 @@ class _TourScreenState extends State<TourScreen>
                   builder: (_) => TourQrPaymentScreen(
                     tour: TourModel.fromJson(_pendingPayment!['tour']),
                     schedule: TourScheduleModel.fromJson(
-                        _pendingPayment!['schedule']),
-                    departureDate:
-                        DateTime.parse(_pendingPayment!['departureDate']),
+                      _pendingPayment!['schedule'],
+                    ),
+                    startTime: DateTime.parse(_pendingPayment!['startTime']),
                     adults: _pendingPayment!['adults'],
                     children: _pendingPayment!['children'],
                     totalPrice: _pendingPayment!['totalPrice'],
-                    startTime: DateTime.parse(_pendingPayment!['startTime']),
                     checkoutUrl: _pendingPayment!['paymentLink'],
                   ),
                 ),

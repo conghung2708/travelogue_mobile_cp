@@ -18,36 +18,99 @@ class MyBookingScreen extends StatefulWidget {
 }
 
 class _MyBookingScreenState extends State<MyBookingScreen> {
-  int selectedTab = 0;
-  final List<String> tabs = ["Chưa thanh toán", "Đã thanh toán", "Đã hoàn tất"];
+  // Status tabs: 0: pending, 1: confirmed, 2: completed
+  int selectedStatusTab = 0;
+  final List<String> statusTabs = ["Chưa thanh toán", "Đã thanh toán", "Đã hoàn tất"];
+
+  // Type filter: 0: All, 1: Tour, 2: Workshop, 3: Guide
+  int selectedType = 0;
+
   final currency = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
 
-  late String bookingType;
-  bool _isInit = true;
+  bool _prefetchedTours = false;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_isInit) {
-      final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-      bookingType = args?['bookingType'] ?? '1';
-      _loadAllToursForBookings();
-      _isInit = false;
+  void initState() {
+    super.initState();
+    _prefetchToursForType1();
+  }
+
+
+  int _asInt(dynamic v, {int fallback = 0}) {
+    if (v is int) return v;
+    if (v is String) return int.tryParse(v) ?? fallback;
+    return fallback;
+  }
+
+int _statusCodeOf(BookingModel b) {
+  final dynamic s = b.status;
+
+  if (s is int) return s;
+
+  if (s is String) {
+    final parsed = int.tryParse(s);
+    if (parsed != null) return parsed;
+  }
+
+
+  final t = (b.statusText ?? '').trim().toUpperCase();
+  if (t == 'PENDING') return 0;
+  if (t == 'CONFIRMED') return 1;
+  if (t == 'COMPLETED') return 2;
+
+ 
+  return 0;
+}
+
+  String _statusText(BookingModel b) {
+    switch (_statusCodeOf(b)) {
+      case 0:
+        return 'Chưa thanh toán';
+      case 1:
+        return 'Đã thanh toán';
+      case 2:
+        return 'Đã hoàn tất';
+      default:
+        return b.statusText ?? 'Không rõ';
     }
   }
 
-  void _loadAllToursForBookings() async {
+  String _typeText(int t) {
+    switch (t) {
+      case 1:
+        return 'Tour';
+      case 2:
+        return 'Workshop';
+      case 3:
+        return 'Hướng dẫn viên';
+      default:
+        return 'Khác';
+    }
+  }
+
+  Future<void> _prefetchToursForType1() async {
+    if (_prefetchedTours) return;
+
+    final futures = <Future<void>>[];
     for (final b in widget.bookings) {
-      if (b.tourId != null && b.tour == null) {
-        final tour = await TourRepository().getTourById(b.tourId!);
-        if (tour != null) {
-          b.tour = tour;
-        }
+      final bt = _asInt(b.bookingType, fallback: -1);
+      if (bt == 1 && b.tourId != null && b.tour == null) {
+        futures.add(() async {
+          final tour = await TourRepository().getTourById(b.tourId!);
+          if (tour != null) b.tour = tour;
+        }());
       }
     }
-    setState(() {});
+
+    await Future.wait(futures);
+    if (mounted) {
+      setState(() {
+        _prefetchedTours = true;
+      });
+    }
   }
 
+  // ===== Build =====
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -57,7 +120,7 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
         elevation: 0,
         leading: const BackButton(color: Colors.black),
         title: Text(
-          bookingType == '3' ? "Lịch trình cá nhân" : "Lịch sử đặt tour",
+          "Quản lý đơn hàng",
           style: TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.bold,
@@ -70,7 +133,10 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
         padding: EdgeInsets.symmetric(horizontal: 4.w),
         child: Column(
           children: [
-            _buildTabFilter(),
+            SizedBox(height: 1.h),
+            _buildTypeFilterChips(),
+            SizedBox(height: 1.5.h),
+            _buildStatusTab(),
             SizedBox(height: 2.h),
             Expanded(child: _buildBookingList()),
           ],
@@ -79,7 +145,56 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
     );
   }
 
-  Widget _buildTabFilter() {
+  Widget _buildTypeFilterChips() {
+    // 0: Tất cả, 1: Tour, 2: Workshop, 3: Guide
+    final items = const [
+      {'label': 'Tất cả', 'value': 0, 'icon': Icons.all_inbox_outlined},
+      {'label': 'Tour', 'value': 1, 'icon': Icons.card_travel_outlined},
+      {'label': 'Workshop', 'value': 2, 'icon': Icons.handyman_outlined},
+      {'label': 'Hướng dẫn viên', 'value': 3, 'icon': Icons.badge_outlined},
+    ];
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: items.map((e) {
+          final value = e['value'] as int;
+          final selected = selectedType == value;
+          return Padding(
+            padding: EdgeInsets.only(right: 2.w),
+            child: ChoiceChip(
+              label: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(e['icon'] as IconData, size: 14.sp),
+                  SizedBox(width: 1.w),
+                  Text(e['label'] as String),
+                ],
+              ),
+              selected: selected,
+              onSelected: (_) => setState(() => selectedType = value),
+              selectedColor: ColorPalette.primaryColor.withOpacity(0.9),
+              backgroundColor: Colors.white,
+              labelStyle: TextStyle(
+                color: selected ? Colors.white : Colors.black87,
+                fontWeight: FontWeight.w600,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+                side: BorderSide(
+                  color: selected
+                      ? ColorPalette.primaryColor
+                      : Colors.grey.shade300,
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildStatusTab() {
     return Container(
       height: 5.5.h,
       decoration: BoxDecoration(
@@ -87,11 +202,11 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
         color: Colors.white,
       ),
       child: Row(
-        children: List.generate(tabs.length, (index) {
-          final isSelected = selectedTab == index;
+        children: List.generate(statusTabs.length, (index) {
+          final isSelected = selectedStatusTab == index;
           return Expanded(
             child: GestureDetector(
-              onTap: () => setState(() => selectedTab = index),
+              onTap: () => setState(() => selectedStatusTab = index),
               child: Container(
                 height: 5.5.h,
                 alignment: Alignment.center,
@@ -102,7 +217,7 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
                       )
                     : null,
                 child: Text(
-                  tabs[index],
+                  statusTabs[index],
                   style: TextStyle(
                     fontSize: 14.sp,
                     color: isSelected ? Colors.white : ColorPalette.subTitleColor,
@@ -118,14 +233,23 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
   }
 
   Widget _buildBookingList() {
-    final filtered = widget.bookings.where((b) {
-      switch (selectedTab) {
+    // Lọc theo loại
+    final typeFiltered = widget.bookings.where((b) {
+      if (selectedType == 0) return true; // Tất cả
+      final bt = _asInt(b.bookingType, fallback: -1);
+      return bt == selectedType;
+    }).toList();
+
+    // Lọc theo trạng thái
+    final filtered = typeFiltered.where((b) {
+      final code = _statusCodeOf(b);
+      switch (selectedStatusTab) {
         case 0:
-          return b.status == "0";
+          return code == 0;
         case 1:
-          return b.status == "1";
+          return code == 1;
         case 2:
-          return b.status == "2" || b.statusText?.toUpperCase() == 'COMPLETED';
+          return code == 2 || (b.statusText?.toUpperCase() == 'COMPLETED');
         default:
           return false;
       }
@@ -144,16 +268,39 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
       itemCount: filtered.length,
       itemBuilder: (context, index) {
         final b = filtered[index];
-        final imageWidget = Image.asset(
-          AssetHelper.img_tay_ninh_login,
-          width: double.infinity,
-          height: 20.h,
-          fit: BoxFit.cover,
-        );
+        final bt = _asInt(b.bookingType, fallback: -1);
+
+        final imageWidget = (bt == 1 && b.tour?.mediaList.isNotEmpty == true)
+            ? Image.network(
+                b.tour!.mediaList.first.mediaUrl ?? '',
+                width: double.infinity,
+                height: 20.h,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Image.asset(
+                  AssetHelper.img_tay_ninh_login,
+                  width: double.infinity,
+                  height: 20.h,
+                  fit: BoxFit.cover,
+                ),
+              )
+            : Image.asset(
+                AssetHelper.img_tay_ninh_login,
+                width: double.infinity,
+                height: 20.h,
+                fit: BoxFit.cover,
+              );
+
+ 
+        final title = (bt == 1)
+            ? (b.tour?.name ?? "Tour ...")
+            : (b.bookingTypeText ?? _typeText(bt));
 
         return GestureDetector(
           onTap: () async {
-            if (b.status == "1" && b.tourId != null) {
+            final statusCode = _statusCodeOf(b);
+
+       
+            if (bt == 1 && statusCode == 1 && b.tourId != null) {
               showDialog(
                 context: context,
                 barrierDismissible: false,
@@ -161,11 +308,11 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
               );
 
               final tour = await TourRepository().getTourById(b.tourId!);
-              Navigator.pop(context);
+              if (mounted) Navigator.pop(context);
 
               if (tour != null) {
                 b.tour = tour;
-                setState(() {});
+                if (mounted) setState(() {});
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -174,46 +321,41 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
                       image: tour.mediaList.isNotEmpty
                           ? (tour.mediaList.first.mediaUrl ?? AssetHelper.img_tay_ninh_login)
                           : AssetHelper.img_tay_ninh_login,
-                      departureDate: b.bookingDate,
+                      startTime: b.bookingDate,
                       isBooked: true,
                     ),
                   ),
                 );
               } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Không tìm thấy thông tin tour.")),
-                );
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Không tìm thấy thông tin tour.")),
+                  );
+                }
               }
             } else {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Tour chưa được thanh toán. Không thể xem chi tiết.")),
+                SnackBar(
+                  content: Text(
+                    bt == 1
+                        ? "Tour chưa được thanh toán. Không thể xem chi tiết."
+                        : "Đơn đặt hiện chưa hỗ trợ xem chi tiết.",
+                  ),
+                ),
               );
             }
           },
           child: _buildBookingCard(
             image: imageWidget,
-            title: b.tour?.name ?? "Tour ...",
-            status: _getStatusText(b),
+            title: title,
+            status: _statusText(b),
             location: "Tây Ninh",
-            price: currency.format(b.finalPrice),
+            price: currency.format((b.finalPrice ?? 0)),
             orderDate: DateFormat('dd/MM/yyyy').format(b.bookingDate),
           ),
         );
       },
     );
-  }
-
-  String _getStatusText(BookingModel b) {
-    switch (b.status) {
-      case 0:
-        return 'Chưa thanh toán';
-      case 1:
-        return 'Đã thanh toán';
-      case 2:
-        return 'Đã hoàn tất';
-      default:
-        return b.statusText ?? 'Không rõ';
-    }
   }
 
   Widget _buildBookingCard({
@@ -243,7 +385,7 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 3)),
         ],
       ),
@@ -251,7 +393,7 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
             child: image,
           ),
           Padding(
@@ -259,24 +401,32 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: TextStyle(
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.bold,
-                        color: ColorPalette.primaryColor)),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.bold,
+                    color: ColorPalette.primaryColor,
+                  ),
+                ),
                 SizedBox(height: 0.8.h),
                 Row(
                   children: [
                     Icon(Icons.calendar_month, size: 13.sp, color: Colors.grey),
                     SizedBox(width: 1.w),
-                    Text('Ngày đặt: $orderDate',
-                        style: TextStyle(fontSize: 13.sp, color: Colors.grey)),
+                    Text(
+                      'Ngày đặt: $orderDate',
+                      style: TextStyle(fontSize: 13.sp, color: Colors.grey),
+                    ),
                     const Spacer(),
-                    Text(price,
-                        style: TextStyle(
-                            fontSize: 14.sp,
-                            color: Colors.green,
-                            fontWeight: FontWeight.bold)),
+                    Text(
+                      price,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        color: Colors.green,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
                 SizedBox(height: 0.8.h),
@@ -284,12 +434,13 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
                   children: [
                     Icon(Icons.place, size: 13.sp, color: Colors.grey),
                     SizedBox(width: 1.w),
-                    Text(location,
-                        style: TextStyle(fontSize: 13.sp, color: Colors.grey)),
+                    Text(
+                      location,
+                      style: TextStyle(fontSize: 13.sp, color: Colors.grey),
+                    ),
                     const Spacer(),
                     Container(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.5.h),
+                      padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.5.h),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(20),
                         color: bgColor,

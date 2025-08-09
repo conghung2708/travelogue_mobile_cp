@@ -15,30 +15,26 @@ import 'package:travelogue_mobile/model/tour/tour_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_schedule_model.dart';
 import 'package:travelogue_mobile/model/booking/create_booking_tour_model.dart';
 import 'package:travelogue_mobile/core/repository/booking_repository.dart';
-import 'package:travelogue_mobile/representation/tour/screens/tour_screen.dart';
-import 'package:travelogue_mobile/representation/tour/screens/payment_success_sreen.dart';
 
 class TourQrPaymentScreen extends StatefulWidget {
   static const routeName = '/tour-qr-payment';
 
   final TourModel tour;
   final TourScheduleModel schedule;
-  final DateTime departureDate;
+  final DateTime startTime;
   final int adults;
   final int children;
   final double totalPrice;
-  final DateTime startTime;
   final String? checkoutUrl;
 
   const TourQrPaymentScreen({
     super.key,
     required this.tour,
     required this.schedule,
-    required this.departureDate,
+    required this.startTime, // giữ để truyền qua nếu cần log/analytics
     required this.adults,
     required this.children,
     required this.totalPrice,
-    required this.startTime,
     this.checkoutUrl,
   });
 
@@ -47,24 +43,25 @@ class TourQrPaymentScreen extends StatefulWidget {
 }
 
 class _TourQrPaymentScreenState extends State<TourQrPaymentScreen> {
-  late final WebViewController _webViewController;
-  final _gestureRecognizers = {
-    Factory(() => EagerGestureRecognizer()),
-  };
+  WebViewController? _webViewController;              // nullable để tránh crash khi build sớm
+  bool _hasController = false;
+  final _gestureRecognizers = { Factory(() => EagerGestureRecognizer()) };
 
-  Duration _remaining = const Duration(minutes: 5);
-  late Timer _timer;
+  // Countdown: luôn 5 phút kể từ khi mở màn
+  late DateTime _deadline;
+  Duration _remaining = Duration.zero;
+  Timer? _timer;
+
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
 
-    final elapsed = DateTime.now().difference(widget.startTime);
-    _remaining = Duration(minutes: 5) - elapsed;
-    if (_remaining.isNegative) _remaining = Duration.zero;
-
-    _startCountdown();
+    // Mốc đếm ngược độc lập với startTime
+    _deadline = DateTime.now().add(const Duration(minutes: 5));
+    _tick();               // cập nhật ngay lập tức
+    _startCountdown();     // rồi chạy timer
 
     if (widget.checkoutUrl != null) {
       _loadWebViewFromUrl(widget.checkoutUrl!);
@@ -74,14 +71,19 @@ class _TourQrPaymentScreenState extends State<TourQrPaymentScreen> {
   }
 
   void _startCountdown() {
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_remaining.inSeconds > 0) {
-        setState(() => _remaining -= const Duration(seconds: 1));
-      } else {
-        timer.cancel();
-        _onCountdownFinished();
-      }
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
+  }
+
+  void _tick() {
+    final diff = _deadline.difference(DateTime.now());
+    setState(() {
+      _remaining = diff.isNegative ? Duration.zero : diff;
     });
+    if (_remaining == Duration.zero) {
+      _timer?.cancel();
+      _onCountdownFinished();
+    }
   }
 
   Future<void> _createBookingAndPayment() async {
@@ -95,14 +97,12 @@ class _TourQrPaymentScreenState extends State<TourQrPaymentScreen> {
       );
 
       final booking = await BookingRepository().createBooking(model);
-
       if (booking == null) {
         _showErrorDialog('Tạo booking thất bại. Vui lòng thử lại.');
         return;
       }
 
-      final paymentUrl =
-          await BookingRepository().createPaymentLink(booking.id);
+      final paymentUrl = await BookingRepository().createPaymentLink(booking.id);
       if (paymentUrl == null) {
         _showErrorDialog('Không tạo được liên kết thanh toán.');
         return;
@@ -116,38 +116,43 @@ class _TourQrPaymentScreenState extends State<TourQrPaymentScreen> {
 
   void _loadWebViewFromUrl(String url) {
     final uri = Uri.parse(url);
-    _webViewController = WebViewController()
+    final controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..loadRequest(uri)
-      ..setNavigationDelegate(NavigationDelegate(
-        onPageFinished: (_) => setState(() => _isLoading = false),
-        onPageStarted: (_) => setState(() => _isLoading = true),
-        onNavigationRequest: (request) {
-          final url = request.url;
-          if (url.contains("status=PAID")) {
-            _completePayment();
-            return NavigationDecision.prevent;
-          } else if (url.contains("status=CANCELLED")) {
-            Future.delayed(const Duration(seconds: 3), () {
-              Navigator.of(context).pushNamedAndRemoveUntil(
-                MainScreen.routeName,
-                (route) => false,
-              );
-              AppBloc.mainBloc.add(OnChangeIndexEvent(indexChange: 2));
-            });
-            return NavigationDecision.prevent;
-          }
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onPageStarted: (_) => setState(() => _isLoading = true),
+          onPageFinished: (_) => setState(() => _isLoading = false),
+          onNavigationRequest: (request) {
+            final url = request.url;
+            if (url.contains('status=PAID')) {
+              _completePayment();
+              return NavigationDecision.prevent;
+            } else if (url.contains('status=CANCELLED')) {
+              Future.delayed(const Duration(seconds: 3), () {
+                Navigator.of(context).pushNamedAndRemoveUntil(
+                  MainScreen.routeName,
+                  (route) => false,
+                );
+                AppBloc.mainBloc.add(OnChangeIndexEvent(indexChange: 2));
+              });
+              return NavigationDecision.prevent;
+            }
+            return NavigationDecision.navigate;
+          },
+        ),
+      );
 
-          return NavigationDecision.navigate;
-        },
-      ));
-
-    if (_webViewController.platform is WebKitWebViewController) {
-      (_webViewController.platform as WebKitWebViewController)
+    if (controller.platform is WebKitWebViewController) {
+      (controller.platform as WebKitWebViewController)
           .setAllowsBackForwardNavigationGestures(true);
     }
 
-    setState(() => _isLoading = true);
+    setState(() {
+      _webViewController = controller;
+      _hasController = true;
+      _isLoading = true;
+    });
   }
 
   void _showErrorDialog(String message) {
@@ -158,8 +163,7 @@ class _TourQrPaymentScreenState extends State<TourQrPaymentScreen> {
         content: Text(message),
         actions: [
           TextButton(
-            onPressed: () =>
-                Navigator.of(context).popUntil((route) => route.isFirst),
+            onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
             child: const Text('Quay lại'),
           ),
         ],
@@ -168,16 +172,16 @@ class _TourQrPaymentScreenState extends State<TourQrPaymentScreen> {
   }
 
   void _onCountdownFinished() {
+    if (!mounted) return;
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text("Hết thời gian"),
-        content: const Text("Thời gian thanh toán đã hết. Vui lòng quay lại."),
+        title: const Text('Hết thời gian'),
+        content: const Text('Thời gian thanh toán đã hết. Vui lòng quay lại.'),
         actions: [
           TextButton(
-            onPressed: () =>
-                Navigator.of(context).popUntil((route) => route.isFirst),
-            child: const Text("Quay lại"),
+            onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+            child: const Text('Quay lại'),
           ),
         ],
       ),
@@ -210,7 +214,6 @@ class _TourQrPaymentScreenState extends State<TourQrPaymentScreen> {
         ],
       ),
     );
-
     if (result == true) {
       Navigator.of(context).pushNamedAndRemoveUntil(
         MainScreen.routeName,
@@ -218,19 +221,21 @@ class _TourQrPaymentScreenState extends State<TourQrPaymentScreen> {
       );
       AppBloc.mainBloc.add(OnChangeIndexEvent(indexChange: 2));
     }
-
-    return false;
+    return false; // chặn back mặc định
   }
 
   @override
   void dispose() {
-    _timer.cancel();
+    _timer?.cancel();
     super.dispose();
   }
 
+  // Hiển thị mm:ss (vì chỉ 5p)
   String _formatDuration(Duration d) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    return '${twoDigits(d.inMinutes)}:${twoDigits(d.inSeconds % 60)}';
+    final total = d.inSeconds.clamp(0, 5 * 60);
+    final mm = (total ~/ 60).toString().padLeft(2, '0');
+    final ss = (total % 60).toString().padLeft(2, '0');
+    return '$mm:$ss';
   }
 
   @override
@@ -246,20 +251,19 @@ class _TourQrPaymentScreenState extends State<TourQrPaymentScreen> {
         body: SafeArea(
           child: Column(
             children: [
+              // Header
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
                 decoration: const BoxDecoration(
                   gradient: Gradients.defaultGradientBackground,
-                  borderRadius:
-                      BorderRadius.vertical(bottom: Radius.circular(24)),
+                  borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
                 ),
                 child: Column(
                   children: [
                     Row(
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.arrow_back_ios,
-                              color: Colors.white),
+                          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
                           onPressed: () async {
                             final confirm = await _onWillPop();
                             if (confirm) Navigator.pop(context);
@@ -270,41 +274,41 @@ class _TourQrPaymentScreenState extends State<TourQrPaymentScreen> {
                     ),
                     Icon(Icons.web_rounded, size: 32.sp, color: Colors.white),
                     SizedBox(height: 1.h),
-                    Text('Thanh toán trực tuyến',
-                        style: TextStyle(
-                            fontSize: 17.sp,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white)),
+                    Text(
+                      'Thanh toán trực tuyến',
+                      style: TextStyle(fontSize: 17.sp, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
                     SizedBox(height: 0.6.h),
-                    Text('$tourName – $price',
-                        style:
-                            TextStyle(fontSize: 15.sp, color: Colors.white70)),
+                    Text('$tourName – $price', style: TextStyle(fontSize: 15.sp, color: Colors.white70)),
                     SizedBox(height: 1.h),
                     _buildCountdownClock(),
                   ],
                 ),
               ),
+
+              // WebView
               Expanded(
                 child: Stack(
                   children: [
-                    WebViewWidget(
-                      controller: _webViewController,
-                      gestureRecognizers: _gestureRecognizers,
-                    ),
-                    if (_isLoading)
-                      const Center(child: CircularProgressIndicator()),
+                    if (_hasController)
+                      WebViewWidget(
+                        controller: _webViewController!,
+                        gestureRecognizers: _gestureRecognizers,
+                      )
+                    else
+                      const SizedBox.shrink(),
+                    if (_isLoading) const Center(child: CircularProgressIndicator()),
                   ],
                 ),
               ),
+
+              // Marquee
               Container(
                 height: 4.h,
                 padding: EdgeInsets.symmetric(horizontal: 5.w),
                 child: Marquee(
                   text: '💳 Travelogue – Thanh toán bảo mật với PayOS',
-                  style: TextStyle(
-                      fontSize: 13.sp,
-                      color: Colors.blueAccent,
-                      fontWeight: FontWeight.w500),
+                  style: TextStyle(fontSize: 13.sp, color: Colors.blueAccent, fontWeight: FontWeight.w500),
                   velocity: 30,
                 ),
               ),

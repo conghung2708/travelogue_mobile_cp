@@ -14,7 +14,7 @@ class TourDetailContent extends StatelessWidget {
   final TourModel tour;
   final TourGuideModel? guide;
   final bool? readOnly;
-  final DateTime? departureDate;
+  final DateTime? startTime;
   final bool? isBooked;
 
   const TourDetailContent({
@@ -22,7 +22,7 @@ class TourDetailContent extends StatelessWidget {
     required this.tour,
     this.guide,
     this.readOnly,
-    this.departureDate,
+    this.startTime,
     this.isBooked,
   });
 
@@ -71,7 +71,7 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
         TourOverviewHeader(
           tour: tour,
           readOnly: readOnly,
-          departureDate: departureDate,
+          startTime: startTime,
           isBooked: isBooked,
         ),
         DefaultTabController(

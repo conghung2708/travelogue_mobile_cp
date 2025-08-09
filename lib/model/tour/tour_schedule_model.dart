@@ -1,49 +1,87 @@
+// lib/model/tour/tour_schedule_model.dart
+import 'dart:convert';
+
+import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
+import 'package:travelogue_mobile/model/tour_guide/tour_guide_model.dart';
+
 class TourScheduleModel {
   final String? scheduleId;
-  final DateTime? departureDate;
+  final DateTime? startTime;
+  final DateTime? endTime;
   final int? maxParticipant;
   final int? currentBooked;
-  final int? totalDays;
   final double? adultPrice;
   final double? childrenPrice;
+  final String? notes;
+  final String? imageUrl;
+  final TourGuideModel? tourGuide;
 
-  TourScheduleModel({
+  const TourScheduleModel({
     this.scheduleId,
-    this.departureDate,
+    this.startTime,
+    this.endTime,
     this.maxParticipant,
     this.currentBooked,
-    this.totalDays,
     this.adultPrice,
     this.childrenPrice,
+    this.notes,
+    this.imageUrl,
+    this.tourGuide,
   });
 
-  factory TourScheduleModel.fromJson(Map<String, dynamic> json) {
+  static DateTime? _parseDateTime(String? raw) {
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      final iso = raw.endsWith('Z') || raw.contains('+') || raw.contains('-')
+          ? raw
+          : '${raw}Z';
+      return DateTime.parse(iso).toLocal();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  factory TourScheduleModel.fromMap(Map<String, dynamic> map) {
     return TourScheduleModel(
-      scheduleId: json['scheduleId'] as String?,
-      departureDate: json['departureDate'] != null
-          ? DateTime.tryParse(json['departureDate'] as String)
+      scheduleId: map['scheduleId'] as String?,
+      startTime: _parseDateTime(map['startTime'] as String?),
+      endTime: _parseDateTime(map['endTime'] as String?),
+      maxParticipant: map['maxParticipant'] as int?,
+      currentBooked: map['currentBooked'] as int?,
+      adultPrice: (map['adultPrice'] as num?)?.toDouble(),
+      childrenPrice: (map['childrenPrice'] as num?)?.toDouble(),
+      notes: map['notes'] as String?,
+      imageUrl: (map['imageUrl'] != null && map['imageUrl'].toString().isNotEmpty)
+          ? map['imageUrl'] as String
+          : AssetHelper.img_default,
+      tourGuide: map['tourGuide'] != null
+          ? TourGuideModel.fromMap(map['tourGuide'] as Map<String, dynamic>)
           : null,
-      maxParticipant: json['maxParticipant'] is int
-          ? json['maxParticipant'] as int
-          : int.tryParse(json['maxParticipant']?.toString() ?? ''),
-      currentBooked: json['currentBooked'] is int
-          ? json['currentBooked'] as int
-          : int.tryParse(json['currentBooked']?.toString() ?? ''),
-      totalDays: json['totalDays'] is int
-          ? json['totalDays'] as int
-          : int.tryParse(json['totalDays']?.toString() ?? ''),
-      adultPrice: (json['adultPrice'] as num?)?.toDouble(),
-      childrenPrice: (json['childrenPrice'] as num?)?.toDouble(),
     );
   }
 
-  Map<String, dynamic> toJson() => {
-        'scheduleId': scheduleId,
-        'departureDate': departureDate?.toIso8601String(),
-        'maxParticipant': maxParticipant,
-        'currentBooked': currentBooked,
-        'totalDays': totalDays,
-        'adultPrice': adultPrice,
-        'childrenPrice': childrenPrice,
-      };
+  factory TourScheduleModel.fromJson(Map<String, dynamic> json) {
+    return TourScheduleModel.fromMap(json);
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'scheduleId': scheduleId,
+      'startTime': startTime?.toIso8601String(),
+      'endTime': endTime?.toIso8601String(),
+      'maxParticipant': maxParticipant,
+      'currentBooked': currentBooked,
+      'adultPrice': adultPrice,
+      'childrenPrice': childrenPrice,
+      'notes': notes,
+      'imageUrl': imageUrl,
+      'tourGuide': tourGuide?.toMap(),
+    };
+  }
+
+
+  Map<String, dynamic> toJson() => toMap();
+
+
+  String toJsonString() => json.encode(toMap());
 }

@@ -1,3 +1,4 @@
+// lib/model/tour/tour_model.dart
 import 'package:travelogue_mobile/model/tour/tour_day_model.dart';
 import 'package:travelogue_mobile/model/tour_guide/tour_guide_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_media_test_model.dart';
@@ -23,7 +24,7 @@ class TourModel {
   final TourGuideModel? tourGuide;
   final List<TourMediaTestModel> mediaList;
 
-  TourModel({
+  const TourModel({
     this.tourId,
     this.name,
     this.description,
@@ -104,15 +105,13 @@ class TourModel {
       statusText: json['statusText'] as String?,
       schedules: (rawSchedules != null && rawSchedules is List)
           ? rawSchedules.map((e) {
-              if (logSchedules) {
-                print('➡️ schedule: $e');
-              }
-              return TourScheduleModel.fromJson(e);
+              if (logSchedules) print('➡️ schedule: $e');
+              return TourScheduleModel.fromMap(e as Map<String, dynamic>);
             }).toList()
-          : [],
+          : const [],
       days: (rawDays != null && rawDays is List)
           ? rawDays.map((e) => TourDayModel.fromJson(e)).toList()
-          : [],
+          : const [],
       tourGuide: (() {
         if (guideRaw is List && guideRaw.isNotEmpty) {
           return TourGuideModel.fromJson(guideRaw.first);
@@ -123,7 +122,7 @@ class TourModel {
       })(),
       mediaList: (rawMedia != null && rawMedia is List)
           ? rawMedia.map((e) => TourMediaTestModel.fromJson(e)).toList()
-          : [],
+          : const [],
     );
   }
 

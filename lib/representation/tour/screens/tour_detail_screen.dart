@@ -12,7 +12,7 @@ class TourDetailScreen extends StatefulWidget {
   final TourModel tour; 
   final String image;
   final bool readOnly;
-  final DateTime? departureDate;
+  final DateTime? startTime;
   final bool? isBooked;
 
   const TourDetailScreen({
@@ -20,7 +20,7 @@ class TourDetailScreen extends StatefulWidget {
     required this.tour,
     required this.image,
     this.readOnly = false,
-    this.departureDate,
+    this.startTime,
     this.isBooked = false,
   });
 
@@ -102,7 +102,7 @@ class _TourDetailScreenState extends State<TourDetailScreen> {
                       tour: tour,
                       guide: tour.tourGuide,
                       readOnly: widget.readOnly,
-                      departureDate: widget.departureDate,
+                      startTime: widget.startTime,
                       isBooked: widget.isBooked,
                     ),
                   );

@@ -3,7 +3,9 @@ import 'package:sizer/sizer.dart';
 import 'package:travelogue_mobile/core/blocs/app_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/authenicate/authenicate_bloc.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
+import 'package:travelogue_mobile/core/repository/booking_repository.dart';
 import 'package:travelogue_mobile/data/data_local/user_local.dart';
+import 'package:travelogue_mobile/representation/booking/screens/my_booking_screen.dart';
 import 'package:travelogue_mobile/representation/user/screens/edit_profile_screen.dart';
 import 'package:travelogue_mobile/representation/user/screens/location_favorite_screen.dart';
 import 'package:travelogue_mobile/representation/user/screens/privacy_screen.dart';
@@ -42,6 +44,13 @@ class UserProfileScreen extends StatelessWidget {
                 child: ListView(
                   padding: const EdgeInsets.all(20),
                   children: [
+                    _buildMenuItem(
+                      Icons.receipt_long_outlined,
+                      "Quản lý đơn hàng",
+                      context: context,
+                      onTap: () => _openOrderManager(context),
+                    ),
+
                     _buildMenuItem(
                       Icons.privacy_tip_outlined,
                       "Quyền riêng tư",
@@ -133,6 +142,65 @@ class UserProfileScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  void _openOrderManager(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) {
+        Widget _tile(String title, IconData icon, int bookingType) {
+          return ListTile(
+            leading: Icon(icon, color: Colors.blueAccent),
+            title: Text(title,
+                style: const TextStyle(fontWeight: FontWeight.w600)),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+           onTap: () async {
+  Navigator.pop(context);
+
+  final bookings = await BookingRepository().getAllMyBookings();
+
+  Navigator.pushNamed(
+    context,
+    MyBookingScreen.routeName,
+    arguments: bookings, 
+  );
+}
+
+          );
+        }
+
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 6),
+                Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(100),
+                    )),
+                const SizedBox(height: 12),
+                const Text("Chọn loại đơn",
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                _tile('Đơn Tour', Icons.card_travel_outlined, 1),
+                _tile('Đơn Workshop', Icons.handyman_outlined, 2),
+                _tile('Đơn Hướng dẫn viên', Icons.badge_outlined, 3),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

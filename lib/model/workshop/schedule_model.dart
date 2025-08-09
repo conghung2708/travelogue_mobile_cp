@@ -1,5 +1,7 @@
 import 'dart:convert';
+
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
+import 'package:travelogue_mobile/model/tour_guide/tour_guide_model.dart';
 
 class ScheduleModel {
   final String? scheduleId;
@@ -11,6 +13,7 @@ class ScheduleModel {
   final double? childrenPrice;
   final String? notes;
   final String? imageUrl;
+  final TourGuideModel? tourGuide;
 
   ScheduleModel({
     this.scheduleId,
@@ -22,23 +25,36 @@ class ScheduleModel {
     this.childrenPrice,
     this.notes,
     this.imageUrl,
+    this.tourGuide,
   });
 
   factory ScheduleModel.fromMap(Map<String, dynamic> map) {
     return ScheduleModel(
       scheduleId: map['scheduleId'],
-      startTime: map['startTime'] != null ? DateTime.parse(map['startTime']) : null,
-      endTime: map['endTime'] != null ? DateTime.parse(map['endTime']) : null,
+      startTime: map['startTime'] != null
+          ? DateTime.tryParse(map['startTime']) ??
+              DateTime.tryParse(map['departureDate'] ?? '')
+          : (map['departureDate'] != null
+              ? DateTime.tryParse(map['departureDate'])
+              : null),
+      endTime: map['endTime'] != null
+          ? DateTime.tryParse(map['endTime'])
+          : null,
       maxParticipant: map['maxParticipant'],
       currentBooked: map['currentBooked'],
       adultPrice: (map['adultPrice'] as num?)?.toDouble(),
       childrenPrice: (map['childrenPrice'] as num?)?.toDouble(),
       notes: map['notes'],
-      imageUrl: (map['imageUrl'] != null && map['imageUrl'].toString().isNotEmpty)
+      imageUrl: (map['imageUrl'] != null &&
+              map['imageUrl'].toString().isNotEmpty)
           ? map['imageUrl']
           : AssetHelper.img_default,
+      tourGuide: map['tourGuide'] != null
+          ? TourGuideModel.fromMap(map['tourGuide'])
+          : null,
     );
   }
+  
 
   Map<String, dynamic> toMap() {
     return {
@@ -51,8 +67,10 @@ class ScheduleModel {
       'childrenPrice': childrenPrice,
       'notes': notes,
       'imageUrl': imageUrl,
+      'tourGuide': tourGuide?.toMap(),
     };
   }
+
 
   String toJson() => json.encode(toMap());
 }

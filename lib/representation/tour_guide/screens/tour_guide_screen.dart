@@ -1,23 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import 'package:intl/intl.dart';
 import 'package:sizer/sizer.dart';
-import 'package:travelogue_mobile/core/blocs/booking/booking_bloc.dart';
-import 'package:travelogue_mobile/core/blocs/booking/booking_event.dart';
-import 'package:travelogue_mobile/core/blocs/booking/booking_state.dart';
+
+import 'package:travelogue_mobile/core/blocs/authenicate/authenicate_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/tour_guide/tour_guide_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/tour_guide/tour_guide_event.dart';
 import 'package:travelogue_mobile/core/constants/color_constants.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
 import 'package:travelogue_mobile/core/helpers/auth_helper.dart';
+import 'package:travelogue_mobile/core/helpers/string_helper.dart';
+
 import 'package:travelogue_mobile/model/tour_guide/tour_guide_filter_model.dart';
 import 'package:travelogue_mobile/model/tour_guide/tour_guide_model.dart';
+
 import 'package:travelogue_mobile/representation/auth/screens/login_screen.dart';
-import 'package:travelogue_mobile/representation/booking/screens/my_booking_screen.dart';
 import 'package:travelogue_mobile/representation/home/widgets/title_widget.dart';
 import 'package:travelogue_mobile/representation/tour_guide/screens/tour_guide_booking_confirmation_screen.dart';
-import 'package:travelogue_mobile/representation/tour_guide/widgets/folder_icon.dart';
 import 'package:travelogue_mobile/representation/tour_guide/widgets/tour_guide_card.dart';
 import 'package:travelogue_mobile/representation/tour_guide/widgets/filter_guide_sheet.dart';
 
@@ -34,7 +33,6 @@ class _TourGuideScreenState extends State<TourGuideScreen> {
   void initState() {
     super.initState();
     context.read<TourGuideBloc>().add(const GetAllTourGuidesEvent());
-    context.read<BookingBloc>().add(GetAllMyBookingsEvent());
   }
 
   void _openFilterSheet() {
@@ -209,9 +207,7 @@ class _TourGuideScreenState extends State<TourGuideScreen> {
       Navigator.pushNamed(
         context,
         LoginScreen.routeName,
-        arguments: {
-          'redirectRoute': TourGuideScreen.routeName,
-        },
+        arguments: {'redirectRoute': TourGuideScreen.routeName},
       );
       return;
     }
@@ -330,83 +326,55 @@ class _TourGuideScreenState extends State<TourGuideScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  CircleAvatar(
-                    backgroundImage: const AssetImage(AssetHelper.avatar),
-                    radius: 5.w,
-                  ),
-                  SizedBox(width: 3.w),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
+              // Header chào user (không hard-code, không có booking folder)
+              BlocBuilder<AuthenicateBloc, AuthenicateState>(
+                builder: (context, authState) {
+                  final String rawName = (authState.props.isNotEmpty
+                      ? authState.props[0] as String
+                      : '');
+                  final String displayName = rawName.isEmpty
+                      ? 'Bạn'
+                      : (StringHelper().formatUserName(rawName) ?? 'Bạn');
+
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CircleAvatar(
+                        backgroundImage: const AssetImage(AssetHelper.avatar),
+                        radius: 5.w,
+                      ),
+                      SizedBox(width: 3.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                              child: Text(
-                                "Xin chào, Hưng",
-                                style: TextStyle(
-                                  fontSize: 17.sp,
-                                  fontWeight: FontWeight.w700,
-                                  fontFamily: "Pattaya",
-                                  color: Colors.black87,
-                                ),
+                            Text(
+                              "Xin chào, $displayName",
+                              style: TextStyle(
+                                fontSize: 17.sp,
+                                fontWeight: FontWeight.w700,
+                                fontFamily: "Pattaya",
+                                color: Colors.black87,
                               ),
                             ),
-                            BlocBuilder<BookingBloc, BookingState>(
-                              builder: (context, state) {
-                                if (state is BookingListSuccess) {
-                                  return GradientFolderIcon(
-                                    onTap: () {
-                                      if (!isLoggedIn()) {
-                                        Navigator.pushNamed(
-                                          context,
-                                          LoginScreen.routeName,
-                                          arguments: {
-                                            'redirectRoute':
-                                                TourGuideScreen.routeName,
-                                          },
-                                        );
-                                        return;
-                                      }
-
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) => MyBookingScreen(
-                                            bookings: state.bookings
-                                                .where(
-                                                    (b) => b.bookingType == '3')
-                                                .toList(),
-                                          ),
-                                          settings: const RouteSettings(
-                                              arguments: {'bookingType': '3'}),
-                                        ),
-                                      );
-                                    },
-                                  );
-                                }
-                                return const SizedBox();
-                              },
+                            Text(
+                              "Chọn hướng dẫn viên đồng hành cùng bạn",
+                              style: TextStyle(
+                                fontSize: 13.sp,
+                                color: Colors.grey[600],
+                              ),
                             ),
                           ],
                         ),
-                        Text(
-                          "Chọn hướng dẫn viên đồng hành cùng bạn",
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                      ),
+                    ],
+                  );
+                },
               ),
+
               SizedBox(height: 3.h),
+
+             
               Stack(
                 children: [
                   Container(
@@ -481,12 +449,17 @@ class _TourGuideScreenState extends State<TourGuideScreen> {
                   )
                 ],
               ),
+
               SizedBox(height: 2.h),
+
               const TitleWithCustoneUnderline(
                 text: "Các hướng dẫn ",
                 text2: "viên",
               ),
+
               SizedBox(height: 2.h),
+
+          
               Padding(
                 padding: EdgeInsets.only(bottom: 1.h),
                 child: Row(
@@ -514,6 +487,8 @@ class _TourGuideScreenState extends State<TourGuideScreen> {
                   ],
                 ),
               ),
+
+          
               Expanded(
                 child: BlocBuilder<TourGuideBloc, TourGuideState>(
                   builder: (context, state) {

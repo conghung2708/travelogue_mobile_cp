@@ -20,7 +20,7 @@ class TourPaymentConfirmationScreen extends StatefulWidget {
   final TourModel tour;
   final TourScheduleModel schedule;
   final String? media;
-  final DateTime? departureDate;
+  final DateTime? startTime;
   final int adults;
   final int children;
   final String? bookingId;
@@ -30,7 +30,7 @@ class TourPaymentConfirmationScreen extends StatefulWidget {
     required this.tour,
     required this.schedule,
     this.media,
-    this.departureDate,
+    this.startTime,
     this.adults = 1,
     this.children = 0,
     this.bookingId,
@@ -119,7 +119,7 @@ class _TourPaymentConfirmationScreenState
                 SizedBox(height: 0.5.h),
                 Text(
                   DateFormat('EEEE, dd MMMM yyyy', 'vi_VN')
-                      .format(widget.departureDate ?? DateTime.now()),
+                      .format(widget.startTime ?? DateTime.now()),
                   style: TextStyle(fontSize: 15.sp, color: Colors.white70),
                 ),
               ],
@@ -183,7 +183,7 @@ class _TourPaymentConfirmationScreenState
                           tour: widget.tour,
                           image: widget.media ?? AssetHelper.img_tay_ninh_login,
                           readOnly: true,
-                          departureDate: widget.departureDate,
+                          startTime: widget.startTime,
                         ),
                       ),
                     );
@@ -396,7 +396,7 @@ class _TourPaymentConfirmationScreenState
                       builder: (_) => TourQrPaymentScreen(
                         tour: widget.tour,
                         schedule: widget.schedule,
-                        departureDate: widget.departureDate ?? DateTime.now(),
+                        startTime: widget.startTime ?? DateTime.now(),
                         adults: widget.adults,
                         children: widget.children,
                         totalPrice: (widget.adults *
@@ -404,7 +404,6 @@ class _TourPaymentConfirmationScreenState
                             (widget.children *
                                 (widget.schedule.childrenPrice ?? 0)
                                     .toDouble()),
-                        startTime: DateTime.now(),
                         checkoutUrl: paymentUrl,
                       ),
                     ),

@@ -11,14 +11,14 @@ import 'package:travelogue_mobile/representation/tour/widgets/tour_confirmed_act
 class TourOverviewHeader extends StatelessWidget {
   final TourModel tour;
   final bool? readOnly;
-  final DateTime? departureDate;
+  final DateTime? startTime;
   final bool? isBooked;
 
   const TourOverviewHeader({
     super.key,
     required this.tour,
     this.readOnly,
-    this.departureDate,
+    this.startTime,
     this.isBooked,
   });
 
@@ -28,8 +28,8 @@ class TourOverviewHeader extends StatelessWidget {
     final String tourDuration =
         '${totalDays}N${(totalDays - 1).clamp(1, totalDays)}D';
 
-    final String tourDate = departureDate != null
-        ? DateFormat('dd/MM/yyyy').format(departureDate!)
+    final String tourDate = startTime != null
+        ? DateFormat('dd/MM/yyyy').format(startTime!)
         : 'Chưa chọn ngày';
 
     final double tourPrice = tour.finalPrice ?? 0;
@@ -79,26 +79,19 @@ class TourOverviewHeader extends StatelessWidget {
           child: const TripMarqueeInfo(),
         ),
         SizedBox(height: 2.h),
-        TourConfirmedActionCard(
-          departureDate: departureDate,
+    TourConfirmedActionCard(
+          startTime: startTime,
           isBooked: isBooked,
           tour: tour,
           currencyFormat: currencyFormatter,
           price: tourPrice,
           readOnly: readOnly,
           onConfirmed: () async {
-            final parsedTour = TourModel.fromJson(tour.toJson());
-
-            print('[TourOverviewHeader] parsedTour id: ${parsedTour.tourId}');
-            print(
-                '[TourOverviewHeader] schedules == null? ${parsedTour.schedules == null}');
-            print(
-                '[TourOverviewHeader] schedules.length: ${parsedTour.schedules?.length}');
             await Navigator.pushNamed(
               context,
               TourTypeSelector.routeName,
               arguments: {
-                'tour': tour.toJson(),
+                'tour': tour, 
               },
             );
           },

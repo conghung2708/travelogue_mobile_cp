@@ -10,6 +10,8 @@ import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
 import 'package:travelogue_mobile/model/args/tour_calendar_args.dart';
 import 'package:travelogue_mobile/model/tour/tour_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_schedule_model.dart';
+import 'package:travelogue_mobile/model/tour_guide/tour_guide_model.dart';
+import 'package:travelogue_mobile/representation/tour/screens/tour_payment_confirmation_screen.dart';
 
 import 'package:travelogue_mobile/representation/tour/screens/tour_team_selector_screen.dart';
 import 'package:travelogue_mobile/representation/tour/widgets/tour_schedule_header.dart';
@@ -35,7 +37,9 @@ class _TourScheduleCalendarScreenState
   DateTime? selectedDay;
 
   final formatter = NumberFormat('#,###');
-
+  DateTime _d(DateTime dt) => DateTime(dt.year, dt.month, dt.day);
+ bool _isPastOrToday(DateTime day) => !_d(day).isAfter(_d(DateTime.now()));
+ 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -45,12 +49,14 @@ class _TourScheduleCalendarScreenState
     isGroupTour = args.isGroupTour;
   }
 
-  TourScheduleModel? getScheduleForDay(DateTime day) {
-    return schedules.firstWhereOrNull((s) {
-      final dep = s.departureDate;
-      return dep != null && isSameDay(dep, day);
-    });
-  }
+TourScheduleModel? getScheduleForDay(DateTime day) {
+  if (_isPastOrToday(day)) return null; 
+  return schedules.firstWhereOrNull((s) {
+    final dep = s.startTime;
+    return dep != null && isSameDay(dep, day);
+  });
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -79,18 +85,24 @@ class _TourScheduleCalendarScreenState
                     focusedDay: focusedDay,
                     selectedDay: selectedDay,
                     getScheduleForDay: getScheduleForDay,
-                    onDaySelected: (selected, focused) {
+                  onDaySelected: (selected, focused) {
+  if (_isPastOrToday(selected)) {
+ 
+    return;
+  }
+
                       final matched = getScheduleForDay(selected);
                       if (matched != null) {
-                        final departure = matched.departureDate!;
+                        final departure = matched.startTime!;
                         final availableSlot = (matched.maxParticipant ?? 0) -
                             (matched.currentBooked ?? 0);
 
                         final media = (tour.mediaList.isNotEmpty &&
-                                tour.mediaList.first.mediaUrl?.isNotEmpty == true)
+                                tour.mediaList.first.mediaUrl?.isNotEmpty ==
+                                    true)
                             ? tour.mediaList.first.mediaUrl!
                             : AssetHelper.img_tay_ninh_login;
-
+                        final guide = matched.tourGuide;
                         showDialog(
                           context: context,
                           barrierColor: Colors.black.withOpacity(0.4),
@@ -98,8 +110,8 @@ class _TourScheduleCalendarScreenState
                             return Dialog(
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(20)),
-                              insetPadding:
-                                  EdgeInsets.symmetric(horizontal: 6.w, vertical: 24),
+                              insetPadding: EdgeInsets.symmetric(
+                                  horizontal: 6.w, vertical: 24),
                               backgroundColor: Colors.white,
                               child: Padding(
                                 padding: EdgeInsets.all(5.w),
@@ -119,7 +131,8 @@ class _TourScheduleCalendarScreenState
                                     _buildDialogRow(
                                         Icons.calendar_today,
                                         'Ngày đi:',
-                                        DateFormat('dd/MM/yyyy').format(departure)),
+                                        DateFormat('dd/MM/yyyy')
+                                            .format(departure)),
                                     SizedBox(height: 1.h),
                                     _buildDialogRow(
                                         Icons.monetization_on,
@@ -129,11 +142,63 @@ class _TourScheduleCalendarScreenState
                                     _buildDialogRow(Icons.people_outline,
                                         'Còn lại:', '$availableSlot chỗ'),
                                     SizedBox(height: 3.h),
+                                    if (guide != null) ...[
+                                      Divider(),
+                                      SizedBox(height: 1.h),
+                                      Padding(
+                                        padding: EdgeInsets.symmetric(
+                                            vertical: 0.5.h),
+                                        child: Row(
+                                          children: [
+                                       
+                                            Container(
+                                              decoration: BoxDecoration(
+                                                color: const Color(
+                                                    0xFFE0F2FE), 
+                                                shape: BoxShape.circle,
+                                              ),
+                                              padding: EdgeInsets.all(1.w),
+                                              child: const Icon(
+                                                Icons.person_rounded,
+                                                color: Color(
+                                                    0xFF0284C7), 
+                                                size: 18,
+                                              ),
+                                            ),
+                                            SizedBox(width: 2.w),
+                                          
+                                            Text(
+                                              'Hướng dẫn viên',
+                                              style: TextStyle(
+                                                fontSize: 15.sp,
+                                                fontWeight: FontWeight.w700,
+                                                color: Colors.black87,
+                                                letterSpacing: 0.3,
+                                              ),
+                                            ),
+                                            SizedBox(width: 1.w),
+                                 
+                                            Expanded(
+                                              child: Divider(
+                                                color: Colors.grey.shade300,
+                                                thickness: 1,
+                                                indent: 8,
+                                                endIndent: 0,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      SizedBox(height: 1.h),
+                                      _buildGuideCard(guide),
+                                      SizedBox(height: 2.h),
+                                    ],
                                     Row(
                                       children: [
                                         Expanded(
                                           child: OutlinedButton(
-                                            onPressed: () => Navigator.pop(context),
+                                            onPressed: () =>
+                                                Navigator.pop(context),
                                             child: const Text("Huỷ"),
                                           ),
                                         ),
@@ -157,13 +222,14 @@ class _TourScheduleCalendarScreenState
                                               } else {
                                                 Navigator.pushNamed(
                                                   context,
-                                                  '/tour-payment-confirmation',
+                                                  TourPaymentConfirmationScreen
+                                                      .routeName,
                                                   arguments: {
                                                     'tour': tour,
                                                     'schedule': matched,
                                                     'media': media,
-                                                    'departureDate':
-                                                        matched.departureDate!,
+                                                    'startTime':
+                                                        matched.startTime!,
                                                     'adults': 1,
                                                     'children': 0,
                                                   },
@@ -250,6 +316,209 @@ class _TourScheduleCalendarScreenState
           ),
         ),
       ],
+    );
+  }
+}
+
+Widget _buildGuideCard(TourGuideModel guide) {
+  final name = (guide.userName?.isNotEmpty == true)
+      ? guide.userName!
+      : (guide.email ?? 'Hướng dẫn viên');
+  final rating = (guide.averageRating ?? 0).toDouble().clamp(0, 5);
+  final reviews = guide.totalReviews ?? 0;
+  final price = guide.price;
+  final sex = guide.sexText;
+
+  final avatar = (guide.avatarUrl != null && guide.avatarUrl!.isNotEmpty)
+      ? NetworkImage(guide.avatarUrl!)
+      : const AssetImage(AssetHelper.img_default) as ImageProvider;
+
+  return Container(
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(16),
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Colors.blue.withOpacity(0.08),
+          Colors.cyan.withOpacity(0.05),
+          Colors.white,
+        ],
+      ),
+      border: Border.all(color: Colors.blue.withOpacity(0.15)),
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x14000000),
+          blurRadius: 12,
+          offset: Offset(0, 6),
+        ),
+      ],
+    ),
+    padding: EdgeInsets.all(3.5.w),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              padding: EdgeInsets.all(2.2),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF7DD3FC), Color(0xFF60A5FA)],
+                ),
+              ),
+              child: CircleAvatar(
+                radius: 21.sp,
+                backgroundColor: Colors.white,
+                child: CircleAvatar(
+                  radius: 19.sp,
+                  backgroundImage: avatar,
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: -2,
+              right: -2,
+              child: Container(
+                width: 16,
+                height: 16,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: Container(
+                  margin: const EdgeInsets.all(2),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF22C55E),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(width: 3.5.w),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      name,
+                      style: TextStyle(
+                        fontSize: 13.5.sp,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black87,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  const Icon(Icons.verified_rounded,
+                      size: 18, color: Color(0xFF3B82F6)),
+                ],
+              ),
+              SizedBox(height: 0.6.h),
+              Row(
+                children: [
+                  _StarRow(rating: rating),
+                  SizedBox(width: 1.2.w),
+                  Text(
+                    '${rating.toStringAsFixed(1)} (${NumberFormat('#,###').format(reviews)})',
+                    style: TextStyle(fontSize: 11.5.sp, color: Colors.black54),
+                  ),
+                ],
+              ),
+              SizedBox(height: 0.7.h),
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                children: [
+                  if (price != null)
+                    _ChipPill(
+                      icon: Icons.payments_rounded,
+                      label:
+                          'Phí: ${NumberFormat('#,###').format(price.round())}đ',
+                    ),
+                  if (sex?.isNotEmpty == true)
+                    _ChipPill(
+                      icon: Icons.wc_rounded,
+                      label: sex!,
+                      tone: ChipTone.neutral,
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _StarRow extends StatelessWidget {
+  final num rating;
+  const _StarRow({required this.rating});
+
+  @override
+  Widget build(BuildContext context) {
+    List<Widget> stars = [];
+    for (int i = 1; i <= 5; i++) {
+      final fill = rating + 0.001 - i;
+      final icon = fill >= 0
+          ? Icons.star_rounded
+          : (fill > -1 ? Icons.star_half_rounded : Icons.star_border_rounded);
+      stars.add(Icon(icon, size: 16, color: const Color(0xFFFFB200)));
+    }
+    return Row(children: stars);
+  }
+}
+
+enum ChipTone { primary, neutral }
+
+class _ChipPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final ChipTone tone;
+  const _ChipPill({
+    required this.icon,
+    required this.label,
+    this.tone = ChipTone.primary,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = tone == ChipTone.primary
+        ? const Color(0xFFEFF6FF)
+        : const Color(0xFFF3F4F6);
+    final fg = tone == ChipTone.primary
+        ? const Color(0xFF2563EB)
+        : const Color(0xFF374151);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: fg.withOpacity(0.15)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: fg),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style:
+                TextStyle(fontSize: 12, color: fg, fontWeight: FontWeight.w600),
+          ),
+        ],
+      ),
     );
   }
 }

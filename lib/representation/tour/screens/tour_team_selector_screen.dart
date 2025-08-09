@@ -226,7 +226,7 @@ class _TourTeamSelectorScreenState extends State<TourTeamSelectorScreen> {
                 builder: (_) => TourPaymentConfirmationScreen(
                   tour: widget.tour,
                   schedule: widget.schedule,
-                  departureDate: widget.schedule.departureDate,
+                  startTime: widget.schedule.startTime,
                   adults: adultCount,
                   children: childrenCount,
                   media: widget.media,
@@ -286,7 +286,7 @@ class _TourTeamSelectorScreenState extends State<TourTeamSelectorScreen> {
                         fontWeight: FontWeight.bold,
                         color: Colors.black87)),
                 SizedBox(height: 0.5.h),
-                Text('📅 ${DateFormat('dd/MM/yyyy').format(schedule.departureDate!)}',
+                Text('📅 ${DateFormat('dd/MM/yyyy').format(schedule.startTime!)}',
                     style: TextStyle(fontSize: 12.sp, color: Colors.grey.shade800)),
                 SizedBox(height: 0.5.h),
                 Text(

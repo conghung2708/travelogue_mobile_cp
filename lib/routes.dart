@@ -84,13 +84,13 @@ final Map<String, WidgetBuilder> routes = {
   UserProfileScreen.routeName: (_) => const UserProfileScreen(),
   FestivalScreen.routeName: (_) => const FestivalScreen(),
 
-FestivalDetailScreen.routeName: (context) {
-  final festival = ModalRoute.of(context)!.settings.arguments as NewsModel;
-  return Provider<NewsModel>.value(
-    value: festival,
-    child: const FestivalDetailScreen(),
-  );
-},
+  FestivalDetailScreen.routeName: (context) {
+    final festival = ModalRoute.of(context)!.settings.arguments as NewsModel;
+    return Provider<NewsModel>.value(
+      value: festival,
+      child: const FestivalDetailScreen(),
+    );
+  },
 
   ExperienceScreen.routeName: (_) => const ExperienceScreen(),
 
@@ -144,7 +144,7 @@ FestivalDetailScreen.routeName: (context) {
     return TourDetailScreen(
       tour: args['tour'] as TourModel,
       image: args['image'] as String? ?? AssetHelper.img_default,
-      departureDate: args['departureDate'] as DateTime?,
+      startTime: args['startTime'] as DateTime?,
       isBooked: args['isBooked'] ?? false,
       readOnly: args['readOnly'] ?? false,
     );
@@ -153,11 +153,12 @@ FestivalDetailScreen.routeName: (context) {
   TourTypeSelector.routeName: (context) {
     final args =
         ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
-    final tourJson = args['tour'] as Map<String, dynamic>;
-    final tour = TourModel.fromJson(tourJson);
+    final tourArg = args['tour'];
+    final tour = (tourArg is TourModel)
+        ? tourArg
+        : TourModel.fromJson(tourArg as Map<String, dynamic>);
     return TourTypeSelector(tour: tour);
   },
-
   TourScheduleCalendarScreen.routeName: (_) =>
       const TourScheduleCalendarScreen(),
 
@@ -177,9 +178,7 @@ FestivalDetailScreen.routeName: (context) {
         schedule: args['schedule'] is TourScheduleModel
             ? args['schedule']
             : TourScheduleModel.fromJson(args['schedule']),
-        departureDate: args['departureDate'] is DateTime
-            ? args['departureDate']
-            : DateTime.parse(args['departureDate']),
+
         adults: args['adults'] as int,
         children: args['children'] as int,
         totalPrice: args['totalPrice'] as double,
@@ -204,7 +203,7 @@ FestivalDetailScreen.routeName: (context) {
       tour: args['tour'],
       schedule: args['schedule'],
       media: args['media'],
-      departureDate: args['departureDate'],
+      startTime: args['startTime'],
       adults: args['adults'],
       children: args['children'],
       bookingId: args['bookingId'],
@@ -269,11 +268,10 @@ FestivalDetailScreen.routeName: (context) {
     }
   },
 
-  MyBookingScreen.routeName: (context) {
-    final args =
-        ModalRoute.of(context)!.settings.arguments as List<BookingModel>;
-    return MyBookingScreen(bookings: args);
-  },
+MyBookingScreen.routeName: (context) {
+  final args = ModalRoute.of(context)!.settings.arguments as List<BookingModel>;
+  return MyBookingScreen(bookings: args);
+},
 
   TourGuideRequestScreen.routeName: (_) => const TourGuideRequestScreen(),
 };
