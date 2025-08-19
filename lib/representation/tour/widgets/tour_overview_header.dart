@@ -1,11 +1,13 @@
+// lib/features/tour/presentation/widgets/tour_overview_header.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sizer/sizer.dart';
 
 import 'package:travelogue_mobile/model/tour/tour_model.dart';
-import 'package:travelogue_mobile/representation/tour/screens/tour_type_selector.dart';
+import 'package:travelogue_mobile/model/args/tour_calendar_args.dart';
 import 'package:travelogue_mobile/representation/trip_plan/widgets/trip_marquee_info.dart';
 import 'package:travelogue_mobile/representation/trip_plan/widgets/trip_info_icon_row.dart';
+import 'package:travelogue_mobile/representation/tour/screens/tour_schedule_calender_screen.dart';
 import 'package:travelogue_mobile/representation/tour/widgets/tour_confirmed_action_card.dart';
 
 class TourOverviewHeader extends StatelessWidget {
@@ -79,7 +81,7 @@ class TourOverviewHeader extends StatelessWidget {
           child: const TripMarqueeInfo(),
         ),
         SizedBox(height: 2.h),
-    TourConfirmedActionCard(
+        TourConfirmedActionCard(
           startTime: startTime,
           isBooked: isBooked,
           tour: tour,
@@ -87,12 +89,21 @@ class TourOverviewHeader extends StatelessWidget {
           price: tourPrice,
           readOnly: readOnly,
           onConfirmed: () async {
+            final schedules = tour.schedules;
+            if (schedules == null || schedules.isEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Tour này chưa có lịch trình.')),
+              );
+              return;
+            }
             await Navigator.pushNamed(
               context,
-              TourTypeSelector.routeName,
-              arguments: {
-                'tour': tour, 
-              },
+              TourScheduleCalendarScreen.routeName,
+              arguments: TourCalendarArgs(
+                tour: tour,
+                schedules: schedules,
+                isGroupTour: true,
+              ),
             );
           },
         ),

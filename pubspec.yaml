@@ -81,6 +81,9 @@ dependencies:
   flutter_tts: ^4.2.3
   avatar_glow: ^3.0.1
   file_picker: ^10.2.1
+  image_picker: ^1.1.2
+  vn_provinces: ^0.0.2
+  address_picker_vn: ^0.3.2
 
   # Caching
   hive: ^2.2.3

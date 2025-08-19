@@ -10,203 +10,238 @@ import 'package:travelogue_mobile/core/constants/status_code.dart';
 import 'package:travelogue_mobile/data/data_local/user_local.dart';
 
 class BaseRepository {
-  static diox.Dio dio = diox.Dio(
+  BaseRepository._internal();
+  static final BaseRepository _instance = BaseRepository._internal();
+  factory BaseRepository() => _instance;
+
+  static final diox.Dio dio = diox.Dio(
     diox.BaseOptions(
-      baseUrl: 'https://travelogue.homes/',
+      baseUrl: 'https://travelogue.homes/', 
       connectTimeout: const Duration(milliseconds: connectTimeOut),
       receiveTimeout: const Duration(milliseconds: receiveTimeOut),
       sendTimeout: const Duration(milliseconds: receiveTimeOut),
+      validateStatus: (_) => true,
     ),
-  ); // with default Options
+  )..interceptors.add(
+      diox.LogInterceptor(
+        request: true,
+        requestHeader: true,
+        requestBody: true,
+        responseHeader: true,
+        responseBody: true,
+      ),
+    );
 
-  Future<diox.Response<dynamic>> postFormData(
-    String gateway,
-    diox.FormData formData,
-  ) async {
+
+  String _normalize(String path) => path.startsWith('/') ? path : '/$path';
+
+
+  Future<diox.Response> getRoute(String gateway,
+      {Map<String, dynamic>? queryParameters}) async {
     try {
-      final response = await dio.post(
-        gateway,
-        data: formData,
-        options: getOptions(),
-        onSendProgress: (send, total) {},
-        onReceiveProgress: (received, total) {},
+      return await dio.get(
+        _normalize(gateway),
+        options: _getOptions(),
+        queryParameters: queryParameters,
       );
-
-      return response;
-    } on diox.DioException catch (exception) {
-      return catchDioError(exception: exception, gateway: gateway);
+    } on diox.DioException catch (e) {
+      return _catchDioError(e);
     }
   }
 
-  Future<diox.Response<dynamic>> putFormData(
-    String gateway,
-    diox.FormData formData,
-  ) async {
-    try {
-      final response = await dio.put(
-        gateway,
-        data: formData,
-        options: getOptions(),
-        onSendProgress: (send, total) {},
-        onReceiveProgress: (received, total) {},
-      );
-      return response;
-    } on diox.DioException catch (exception) {
-      return catchDioError(exception: exception, gateway: gateway);
-    }
-  }
 
- Future<diox.Response<dynamic>> postRoute({
+Future<diox.Response> postRoute({
   required String gateway,
-  required Map<String, dynamic> data,
+  dynamic data, // <- optional
   String? query,
 }) async {
   try {
-    final Map<String, String> paramsObject = {};
-    if (query != null) {
-      query.split('&').forEach((element) {
-        paramsObject[element.split('=')[0]] = element.split('=')[1];
-      });
-    }
-
-    final response = await dio.post(
-      gateway,
-      data: convert.jsonEncode(data),
-      options: getOptions(),
-      queryParameters: query == null ? null : paramsObject,
+    final paramsObject = _parseQuery(query);
+    final hasBody = data != null;
+    return await dio.post(
+      _normalize(gateway),
+      data: hasBody ? convert.jsonEncode(data) : null,
+      options: _getOptions(hasBody: hasBody),
+      queryParameters: paramsObject,
     );
-    return response;
-  } on diox.DioException catch (exception) {
-    return catchDioError(exception: exception, gateway: gateway);
+  } on diox.DioException catch (e) {
+    return _catchDioError(e);
   }
 }
 
-  Future<diox.Response<dynamic>> patchRoute(
+Future<diox.Response> putRoute({
+  required String gateway,
+  dynamic data, // <- optional
+  String? query,
+}) async {
+  try {
+    final paramsObject = _parseQuery(query);
+    final hasBody = data != null;
+    return await dio.put(
+      _normalize(gateway),
+      data: hasBody ? convert.jsonEncode(data) : null,
+      options: _getOptions(hasBody: hasBody),
+      queryParameters: paramsObject,
+    );
+  } on diox.DioException catch (e) {
+    return _catchDioError(e);
+  }
+}
+
+  Future<diox.Response> patchRoute(
     String gateway, {
     String? query,
     Map<String, dynamic>? body,
   }) async {
     try {
-      final Map<String, String> paramsObject = {};
-      if (query != null) {
-        query.split('&').forEach((element) {
-          paramsObject[element.split('=')[0]] = element.split('=')[1];
-        });
-      }
-
-      final response = await dio.patch(
-        gateway,
+      final paramsObject = _parseQuery(query);
+      return await dio.patch(
+        _normalize(gateway),
         data: body == null ? null : convert.jsonEncode(body),
-        options: getOptions(),
-        queryParameters: query == null ? null : paramsObject,
+        options: _getOptions(),
+        queryParameters: paramsObject,
       );
-      return response;
-    } on diox.DioException catch (exception) {
-      return catchDioError(exception: exception, gateway: gateway);
+    } on diox.DioException catch (e) {
+      return _catchDioError(e);
     }
   }
-Future<diox.Response<dynamic>> getRoute(
-  String gateway, {
-  Map<String, dynamic>? queryParameters,
-}) async {
-  try {
-    final response = await dio.get(
-      gateway,
-      options: getOptions(),
-      queryParameters: queryParameters,
-    );
-    return response;
-  } on diox.DioException catch (exception) {
-    return catchDioError(exception: exception, gateway: gateway);
-  }
-}
 
-  Future<diox.Response<dynamic>> deleteRoute(
+  Future<diox.Response> deleteRoute(
     String gateway, {
-    String? params,
     String? query,
     Map<String, dynamic>? body,
     diox.FormData? formData,
   }) async {
     try {
-      final Map<String, String> paramsObject = {};
-      if (query != null) {
-        query.split('&').forEach((element) {
-          paramsObject[element.split('=')[0]] = element.split('=')[1];
-        });
-      }
-
-      final response = await dio.delete(
-        gateway,
+      final paramsObject = _parseQuery(query);
+      return await dio.delete(
+        _normalize(gateway),
         data: formData ?? (body == null ? null : convert.jsonEncode(body)),
-        options: getOptions(),
-        queryParameters: query == null ? null : paramsObject,
+        options: _getOptions(),
+        queryParameters: paramsObject,
       );
-      return response;
-    } on diox.DioException catch (exception) {
-      return catchDioError(exception: exception, gateway: gateway);
+    } on diox.DioException catch (e) {
+      return _catchDioError(e);
     }
   }
 
-  diox.Response catchDioError({
-    required diox.DioException exception,
-    required String gateway,
-  }) {
-    return diox.Response(
-      requestOptions: diox.RequestOptions(path: gateway),
-      statusCode: StatusCode.badGateway,
-      statusMessage: "CATCH EXCEPTION DIO",
-    );
-  }
-
-  diox.Options getOptions() {
-    return diox.Options(
-      validateStatus: (status) {
-        // if (status == StatusCode.unauthorized &&
-        //     UserLocal().getAccessToken().isNotEmpty) {
-        //   UserLocal().clearAccessToken();
-        //   showDialogLoading();
-        //   AppBloc.authBloc.add(LogOutEvent());
-        // }
-        return true;
-      },
-      headers: getHeaders(),
-    );
-  }
-
-  Map<String, String> getHeaders() {
-    return {
-      'Authorization': 'Bearer ${UserLocal().getAccessToken}',
-      'Content-Type': 'application/json; charset=UTF-8',
-      'Connection': 'keep-alive',
-      'Accept': '*/*',
-      'Accept-Encoding': 'gzip, deflate, br',
-    };
-  }
-  Future<diox.Response<dynamic>> putRoute({
-  required String gateway,
-  required Map<String, dynamic> data,
-  String? query,
-}) async {
+Future<diox.Response> postFormData(String gateway, diox.FormData formData) async {
   try {
-    final Map<String, String> paramsObject = {};
-    if (query != null) {
-      query.split('&').forEach((element) {
-        paramsObject[element.split('=')[0]] = element.split('=')[1];
-      });
-    }
-
-    final response = await dio.put(
-      gateway,
-      data: convert.jsonEncode(data),
-      options: getOptions(),
-      queryParameters: query == null ? null : paramsObject,
+    return await dio.post(
+      _normalize(gateway),
+      data: formData,
+      options: _getOptions(isMultipart: true), 
     );
-    return response;
-  } on diox.DioException catch (exception) {
-    return catchDioError(exception: exception, gateway: gateway);
+  } on diox.DioException catch (e) {
+    return _catchDioError(e);
   }
 }
 
+  Future<diox.Response> putFormData(
+      String gateway, diox.FormData formData) async {
+    try {
+      return await dio.put(
+        _normalize(gateway),
+        data: formData,
+        options: _getOptions(isMultipart: true),
+      );
+    } on diox.DioException catch (e) {
+      return _catchDioError(e);
+    }
+  }
+
+ 
+  diox.Response _catchDioError(diox.DioException e) {
+    print('🔥 DioException.type: ${e.type}');
+    print('🔥 Message: ${e.message}');
+    print('🔥 URL: ${e.requestOptions.uri}');
+
+    if (e.response != null) {
+      final r = e.response!;
+      print('🔥 Resp status: ${r.statusCode}');
+      print('🔥 Resp data: ${r.data}');
+      return r;
+    }
+
+    final code = _mapDioTypeToStatus(e.type);
+    return diox.Response(
+      requestOptions: e.requestOptions,
+      statusCode: code,
+      statusMessage: e.message,
+      data: {
+        'error': 'network_error',
+        'message': e.message,
+        'type': e.type.toString(),
+      },
+    );
+  }
+
+  int _mapDioTypeToStatus(diox.DioExceptionType type) {
+    switch (type) {
+      case diox.DioExceptionType.connectionTimeout:
+      case diox.DioExceptionType.receiveTimeout:
+      case diox.DioExceptionType.sendTimeout:
+        return StatusCode.requestTimeout; // 408
+      case diox.DioExceptionType.badCertificate:
+        return 495;
+      case diox.DioExceptionType.connectionError:
+        return 503;
+      case diox.DioExceptionType.cancel:
+        return 499;
+      default:
+        return 520;
+    }
+  }
+
+diox.Options _getOptions({bool isMultipart = false, bool hasBody = false}) {
+  return diox.Options(
+    validateStatus: (_) => true,
+    headers: _getHeaders(isMultipart: isMultipart, hasBody: hasBody),
+    receiveDataWhenStatusError: true,
+  );
+}
+  Map<String, dynamic>? _parseQuery(String? query) {
+    if (query == null || query.isEmpty) return null;
+    final map = <String, String>{};
+    for (final element in query.split('&')) {
+      final kv = element.split('=');
+      if (kv.length == 2) map[kv[0]] = kv[1];
+    }
+    return map;
+  }
+
+// THAY _getHeaders()
+Map<String, String> _getHeaders({bool isMultipart = false, bool hasBody = false}) {
+  final token = _readToken();
+  final headers = <String, String>{
+    'Accept': '*/*',
+    'Connection': 'keep-alive',
+  };
+
+  if (isMultipart) {
+    headers['Content-Type'] = 'multipart/form-data';
+  } else if (hasBody) {
+    headers['Content-Type'] = 'application/json; charset=UTF-8';
+  }
+  // ⬆️ Không set Content-Type khi không có body
+
+  if (token != null) headers['Authorization'] = 'Bearer $token';
+  return headers;
 }
 
+  String? _readToken() {
+    try {
+      final dynamic v = UserLocal().getAccessToken;
+      if (v is String) {
+        return (v.isEmpty || v == 'null') ? null : v;
+      }
+      if (v is String Function()) {
+        final token = v();
+        return (token.isEmpty || token == 'null') ? null : token;
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+}

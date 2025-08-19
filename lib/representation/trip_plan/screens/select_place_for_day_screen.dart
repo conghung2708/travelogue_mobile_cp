@@ -1,463 +1,562 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:intl/intl.dart';
 import 'package:sizer/sizer.dart';
-import 'package:travelogue_mobile/core/blocs/restaurant/restaurant_bloc.dart';
-import 'package:travelogue_mobile/core/repository/restaurant_repository.dart';
-import 'package:travelogue_mobile/model/location_model.dart';
-import 'package:travelogue_mobile/model/restaurant_model.dart';
-import 'package:travelogue_mobile/model/trip_craft_village.dart';
-import 'package:travelogue_mobile/model/trip_plan.dart';
-import 'package:travelogue_mobile/model/craft_village/craft_village_model.dart';
+
+import 'package:travelogue_mobile/core/services/vietmap_route_service.dart';
 import 'package:travelogue_mobile/core/blocs/home/home_bloc.dart';
-import 'package:travelogue_mobile/model/trip_plan_cuisine.dart';
-import 'package:travelogue_mobile/model/trip_plan_location.dart';
+import 'package:travelogue_mobile/core/utils/time_utils.dart';
+
+import 'package:travelogue_mobile/model/location_model.dart';
+import 'package:travelogue_mobile/model/trip_plan/trip_plan_detail_model.dart';
+import 'package:travelogue_mobile/model/trip_plan/trip_activity_model.dart';
+import 'package:travelogue_mobile/model/trip_plan/trip_plan_location_model.dart';
+import 'package:travelogue_mobile/model/trip_plan/itinerary_stop.dart';
+
 import 'package:travelogue_mobile/representation/home/widgets/title_widget.dart';
+import 'package:travelogue_mobile/representation/trip_plan/widgets/filter_chips_bar.dart';
+import 'package:travelogue_mobile/representation/trip_plan/widgets/place_card.dart';
+import 'package:travelogue_mobile/representation/trip_plan/widgets/route_dialogs.dart';
+import 'package:travelogue_mobile/representation/trip_plan/widgets/selected_list_sheet.dart';
 
 class SelectPlaceForDayScreen extends StatefulWidget {
   static const routeName = '/select-place-for-day';
 
-  final TripPlan trip;
-  final DateTime day;
-
-  const SelectPlaceForDayScreen(
-      {super.key, required this.trip, required this.day});
+  const SelectPlaceForDayScreen({super.key});
 
   @override
   State<SelectPlaceForDayScreen> createState() =>
       _SelectPlaceForDayScreenState();
 }
 
-
-
 class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
-  final ValueNotifier<int> selectedFilterIndex = ValueNotifier<int>(0);
-  final List<Map<String, dynamic>> selectedPlaces = [];
-  List<LocationModel> locations = [];
-  List<RestaurantModel> restaurants = [];
-  Set<String> blockedIds = {}; 
-  
+  // ===== THEME CONSTANTS FOR DIALOGS / BUTTONS =====
+  static const _kBlue = Color(0xFF1565C0); // primary text/icon
+  static const _kBlueLight = Color(0xFFE3F2FD); // button background
+  static const _kBlueLight2 = Color(0xFFEEF6FF); // surfaces
 
-    @override
-  @override
-void didChangeDependencies() {
-  super.didChangeDependencies();
-  final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
-  final initialSelected = args['selected'] as List<dynamic>? ?? [];
-  final blockedItems = args['allSelectedOtherDays'] as List<dynamic>? ?? [];
+  ButtonStyle get _tonalBlueButton => ElevatedButton.styleFrom(
+        backgroundColor: _kBlueLight,
+        foregroundColor: _kBlue,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      );
 
-  // Chuyển blocked items thành Set<String> id  
-  blockedIds.clear();
-  for (var item in blockedItems) {
-    if (item is TripPlanLocation) {
-      blockedIds.add(item.location.id ?? '');
-    } else if (item is TripPlanCuisine) {
-      blockedIds.add(item.restaurant.id ?? '');
-    } else if (item is TripPlanCraftVillage) {
-      blockedIds.add(item.craftVillage.id);
-    }
+  Widget _dialogAction(String label, {required VoidCallback onPressed, bool isPrimary = false}) {
+    return ElevatedButton(
+      onPressed: onPressed,
+      style: _tonalBlueButton.copyWith(
+        backgroundColor: WidgetStatePropertyAll(isPrimary ? _kBlue : _kBlueLight),
+        foregroundColor: WidgetStatePropertyAll(isPrimary ? Colors.white : _kBlue),
+      ),
+      child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+    );
   }
 
-  // Khởi tạo selectedPlaces nếu rỗng
-  if (selectedPlaces.isEmpty && initialSelected.isNotEmpty) {
-    for (var item in initialSelected) {
-      if (item is TripPlanLocation) {
-        selectedPlaces.add({
-          'id': item.location.id ?? '',
-          'name': item.location.name ?? '',
-          'imageUrl': item.location.imgUrlFirst,
-          'type': 'location',
-          'object': item.location,
-        });
-      } else if (item is TripPlanCuisine) {
-        selectedPlaces.add({
-          'id': item.restaurant.id ?? '',
-          'name': item.restaurant.name ?? '',
-          'imageUrl': item.restaurant.imgUrlFirst,
-          'type': 'restaurant',
-          'object': item.restaurant,
-        });
-      } else if (item is TripPlanCraftVillage) {
-        selectedPlaces.add({
-          'id': item.craftVillage.id,
-          'name': item.craftVillage.name,
-          'imageUrl': item.craftVillage.imageList.first,
-          'type': 'craft',
-          'object': item.craftVillage,
-        });
+  Theme _wrapDialog(Widget child) {
+    final base = Theme.of(context);
+    return Theme(
+      data: base.copyWith(
+        dialogTheme: DialogTheme(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
+          titleTextStyle: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: _kBlue,
+          ),
+          contentTextStyle: TextStyle(
+            fontSize: 14,
+            color: Colors.grey.shade800,
+            height: 1.4,
+          ),
+        ),
+      ),
+      child: child,
+    );
+  }
+
+  Future<bool> _showConfirmDialog({required String title, required Widget content}) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => _wrapDialog(
+        AlertDialog(
+          title: Row(
+            children: const [
+              Icon(Icons.info_outline, color: _kBlue),
+              SizedBox(width: 8),
+              Expanded(child: Text('')),
+            ],
+          ),
+          contentPadding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+          titlePadding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+          // Use LayoutBuilder to insert the actual title text nicely aligned with icon
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: _kBlue)),
+              const SizedBox(height: 8),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: _kBlueLight2,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(padding: const EdgeInsets.all(12), child: content),
+              ),
+            ],
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          actions: [
+            _dialogAction('Hủy', onPressed: () => Navigator.pop(ctx, false)),
+            _dialogAction('Tiếp tục', isPrimary: true, onPressed: () => Navigator.pop(ctx, true)),
+          ],
+        ),
+      ),
+    );
+    return ok == true;
+  }
+
+  Future<bool> _showInputDialog({
+    required String title,
+    required Widget input,
+    String cancelText = 'Hủy',
+    String okText = 'Lưu',
+  }) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => _wrapDialog(
+        AlertDialog(
+          title: Row(children: const [Icon(Icons.tune, color: _kBlue), SizedBox(width: 8), Text('Thiết lập')]),
+          contentPadding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: const TextStyle(fontWeight: FontWeight.w700, color: _kBlue)),
+              const SizedBox(height: 10),
+              DecoratedBox(
+                decoration: BoxDecoration(color: _kBlueLight2, borderRadius: BorderRadius.circular(12)),
+                child: Padding(padding: const EdgeInsets.all(12), child: input),
+              ),
+            ],
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          actions: [
+            _dialogAction(cancelText, onPressed: () => Navigator.pop(ctx, false)),
+            _dialogAction(okText, isPrimary: true, onPressed: () => Navigator.pop(ctx, true)),
+          ],
+        ),
+      ),
+    );
+    return ok == true;
+  }
+
+  final ValueNotifier<int> selectedFilterIndex = ValueNotifier<int>(0);
+
+  final List<TripActivityModel> _selectedActivities = [];
+  final Set<String> _selectedIds = <String>{};
+  final Set<String> _blockedLocationIds = <String>{};
+  bool _didHydrateCoords = false;
+
+  final List<ItineraryStop> _itinerary = [];
+
+  List<LocationModel> _allLocations = [];
+  bool _didInit = false;
+
+  LocationModel? _anchorPlace;
+  final Map<String, double> _roadKmCache = {};
+  double _maxDistanceKm = 20.0;
+
+  static const int minHour = 6;
+  static const int maxHour = 23;
+
+  late TimeOfDay _dayStart;
+  late DateTime _dayDate;
+
+  late final VietmapRouteService _vietmap = VietmapRouteService(
+    apiKey: '840f8a8247cb32578fc81fec50af42b8ede321173a31804b',
+  );
+  Future<void> _recomputeLinkAndTimesAfterRemove(int removedIdx) async {
+    final currIdx = removedIdx;
+    final prevIdx = removedIdx - 1;
+
+    if (currIdx >= _itinerary.length) {
+      _recalcTimesForSelected(startFromIndex: prevIdx + 1);
+      return;
+    }
+
+    int travelMeters = 0;
+    int travelSeconds = 0;
+
+    if (prevIdx >= 0) {
+      final from = _itinerary[prevIdx].place;
+      final to = _itinerary[currIdx].place;
+      final fromLat = from.safeLat, fromLng = from.safeLng;
+      final toLat = to.safeLat, toLng = to.safeLng;
+
+      if (fromLat != null &&
+          fromLng != null &&
+          toLat != null &&
+          toLng != null) {
+        try {
+          final route = await _vietmap.routeMotorcycle(
+            fromLat: fromLat,
+            fromLng: fromLng,
+            toLat: toLat,
+            toLng: toLng,
+          );
+          travelMeters = route.distanceMeters;
+          travelSeconds = route.durationSeconds;
+        } catch (e) {
+          // UI-only change: keep logic, soften log
+          debugPrint('[RECOMPUTE][WARN] Lỗi khi tính route A→C: $e');
+        }
       }
     }
-    setState(() {}); // Cập nhật UI
+
+    final oldC = _itinerary[currIdx];
+    final fromDepart = (prevIdx >= 0)
+        ? _itinerary[prevIdx].depart
+        : TimeUtils.combine(_dayDate, _dayStart);
+    final newArrival = fromDepart.add(Duration(seconds: travelSeconds));
+    final newDepart = newArrival.add(Duration(minutes: oldC.stayMinutes));
+
+    _itinerary[currIdx] = ItineraryStop(
+      place: oldC.place,
+      arrival: newArrival,
+      depart: newDepart,
+      stayMinutes: oldC.stayMinutes,
+      travelMeters: travelMeters,
+      travelSeconds: travelSeconds,
+    );
+
+    _selectedActivities[currIdx] = _selectedActivities[currIdx].copyWith(
+      startTime: newArrival,
+      endTime: newDepart,
+      startTimeFormatted: DateFormat('HH:mm').format(newArrival),
+      endTimeFormatted: DateFormat('HH:mm').format(newDepart),
+      duration: '${oldC.stayMinutes} phút',
+      order: currIdx + 1,
+    );
+
+    _recalcTimesForSelected(startFromIndex: currIdx + 1);
   }
-}
+
+  void _hydrateSelectedFromCatalog() {
+    if (_didHydrateCoords) return;
+    if (_allLocations.isEmpty || _itinerary.isEmpty) return;
+
+    for (int i = 0; i < _itinerary.length; i++) {
+      final stop = _itinerary[i];
+      final pid = stop.place.id ?? '';
+      if (pid.isEmpty) continue;
+
+      final found = _allLocations.firstWhere(
+        (l) => (l.id ?? '') == pid,
+        orElse: () => LocationModel(id: null),
+      );
+      if (found.id != null) {
+        _itinerary[i] = ItineraryStop(
+          place: found,
+          arrival: stop.arrival,
+          depart: stop.depart,
+          stayMinutes: stop.stayMinutes,
+          travelMeters: stop.travelMeters,
+          travelSeconds: stop.travelSeconds,
+        );
+      }
+    }
+
+    final lastId = _selectedActivities.last.locationId;
+    final anchor = _allLocations.firstWhere(
+      (l) => (l.id ?? '') == lastId,
+      orElse: () => LocationModel(id: null),
+    );
+    if (anchor.id != null) _anchorPlace = anchor;
+
+    _didHydrateCoords = true;
+  }
+
+  Future<void> _handleRemoveAt(int idx) async {
+    final removedAct = _selectedActivities[idx];
+
+    setState(() {
+      _selectedActivities.removeAt(idx);
+      _itinerary.removeAt(idx);
+      _selectedIds.remove(removedAct.locationId);
+    });
+
+    await _recomputeLinkAndTimesAfterRemove(idx);
+
+    if (_anchorPlace != null) {
+      _unawaited(_refreshMatrixFor(_allLocations));
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_didInit) return;
+    _didInit = true;
+
+    final args =
+        (ModalRoute.of(context)?.settings.arguments as Map?) ?? const {};
+
+    final _ = args['detail'] as TripPlanDetailModel?;
+
+    final dayArg = args['day'];
+    if (dayArg is DateTime) {
+      _dayDate = DateTime(dayArg.year, dayArg.month, dayArg.day);
+    } else {
+      final now = DateTime.now();
+      _dayDate = DateTime(now.year, now.month, now.day);
+    }
+
+    final startTimeArg = args['startTime'];
+    _dayStart = startTimeArg is TimeOfDay
+        ? startTimeArg
+        : const TimeOfDay(hour: minHour, minute: 0);
+
+    final initialSelected =
+        (args['selected'] as List?)?.cast<TripActivityModel>() ?? const [];
+    _selectedActivities
+      ..clear()
+      ..addAll(initialSelected);
+    _selectedIds
+      ..clear()
+      ..addAll(initialSelected.map((e) => e.locationId));
+
+    if (_selectedActivities.isNotEmpty) {
+      for (final a in _selectedActivities) {
+        final loc = LocationModel(
+          id: a.locationId,
+          name: a.name,
+          description: a.description,
+          address: a.address,
+        );
+        _itinerary.add(
+          ItineraryStop(
+            place: loc,
+            arrival: a.startTime,
+            depart: a.endTime,
+            stayMinutes: a.endTime.difference(a.startTime).inMinutes,
+            travelMeters: 0,
+            travelSeconds: 0,
+          ),
+        );
+      }
+    }
+
+    final otherSelected =
+        (args['allSelectedOtherDays'] as List?)?.cast<TripActivityModel>() ??
+            const [];
+    _blockedLocationIds
+      ..clear()
+      ..addAll(
+          otherSelected.map((e) => e.locationId).where((e) => e.isNotEmpty));
+  }
+
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider<HomeBloc>(
-          create: (_) => HomeBloc()..add(GetAllLocationEvent()),
-        ),
-        BlocProvider<RestaurantBloc>(
-          create: (_) => RestaurantBloc(repository: RestaurantRepository())
-            ..add(GetAllRestaurantEvent()),
-        ),
-      ],
+    return BlocProvider<HomeBloc>(
+      create: (_) => HomeBloc()..add(GetAllLocationEvent()),
       child: Scaffold(
         backgroundColor: Colors.white,
         appBar: _buildIconOnlyAppBar(context),
         body: BlocBuilder<HomeBloc, HomeState>(
-          builder: (context, locationState) {
-            locations =
-                locationState is GetHomeSuccess ? locationState.locations : [];
-            return BlocBuilder<RestaurantBloc, RestaurantState>(
-              builder: (context, restaurantState) {
-                restaurants = restaurantState is RestaurantLoaded
-                    ? restaurantState.restaurants
-                    : [];
-                final villages = craftVillages;
-                return Stack(
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 4.w),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+          builder: (context, state) {
+            _allLocations = state is GetHomeSuccess ? state.locations : [];
+
+            if (!_didHydrateCoords &&
+                _allLocations.isNotEmpty &&
+                _itinerary.isNotEmpty) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!mounted) return;
+                setState(() {
+                  _hydrateSelectedFromCatalog();
+                });
+                _unawaited(_refreshMatrixFor(_allLocations));
+              });
+            }
+
+            if (_anchorPlace == null &&
+                _selectedActivities.isNotEmpty &&
+                _allLocations.isNotEmpty) {
+              final lastAct = _selectedActivities.last;
+              final found = _allLocations.firstWhere(
+                (loc) => (loc.id ?? '') == lastAct.locationId,
+                orElse: () => LocationModel(id: null),
+              );
+              if (found.id != null) _anchorPlace = found;
+            }
+
+            return Stack(
+              children: [
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4.w),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(height: 1.h),
+                      Text('Chọn',
+                          style: TextStyle(
+                              fontSize: 22.sp, fontWeight: FontWeight.bold)),
+                      Text('Địa điểm',
+                          style: TextStyle(
+                              fontSize: 22.sp, fontWeight: FontWeight.bold)),
+                      SizedBox(height: 1.h),
+                      Row(
                         children: [
-                          SizedBox(height: 1.h),
-                          Text('Chọn',
-                              style: TextStyle(
-                                  fontSize: 22.sp,
-                                  fontWeight: FontWeight.bold)),
-                          Text('Địa điểm',
-                              style: TextStyle(
-                                  fontSize: 22.sp,
-                                  fontWeight: FontWeight.bold)),
-                          SizedBox(height: 2.h),
-                          Center(
-                            child: ValueListenableBuilder<int>(
-                              valueListenable: selectedFilterIndex,
-                              builder: (context, selectedIndex, _) {
-                                final filters = [
-                                  {
-                                    'label': 'Tất cả',
-                                    'icon': Icons.all_inclusive
-                                  },
-                                  {
-                                    'label': 'Di tích',
-                                    'icon': Icons.location_on
-                                  },
-                                  {
-                                    'label': 'Ẩm thực',
-                                    'icon': Icons.restaurant
-                                  },
-                                  {
-                                    'label': 'Làng nghề',
-                                    'icon': Icons.handyman
-                                  },
-                                ];
-                                return SizedBox(
-                                  height: 10.h,
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children:
-                                        List.generate(filters.length, (index) {
-                                      final selected = index == selectedIndex;
-                                      return Padding(
-                                        padding: EdgeInsets.symmetric(
-                                            horizontal: 3.w),
-                                        child: GestureDetector(
-                                          onTap: () =>
-                                              selectedFilterIndex.value = index,
-                                          child: Column(
-                                            children: [
-                                              CircleAvatar(
-                                                radius: 24,
-                                                backgroundColor: selected
-                                                    ? Colors.blueAccent
-                                                    : Colors.grey[200],
-                                                child: Icon(
-                                                  filters[index]['icon']
-                                                      as IconData,
-                                                  color: selected
-                                                      ? Colors.white
-                                                      : Colors.black54,
-                                                ),
-                                              ),
-                                              SizedBox(height: 0.8.h),
-                                              Text(
-                                                filters[index]['label']
-                                                    as String,
-                                                style: TextStyle(
-                                                  fontSize: 14.sp,
-                                                  fontWeight: selected
-                                                      ? FontWeight.bold
-                                                      : FontWeight.normal,
-                                                  color: selected
-                                                      ? Colors.blueAccent
-                                                      : Colors.black87,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      );
-                                    }),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                          const TitleWithCustoneUnderline(
-                              text: '📍Địa điểm ', text2: ' nổi bật'),
-                          SizedBox(height: 2.h),
-                          Expanded(
-                            child: ValueListenableBuilder<int>(
-                              valueListenable: selectedFilterIndex,
-                              builder: (context, filterIndex, _) {
-                                List<Widget> items;
-                                switch (filterIndex) {
-                                  case 1:
-                                    items = locations
-                                        .map((e) => _buildCardItem(
-                                            context,
-                                            e.imgUrlFirst,
-                                            e.name ?? '',
-                                            Icons.location_on,
-                                            e))
-                                        .toList();
-                                    break;
-                                  case 2:
-                                    items = restaurants
-                                        .map((e) => _buildCardItem(
-                                            context,
-                                            e.imgUrlFirst,
-                                            e.name ?? '',
-                                            Icons.restaurant,
-                                            e))
-                                        .toList();
-                                    break;
-                                  case 3:
-                                    items = villages
-                                        .map((e) => _buildCardItem(
-                                            context,
-                                            e.imageList.first,
-                                            e.name,
-                                            Icons.handyman,
-                                            e))
-                                        .toList();
-                                    break;
-                                  default:
-                                    items = [
-                                      ...locations.map((e) => _buildCardItem(
-                                          context,
-                                          e.imgUrlFirst,
-                                          e.name ?? '',
-                                          Icons.location_on,
-                                          e)),
-                                      ...restaurants.map((e) => _buildCardItem(
-                                          context,
-                                          e.imgUrlFirst,
-                                          e.name ?? '',
-                                          Icons.restaurant,
-                                          e)),
-                                      ...villages.map((e) => _buildCardItem(
-                                          context,
-                                          e.imageList.first,
-                                          e.name,
-                                          Icons.handyman,
-                                          e)),
-                                    ];
+                          const Icon(Icons.schedule),
+                          SizedBox(width: 2.w),
+                          Text(
+                              'Bắt đầu từ: ${TimeUtils.fmtTimeOfDay(_dayStart)}'),
+                          TextButton(
+                            onPressed: () async {
+                              final picked = await showTimePicker(
+                                context: context,
+                                initialTime: _dayStart,
+                              );
+                              if (picked != null) {
+                                if (picked.hour < minHour ||
+                                    picked.hour > maxHour) {
+                                  _snack(
+                                      'Chỉ cho phép từ $minHour:00 tới $maxHour:00');
+                                  return;
                                 }
-                                return MasonryGridView.count(
-                                  crossAxisCount: 2,
-                                  mainAxisSpacing: 2.h,
-                                  crossAxisSpacing: 4.w,
-                                  itemCount: items.length,
-                                  itemBuilder: (context, index) => items[index],
-                                );
-                              },
-                            ),
+                                setState(() {
+                                  _dayStart = picked;
+                                  _roadKmCache.clear();
+                                  _recalcTimesForSelected();
+                                });
+                              }
+                            },
+                            child: const Text('Đổi giờ'),
                           ),
                         ],
                       ),
-                    ),
-                    if (selectedPlaces.isNotEmpty)
-                      Positioned(
-                        bottom: 2.h,
-                        left: 8.w,
-                        right: 8.w,
-                        child: _buildGradientCompleteButton(),
+                      SizedBox(height: 0.5.h),
+                      InkWell(
+                        onTap: _showDistanceTip,
+                        borderRadius: BorderRadius.circular(8),
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 0.4.h),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.motorcycle,
+                                  size: 18, color: Colors.grey),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  'Chọn điểm trong bán kính ${_maxDistanceKm.toStringAsFixed(0)} km để dành nhiều thời gian khám phá hơn',
+                                  style: const TextStyle(
+                                      fontSize: 13, color: Colors.grey),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                  ],
-                );
-              },
+                      SizedBox(height: 1.5.h),
+                      Center(
+                        child: FilterChipsBar(
+                            selectedIndexListenable: selectedFilterIndex),
+                      ),
+                      const TitleWithCustoneUnderline(
+                          text: '📍Địa điểm ', text2: ' nổi bật'),
+                      SizedBox(height: 2.h),
+                      Expanded(
+                        child: ValueListenableBuilder<int>(
+                          valueListenable: selectedFilterIndex,
+                          builder: (context, filterIndex, _) {
+                            final filtered =
+                                _filterLocations(_allLocations, filterIndex);
+
+                            if (_anchorPlace != null) {
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                _refreshMatrixFor(filtered);
+                              });
+                            }
+
+                            return MasonryGridView.count(
+                              crossAxisCount: 2,
+                              mainAxisSpacing: 2.h,
+                              crossAxisSpacing: 4.w,
+                              itemCount: filtered.length,
+                              itemBuilder: (context, index) {
+                                final loc = filtered[index];
+                                final id = loc.id ?? (loc.name ?? '$index');
+
+                                final isSelectedHere = _selectedActivities
+                                    .any((a) => a.locationId == id);
+                                final order = isSelectedHere
+                                    ? _selectedActivities.indexWhere(
+                                            (a) => a.locationId == id) +
+                                        1
+                                    : 0;
+
+                                final blocked =
+                                    _blockedLocationIds.contains(id);
+
+                                String? distanceText;
+                                if (_anchorPlace != null) {
+                                  final anchorId = (_anchorPlace!.id ??
+                                          _anchorPlace!.name) ??
+                                      '';
+                                  final idForKey = (loc.id ?? loc.name) ?? '';
+                                  if (anchorId != idForKey) {
+                                    final key = _roadKey(_anchorPlace!.id,
+                                        _anchorPlace!.name, loc.id, loc.name);
+                                    final km = _roadKmCache[key];
+                                    if (km != null) {
+                                      distanceText =
+                                          '${km.toStringAsFixed(1)} km';
+                                    }
+                                  }
+                                }
+
+                                return PlaceCard(
+                                  imageUrl: loc.imgUrlFirst,
+                                  name: loc.name ?? '',
+                                  icon: _iconForCategory(
+                                      _mapCategoryToType(loc.category)),
+                                  overlayOrder: order,
+                                  blocked: blocked,
+                                  onTap:
+                                      blocked ? null : () => _onPlaceTap(loc),
+                                  onLongPress: () => Navigator.pushNamed(
+                                    context,
+                                    '/place_detail_screen',
+                                    arguments: loc,
+                                  ),
+                                  distanceText: distanceText,
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Positioned(
+                  bottom: 2.h,
+                  left: 8.w,
+                  right: 8.w,
+                  child: _buildCompleteButton(alwaysEnabled: true),
+                ),
+              ],
             );
           },
         ),
       ),
     );
   }
-
-  Widget _buildFavoriteIconButton() {
-    return Stack(
-      children: [
-        _roundedIconButton(Icons.star_border, onPressed: _showSelectedList),
-        if (selectedPlaces.isNotEmpty)
-          Positioned(
-            right: 0,
-            top: 0,
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: const BoxDecoration(
-                color: Colors.red,
-                shape: BoxShape.circle,
-              ),
-              child: Text(
-                '${selectedPlaces.length}',
-                style: const TextStyle(fontSize: 10, color: Colors.white),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
- void _showSelectedList() {
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true, 
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-    ),
-    builder: (context) {
-      return DraggableScrollableSheet(
-        expand: false,
-        initialChildSize: 0.6, // Tùy chỉnh chiều cao ban đầu
-        minChildSize: 0.3,
-        maxChildSize: 0.9,
-        builder: (context, scrollController) {
-          return Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Text(
-                    'Đã chọn (${selectedPlaces.length}/6)',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Expanded(
-                  child: ListView.builder(
-                    controller: scrollController,
-                    itemCount: selectedPlaces.length,
-                    itemBuilder: (context, index) {
-                      final place = selectedPlaces[index];
-                      return ListTile(
-                        leading: CircleAvatar(
-                          backgroundImage: NetworkImage(place['imageUrl'] ?? ''),
-                          onBackgroundImageError: (_, __) => const Icon(Icons.image),
-                        ),
-                        title: Text(place['name']),
-                        subtitle: Text(_getTypeInVietnamese(place['type'])),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () {
-                            setState(() {
-                              selectedPlaces.removeAt(index);
-                              Navigator.pop(context);
-                              _showSelectedList(); // Hiện lại sau khi xoá
-                            });
-                          },
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      );
-    },
-  );
-}
-
- 
-Widget _buildGradientCompleteButton() {
-  return DecoratedBox(
-    decoration: BoxDecoration(
-      gradient: const LinearGradient(
-        colors: [Color(0xFF2196F3), Color(0xFF64B5F6)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ),
-      borderRadius: BorderRadius.circular(30),
-      boxShadow: const [
-        BoxShadow(
-          color: Colors.black26,
-          blurRadius: 8,
-          offset: Offset(0, 3),
-        ),
-      ],
-    ),
-    child: ElevatedButton.icon(
-      style: ElevatedButton.styleFrom(
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        shadowColor: Colors.transparent,
-        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 1.8.h),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-      ),
-      onPressed: () {
-        final results = selectedPlaces.map((place) {
-          final type = place['type'];
-          if (type == 'location') {
-            return TripPlanLocation(
-              tripPlanVersionId: '',
-              startTime: widget.day,
-              endTime: widget.day.add(const Duration(hours: 1)),
-              note: '',
-              order: 0,
-              location: place['object'],
-            );
-          } else if (type == 'restaurant') {
-            return TripPlanCuisine(
-              tripPlanVersionId: '',
-              restaurant: place['object'],
-              startTime: widget.day,
-              endTime: widget.day.add(const Duration(hours: 1)),
-              note: '',
-              order: 0,
-            );
-          } else {
-            return TripPlanCraftVillage(
-              tripPlanVersionId: '',
-              craftVillage: place['object'],
-              startTime: widget.day,
-              endTime: widget.day.add(const Duration(hours: 1)),
-              note: '',
-              order: 0,
-            );
-          }
-        }).toList();
-
-        Navigator.pop(context, results);
-      },
-      icon: Icon(Icons.check_circle, size: 20.sp, color: Colors.white),
-      label: Text(
-        'HOÀN TẤT',
-        style: TextStyle(
-          fontSize: 14.sp,
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
-          letterSpacing: 1.2,
-        ),
-      ),
-    ),
-  );
-}
-
 
   PreferredSizeWidget _buildIconOnlyAppBar(BuildContext context) {
     return AppBar(
@@ -472,7 +571,7 @@ Widget _buildGradientCompleteButton() {
       actions: [
         _roundedIconButton(Icons.menu),
         const SizedBox(width: 10),
-        _buildFavoriteIconButton(),
+        _buildSelectedCountButton(),
         const SizedBox(width: 12),
       ],
     );
@@ -484,165 +583,776 @@ Widget _buildGradientCompleteButton() {
       borderRadius: BorderRadius.circular(30),
       child: Container(
         padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade200,
-          shape: BoxShape.circle,
-        ),
+        decoration:
+            BoxDecoration(color: Colors.grey.shade200, shape: BoxShape.circle),
         child: Icon(icon, size: 20, color: Colors.black87),
       ),
     );
   }
 
- Widget _buildCardItem(
-  BuildContext context,
-  String imageUrl,
-  String name,
-  IconData icon,
-  dynamic item,
-) {
-  final id = item.id ?? name;
-  final isSelected = selectedPlaces.any((p) => p['id'] == id);
-  final selectedIndex =
-      isSelected ? selectedPlaces.indexWhere((p) => p['id'] == id) + 1 : 0;
-
-  final isBlocked = blockedIds.contains(id);
-
-  final cardContent = ClipRRect(
-    borderRadius: BorderRadius.circular(4.w),
-    child: Stack(
+  Widget _buildSelectedCountButton() {
+    return Stack(
       children: [
-        Image.network(
-          imageUrl,
-          width: 45.w,
-          height: 45.w,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => Container(
-            width: 45.w,
-            height: 45.w,
-            color: Colors.grey[300],
-            child: Icon(Icons.image_not_supported, size: 16.sp),
-          ),
-        ),
-        if (selectedIndex > 0)
-          Positioned.fill(
+        _roundedIconButton(Icons.star_border, onPressed: _showSelectedList),
+        if (_selectedActivities.isNotEmpty)
+          Positioned(
+            right: 0,
+            top: 0,
             child: Container(
-              color: Colors.black.withOpacity(0.4),
-              child: Center(
-                child: CircleAvatar(
-                  radius: 20,
-                  backgroundColor: Colors.white,
-                  child: Text(
-                    '$selectedIndex',
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blueAccent,
-                    ),
-                  ),
-                ),
-              ),
+              padding: const EdgeInsets.all(4),
+              decoration: const BoxDecoration(
+                  color: Colors.red, shape: BoxShape.circle),
+              child: Text('${_selectedActivities.length}',
+                  style: const TextStyle(fontSize: 10, color: Colors.white)),
             ),
           ),
-        Positioned(
-          left: 2.w,
-          right: 2.w,
-          bottom: 2.h,
-          child: Row(
+      ],
+    );
+  }
+
+  Future<void> _showDistanceTip() async {
+    await showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: EdgeInsets.all(1.h),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.4),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, size: 12.sp, color: Colors.white),
+              Row(
+                children: const [
+                  Icon(Icons.motorcycle, color: _kBlue),
+                  SizedBox(width: 8),
+                  Text('Giới hạn khoảng cách',
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: _kBlue)),
+                ],
               ),
-              SizedBox(width: 2.w),
-              Expanded(
-                child: Text(
-                  name,
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    shadows: const [
-                      Shadow(
-                          color: Colors.black54,
-                          offset: Offset(0, 1),
-                          blurRadius: 2),
-                    ],
-                  ),
-                  overflow: TextOverflow.ellipsis,
+              const SizedBox(height: 12),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: _kBlueLight2,
+                  borderRadius: BorderRadius.circular(12),
                 ),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Text(
+                    'Để chuyến đi thoải mái và tiết kiệm thời gian di chuyển, hãy chọn điểm kế tiếp trong vòng ${_maxDistanceKm.toStringAsFixed(0)} km từ điểm trước.',
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Text('Hiện tại: ${_maxDistanceKm.toStringAsFixed(0)} km',
+                      style: const TextStyle(fontWeight: FontWeight.w700, color: _kBlue)),
+                  const Spacer(),
+                  ElevatedButton.icon(
+                    style: _tonalBlueButton,
+                    onPressed: () async {
+                      Navigator.of(ctx).pop();
+                      await _askChangeRadius();
+                    },
+                    icon: const Icon(Icons.tune),
+                    label: const Text('Đổi bán kính'),
+                  ),
+                ],
               ),
             ],
           ),
-        ),
-      ],
-    ),
-  );
+        );
+      },
+    );
+  }
 
-  if (isBlocked) {
-    return Opacity(
-      opacity: 0.3,
-      child: IgnorePointer(
-        ignoring: true,
-        child: cardContent,
+  Future<bool> _confirmDistanceAfterRemoval(int idx) async {
+    final prevIdx = idx - 1;
+    final nextIdx = idx + 1;
+
+    if (prevIdx >= 0 && nextIdx < _itinerary.length) {
+      final from = _itinerary[prevIdx].place;
+      final to = _itinerary[nextIdx].place;
+      final fLat = from.safeLat, fLng = from.safeLng;
+      final tLat = to.safeLat, tLng = to.safeLng;
+
+      if (fLat != null && fLng != null && tLat != null && tLng != null) {
+        try {
+          final route = await _vietmap.routeMotorcycle(
+            fromLat: fLat, fromLng: fLng, toLat: tLat, toLng: tLng,
+          );
+          final distanceKm = route.distanceMeters / 1000.0;
+          if (distanceKm > _maxDistanceKm) {
+            return _showConfirmDialog(
+              title: 'Khoảng cách xa sau khi xóa',
+              content: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _placePills(from.name ?? 'Điểm trước', to.name ?? 'Điểm sau'),
+                  const SizedBox(height: 12),
+                  Text('Sau khi xóa, khoảng cách sẽ là ' 
+                      '${distanceKm.toStringAsFixed(1)} km (>${_maxDistanceKm.toStringAsFixed(0)} km).'),
+                ],
+              ),
+            );
+          }
+        } catch (_) {}
+      }
+    }
+    return true;
+  }
+
+  Future<void> _askChangeRadius() async {
+    final controller =
+        TextEditingController(text: _maxDistanceKm.toStringAsFixed(0));
+    final ok = await _showInputDialog(
+      title: 'Đổi bán kính (km)',
+      input: TextField(
+        controller: controller,
+        keyboardType: TextInputType.number,
+        decoration:
+            const InputDecoration(hintText: 'Ví dụ: 15', suffixText: 'km', border: InputBorder.none),
+      ),
+      okText: 'Lưu',
+      cancelText: 'Hủy',
+    );
+
+    if (ok == true) {
+      final v = double.tryParse(controller.text.trim().replaceAll(',', '.'));
+      if (v == null || v <= 0) {
+        _snack('Vui lòng nhập số km hợp lệ.');
+        return;
+      }
+      setState(() {
+        _maxDistanceKm = v;
+      });
+    }
+  }
+
+  void _showSelectedList() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final places = _selectedActivities
+                .map((a) => LocationModel(
+                      id: a.locationId,
+                      name: a.name,
+                      description: a.description,
+                      address: a.address,
+                      medias: null,
+                    ))
+                .toList();
+
+            final itin = List<ItineraryStop>.from(_itinerary);
+
+            return SelectedListSheet(
+              selectedPlaces: places,
+              itinerary: itin,
+              typeLabelBuilder: (loc) => _vnTypeLabelFromCategory(loc.category),
+              onRemoveAt: (idx) async {
+                final removedAct = _selectedActivities[idx];
+                final prevIdx = idx - 1;
+                final nextIdx = idx + 1;
+
+                bool continueRemove = true;
+                if (prevIdx >= 0 && nextIdx < _itinerary.length) {
+                  final from = _itinerary[prevIdx].place;
+                  final to = _itinerary[nextIdx].place;
+                  final fLat = from.safeLat, fLng = from.safeLng;
+                  final tLat = to.safeLat, tLng = to.safeLng;
+
+                  if (fLat != null &&
+                      fLng != null &&
+                      tLat != null &&
+                      tLng != null) {
+                    try {
+                      final route = await _vietmap.routeMotorcycle(
+                        fromLat: fLat,
+                        fromLng: fLng,
+                        toLat: tLat,
+                        toLng: tLng,
+                      );
+                      final distanceKm = route.distanceMeters / 1000.0;
+                      if (distanceKm > _maxDistanceKm) {
+                        continueRemove = await _showConfirmDialog(
+                          title: 'Khoảng cách xa sau khi xóa',
+                          content: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _placePills(from.name ?? 'Điểm trước', to.name ?? 'Điểm sau'),
+                              const SizedBox(height: 12),
+                              Text('Sau khi xóa “${removedAct.name}”, khoảng cách sẽ là ' 
+                                  '${distanceKm.toStringAsFixed(1)} km (>${_maxDistanceKm.toStringAsFixed(0)} km).'),
+                            ],
+                          ),
+                        );
+                      }
+                    } catch (_) {}
+                  }
+                }
+                if (!continueRemove) return;
+
+                await _handleRemoveAt(idx);
+
+                if (!context.mounted) return;
+                if (_selectedActivities.isEmpty) {
+                  Navigator.pop(context);
+                } else {
+                  setModalState(() {});
+                }
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _placePills(String a, String b) {
+    Widget chip(String text, IconData icon) => Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: _kBlueLight,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(icon, size: 16, color: _kBlue),
+            const SizedBox(width: 6),
+            Text(text, style: const TextStyle(color: _kBlue, fontWeight: FontWeight.w600)),
+          ]),
+        );
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [chip(a, Icons.place), const Icon(Icons.arrow_forward, color: _kBlue, size: 18), chip(b, Icons.flag)],
+    );
+  }
+
+  Widget _buildGradientCompleteButton() {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF2196F3), Color(0xFF64B5F6)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: const [
+          BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 3))
+        ],
+      ),
+      child: ElevatedButton.icon(
+        style: ElevatedButton.styleFrom(
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 1.8.h),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+        ),
+        onPressed: () {
+          final payload = _toTplList();
+          Navigator.pop(context, {
+            'tpl': payload,
+            'acts': List<TripActivityModel>.from(_selectedActivities),
+          });
+        },
+        icon: Icon(Icons.check_circle, size: 20.sp, color: Colors.white),
+        label: Text(
+          'HOÀN TẤT',
+          style: TextStyle(
+            fontSize: 14.sp,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            letterSpacing: 1.2,
+          ),
+        ),
       ),
     );
   }
 
-  return GestureDetector(
-    onTap: () {
-      setState(() {
-        if (isSelected) {
-          selectedPlaces.removeWhere((p) => p['id'] == id);
-        } else if (selectedPlaces.length < 6) {
-          selectedPlaces.add({
-            'id': id,
-            'name': name,
-            'imageUrl': imageUrl,
-            'type': icon == Icons.restaurant
-                ? 'restaurant'
-                : icon == Icons.handyman
-                    ? 'craft'
-                    : 'location',
-            'object': item,
-          });
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Chỉ được chọn tối đa 6 địa điểm.')),
+  Widget _buildCompleteButton({bool alwaysEnabled = false}) {
+    final hasAny = _selectedActivities.isNotEmpty;
+
+    final BoxDecoration deco = hasAny
+        ? BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF2196F3), Color(0xFF64B5F6)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: const [
+              BoxShadow(
+                  color: Colors.black26, blurRadius: 8, offset: Offset(0, 3))
+            ],
+          )
+        : BoxDecoration(
+            color: Colors.grey.shade300,
+            borderRadius: BorderRadius.circular(30),
           );
-        }
-      });
-    },
-    onLongPress: () {
-      if (icon == Icons.restaurant) {
-        Navigator.pushNamed(context, '/restaurant_detail_screen',
-            arguments: item);
-      } else if (icon == Icons.handyman) {
-        Navigator.pushNamed(context, '/craft_village_detail_screen',
-            arguments: item);
-      } else {
-        Navigator.pushNamed(context, '/place_detail_screen', arguments: item);
-      }
-    },
-    child: cardContent,
-  );
-}
 
-}
+    return DecoratedBox(
+      decoration: deco,
+      child: ElevatedButton.icon(
+        style: ElevatedButton.styleFrom(
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 1.8.h),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+        ),
+        onPressed: () async {
+          final hasAny = _selectedActivities.isNotEmpty;
 
+          if (!hasAny) {
+            Navigator.pop(
+                context, {'tpl': null, 'acts': null, 'clearDay': true});
+            return;
+          }
 
-String _getTypeInVietnamese(String type) {
-  switch (type) {
-    case 'restaurant':
-      return 'Ẩm thực';
-    case 'craft':
-      return 'Làng nghề';
-    case 'location':
-      return 'Địa điểm';
-    default:
-      return 'Không rõ';
+          final payload = _toTplList();
+          Navigator.pop(context, {
+            'tpl': payload,
+            'acts': List<TripActivityModel>.from(_selectedActivities),
+          });
+        },
+        icon: Icon(
+          hasAny ? Icons.check_circle : Icons.save_outlined,
+          size: 20.sp,
+          color: hasAny ? Colors.white : Colors.black54,
+        ),
+        label: Text(
+          hasAny ? 'HOÀN TẤT' : 'LƯU NGÀY TRỐNG',
+          style: TextStyle(
+            fontSize: 14.sp,
+            fontWeight: FontWeight.bold,
+            color: hasAny ? Colors.white : Colors.black87,
+            letterSpacing: 1.2,
+          ),
+        ),
+      ),
+    );
   }
+
+  Future<void> _onPlaceTap(LocationModel loc) async {
+    final id = loc.id ?? (loc.name ?? '');
+    final isSelected = _selectedActivities.any((a) => a.locationId == id);
+
+    if (isSelected) {
+      final idx = _selectedActivities.indexWhere((a) => a.locationId == id);
+      if (!await _confirmDistanceAfterRemoval(idx)) return;
+      await _handleRemoveAt(idx);
+      return;
+    }
+
+    if (_blockedLocationIds.contains(id)) {
+      _snack('Địa điểm này đã có ở ngày khác.');
+      return;
+    }
+
+    final stay = await RouteDialogs.askStayMinutes(context);
+    if (stay == null || stay <= 0) return;
+
+    if (_selectedActivities.isEmpty) {
+      if (loc.safeLat == null || loc.safeLng == null) {
+        _snack('“${loc.name ?? 'Điểm này'}” thiếu tọa độ. Không thể làm điểm xuất phát.');
+        return;
+      }
+
+      final parsedOpen = _parseOpenTime(itemOpenTime: loc.openTime);
+      if (parsedOpen != null) {
+        if (parsedOpen.hour > maxHour ||
+            (parsedOpen.hour == maxHour && parsedOpen.minute > 0)) {
+          _snack('Giờ mở cửa (${_fmtTOD(parsedOpen)}) vượt quá $maxHour:00.');
+          return;
+        }
+        final adjusted = TimeOfDay(
+          hour: parsedOpen.hour < minHour ? minHour : parsedOpen.hour,
+          minute: parsedOpen.minute,
+        );
+        setState(() => _dayStart = adjusted);
+      }
+
+      final start = TimeUtils.combine(_dayDate, _dayStart);
+      final earliest = TimeUtils.combine(
+          _dayDate, const TimeOfDay(hour: minHour, minute: 0));
+      final arrival = start.isBefore(earliest) ? earliest : start;
+      final depart = arrival.add(Duration(minutes: stay));
+
+      if (!TimeUtils.withinDay(arrival, _dayDate, minHour, maxHour) ||
+          !TimeUtils.withinDay(depart, _dayDate, minHour, maxHour)) {
+        _snack('Lịch vượt quá $maxHour:00, vui lòng chọn thời lượng ngắn hơn.');
+        return;
+      }
+
+      final ok = await RouteDialogs.showFirstStopDialog(
+        context: context,
+        placeName: loc.name ?? 'Điểm mới',
+        arrival: arrival,
+        depart: depart,
+        stayMinutes: stay,
+      );
+      if (!ok) return;
+
+      final act = _makeActivityFromLocation(
+        loc: loc,
+        arrival: arrival,
+        depart: depart,
+        order: 1,
+      );
+
+      setState(() {
+        _selectedActivities.add(act);
+        _itinerary.add(
+          ItineraryStop(
+            place: loc,
+            arrival: arrival,
+            depart: depart,
+            stayMinutes: stay,
+            travelMeters: 0,
+            travelSeconds: 0,
+          ),
+        );
+        _selectedIds.add(id);
+        _anchorPlace = loc;
+        _roadKmCache.clear();
+      });
+
+      _unawaited(_refreshMatrixFor(_allLocations));
+      return;
+    }
+
+    final lastStop = _itinerary.last;
+    final fromLat = lastStop.place.safeLat, fromLng = lastStop.place.safeLng;
+    final toLat = loc.safeLat, toLng = loc.safeLng;
+
+    if (fromLat == null || fromLng == null) {
+      _snack('“${lastStop.place.name ?? 'Điểm trước'}” thiếu tọa độ. Không thể tính lộ trình.');
+      return;
+    }
+    if (toLat == null || toLng == null) {
+      _snack('“${loc.name ?? 'Điểm mới'}” thiếu tọa độ. Không thể tính lộ trình.');
+      return;
+    }
+
+    try {
+      final route = await _vietmap.routeMotorcycle(
+        fromLat: fromLat,
+        fromLng: fromLng,
+        toLat: toLat,
+        toLng: toLng,
+      );
+
+      final distanceKm = route.distanceMeters / 1000.0;
+      if (distanceKm > _maxDistanceKm) {
+        final confirm = await _showConfirmDialog(
+          title: 'Khoảng cách xa',
+          content: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _placePills(lastStop.place.name ?? 'Điểm trước', loc.name ?? 'Điểm mới'),
+              const SizedBox(height: 12),
+              Text('Điểm này cách điểm trước khoảng ' 
+                  '${distanceKm.toStringAsFixed(1)} km, vượt giới hạn khuyến nghị là ${_maxDistanceKm.toStringAsFixed(0)} km.'),
+            ],
+          ),
+        );
+
+        if (confirm != true) return;
+      }
+
+      final arrival =
+          lastStop.depart.add(Duration(seconds: route.durationSeconds));
+      final depart = arrival.add(Duration(minutes: stay));
+
+      if (!TimeUtils.withinDay(arrival, _dayDate, minHour, maxHour) ||
+          !TimeUtils.withinDay(depart, _dayDate, minHour, maxHour)) {
+        _snack('Lịch vượt khung giờ $minHour:00–$maxHour:00 của ngày.');
+        return;
+      }
+
+      final ok = await RouteDialogs.showRouteSummaryDialog(
+        context: context,
+        placeName: loc.name ?? 'Điểm mới',
+        distanceKm: double.parse(distanceKm.toStringAsFixed(1)),
+        travelMinutes: (route.durationSeconds / 60).round(),
+        arrival: arrival,
+        depart: depart,
+      );
+      if (!ok) return;
+
+      final act = _makeActivityFromLocation(
+        loc: loc,
+        arrival: arrival,
+        depart: depart,
+        order: _selectedActivities.length + 1,
+      );
+
+      setState(() {
+        _selectedActivities.add(act);
+        _itinerary.add(
+          ItineraryStop(
+            place: loc,
+            arrival: arrival,
+            depart: depart,
+            stayMinutes: stay,
+            travelMeters: route.distanceMeters,
+            travelSeconds: route.durationSeconds,
+          ),
+        );
+        _selectedIds.add(id);
+        _anchorPlace = loc;
+        _roadKmCache.clear();
+      });
+
+      _unawaited(_refreshMatrixFor(_allLocations));
+    } on dynamic catch (e, st) {
+      try {
+        final status = (e as dynamic).response?.statusCode;
+        final data = (e as dynamic).response?.data;
+        final uri = (e as dynamic).requestOptions?.uri;
+        debugPrint('[ROUTE][ERR] Dio-like error status=$status uri=$uri');
+        debugPrint('[ROUTE][ERR] respData=$data');
+      } catch (_) {}
+      debugPrint('[ROUTE][ERR] $e');
+      debugPrint(st.toString());
+      _snack('Không thể tính lộ trình: ${e.runtimeType}. Vui lòng thử lại.');
+    }
+  }
+
+  void _recalcTimesForSelected({int startFromIndex = 0}) {
+    if (_selectedActivities.isEmpty) return;
+
+    DateTime cursor = TimeUtils.combine(_dayDate, _dayStart);
+    final earliest =
+        TimeUtils.combine(_dayDate, const TimeOfDay(hour: minHour, minute: 0));
+    if (cursor.isBefore(earliest)) cursor = earliest;
+
+    for (int i = 0; i < _selectedActivities.length; i++) {
+      if (i < startFromIndex && i != 0) continue;
+
+      final oldAct = _selectedActivities[i];
+      final oldStop = _itinerary[i];
+      final stayMinutes = oldAct.endTime
+          .difference(oldAct.startTime)
+          .inMinutes
+          .clamp(5, 24 * 60);
+
+      final arrival = (i == 0) ? cursor : _selectedActivities[i - 1].endTime;
+      final depart = arrival.add(Duration(minutes: stayMinutes));
+
+      _selectedActivities[i] = oldAct.copyWith(
+        startTime: arrival,
+        endTime: depart,
+        startTimeFormatted: DateFormat('HH:mm').format(arrival),
+        endTimeFormatted: DateFormat('HH:mm').format(depart),
+        duration: '$stayMinutes phút',
+        order: i + 1,
+      );
+
+      _itinerary[i] = ItineraryStop(
+        place: oldStop.place,
+        arrival: arrival,
+        depart: depart,
+        stayMinutes: stayMinutes,
+        travelMeters: oldStop.travelMeters,
+        travelSeconds: oldStop.travelSeconds,
+      );
+
+      cursor = depart;
+    }
+  }
+
+  TripActivityModel _makeActivityFromLocation({
+    required LocationModel loc,
+    required DateTime arrival,
+    required DateTime depart,
+    required int order,
+  }) {
+    final type = _vnTypeLabelFromCategory(loc.category);
+    final durationMin = depart.difference(arrival).inMinutes;
+    final img = (loc.imgUrlFirst).toString().trim();
+
+    return TripActivityModel(
+      locationId: (loc.id ?? ''),
+      type: type,
+      name: (loc.name ?? 'Địa điểm không tên'),
+      description: (loc.description ?? ''),
+      address: (loc.address ?? ''),
+      startTime: arrival,
+      endTime: depart,
+      startTimeFormatted: DateFormat('HH:mm').format(arrival),
+      endTimeFormatted: DateFormat('HH:mm').format(depart),
+      duration: '$durationMin phút',
+      notes: '',
+      order: order,
+      imageUrl: img.isEmpty ? null : img,
+    );
+  }
+
+  List<TripPlanLocationModel> _toTplList() {
+    final result = <TripPlanLocationModel>[];
+    for (int i = 0; i < _selectedActivities.length; i++) {
+      final a = _selectedActivities[i];
+      final stop = _itinerary[i];
+
+      result.add(
+        TripPlanLocationModel(
+          tripPlanLocationId: null,
+          locationId: a.locationId,
+          order: i + 1,
+          startTime: a.startTime,
+          endTime: a.endTime,
+          notes: a.notes,
+          travelTimeFromPrev: stop.travelSeconds,
+          distanceFromPrev: stop.travelMeters,
+          estimatedStartTime: a.startTime.millisecondsSinceEpoch ~/ 1000,
+          estimatedEndTime: a.endTime.millisecondsSinceEpoch ~/ 1000,
+        ),
+      );
+    }
+    return result;
+  }
+
+  List<LocationModel> _filterLocations(
+      List<LocationModel> src, int filterIndex) {
+    switch (filterIndex) {
+      case 1:
+        return src
+            .where((e) => _mapCategoryToType(e.category) == 'history')
+            .toList();
+      case 2:
+        return src
+            .where((e) => _mapCategoryToType(e.category) == 'food')
+            .toList();
+      case 3:
+        return src
+            .where((e) => _mapCategoryToType(e.category) == 'craft')
+            .toList();
+      default:
+        return src;
+    }
+  }
+
+  String _mapCategoryToType(String? category) {
+    final c = (category ?? '').toLowerCase();
+    if (c.contains('lịch sử')) return 'history';
+    if (c.contains('làng nghề')) return 'craft';
+    if (c.contains('ẩm thực')) return 'food';
+    return 'scenic';
+  }
+
+  String _vnTypeLabelFromCategory(String? category) {
+    switch (_mapCategoryToType(category)) {
+      case 'history':
+        return 'Địa điểm lịch sử';
+      case 'craft':
+        return 'Làng nghề';
+      case 'food':
+        return 'Ẩm thực';
+      default:
+        return 'Danh lam thắng cảnh';
+    }
+  }
+
+  IconData _iconForCategory(String type) {
+    switch (type) {
+      case 'food':
+        return Icons.restaurant;
+      case 'craft':
+        return Icons.handyman;
+      default:
+        return Icons.location_on;
+    }
+  }
+
+  void _snack(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  TimeOfDay? _parseOpenTime({String? itemOpenTime}) {
+    final s = itemOpenTime?.trim();
+    if (s == null || s.isEmpty) return null;
+    final m = RegExp(r'(\d{1,2})(?:[:hHgG]?(\d{2}))?').firstMatch(s);
+    if (m == null) return null;
+    final h = int.tryParse(m.group(1) ?? '');
+    final mm = int.tryParse(m.group(2) ?? '0') ?? 0;
+    if (h == null || h < 0 || h > 23) return null;
+    if (mm < 0 || mm > 59) return null;
+    return TimeOfDay(hour: h, minute: mm);
+  }
+
+  String _fmtTOD(TimeOfDay t) {
+    final hh = t.hour.toString().padLeft(2, '0');
+    final mm = t.minute.toString().padLeft(2, '0');
+    return '$hh:$mm';
+  }
+
+  String _roadKey(String? aId, String? aName, String? bId, String? bName) =>
+      '${(aId ?? aName) ?? ''}|${(bId ?? bName) ?? ''}';
+
+  Future<void> _refreshMatrixFor(List<LocationModel> targets) async {
+    final a = _anchorPlace;
+    if (a == null) return;
+    final aLat = a.safeLat, aLng = a.safeLng;
+    if (aLat == null || aLng == null) return;
+
+    final usableTargets = <LocationModel>[];
+    final coords = <List<double>>[];
+    for (final t in targets) {
+      final tId = (t.id ?? t.name) ?? '';
+      final aId = (a.id ?? a.name) ?? '';
+      if (tId == aId) continue;
+      final lat = t.safeLat, lng = t.safeLng;
+      if (lat == null || lng == null) continue;
+
+      final key = _roadKey(a.id, a.name, t.id, t.name);
+      if (_roadKmCache.containsKey(key)) continue;
+
+      usableTargets.add(t);
+      coords.add([lat, lng]);
+    }
+
+    if (coords.isEmpty) return;
+
+    try {
+      final kms = await _vietmap.matrixDistanceKm(
+        anchorLat: aLat,
+        anchorLng: aLng,
+        targetsLatLng: coords,
+        vehicle: 'motorcycle',
+      );
+
+      for (var i = 0; i < usableTargets.length; i++) {
+        final t = usableTargets[i];
+        final km = kms[i];
+        if (km == null) continue;
+        final key = _roadKey(a.id, a.name, t.id, t.name);
+        _roadKmCache[key] = km;
+      }
+      if (mounted) setState(() {});
+    } catch (_) {}
+  }
+
+  void _unawaited(Future<void> f) {}
+}
+
+extension LocGeoX on LocationModel {
+  double? get safeLat => latitude;
+  double? get safeLng => longitude;
 }

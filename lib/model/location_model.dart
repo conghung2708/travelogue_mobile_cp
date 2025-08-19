@@ -74,28 +74,28 @@ class LocationModel {
     );
   }
 
-  factory LocationModel.fromMap(Map<String, dynamic> map) {
-    return LocationModel(
-      id: map['id']?.toString(),
-      name: map['name']?.toString(),
-      description: map['description']?.toString(),
-      content: map['content']?.toString(),
-      latitude: (map['latitude'] as num?)?.toDouble(),
-      longitude: (map['longitude'] as num?)?.toDouble(),
-      rating: map['rating'] is int
-          ? map['rating']
-          : int.tryParse(map['rating']?.toString() ?? ''),
-      openTime: map['openTime']?.toString(),
-      closeTime: map['closeTime']?.toString(),
-      category: map['category']?.toString(),
-      districtId: map['districtId']?.toString(),
-      districtName: map['districtName']?.toString(),
-      medias: (map['medias'] != null && map['medias'] is List)
-          ? (map['medias'] as List).map((e) => MediaModel.fromMap(e)).toList()
-          : [],
-      address: map['address']?.toString(),
-    );
-  }
+ factory LocationModel.fromMap(Map<String, dynamic> map) {
+  double? _toDouble(dynamic v) => v == null ? null : double.tryParse(v.toString());
+
+  return LocationModel(
+    id: map['id']?.toString(),
+    name: map['name']?.toString(),
+    description: map['description']?.toString(),
+    content: map['content']?.toString(),
+    latitude: _toDouble(map['latitude']),
+    longitude: _toDouble(map['longitude']),
+    rating: int.tryParse(map['rating']?.toString() ?? ''),
+    openTime: map['openTime']?.toString(),
+    closeTime: map['closeTime']?.toString(),
+    category: map['category']?.toString(),
+    districtId: map['districtId']?.toString(),
+    districtName: map['districtName']?.toString(),
+    medias: (map['medias'] is List)
+        ? (map['medias'] as List).map((e) => MediaModel.fromMap(e)).toList()
+        : [],
+    address: map['address']?.toString(),
+  );
+}
 
   Map<String, dynamic> toMap() {
     return {

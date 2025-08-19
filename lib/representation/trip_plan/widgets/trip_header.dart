@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
-import 'package:travelogue_mobile/model/trip_plan.dart';
 
 class TripHeader extends StatelessWidget {
-  final TripPlan trip;
+  final String title;
   final bool isEditingName;
   final TextEditingController nameController;
   final VoidCallback onEditTap;
+  final String? coverImage;
 
   const TripHeader({
     super.key,
-    required this.trip,
+    required this.title,
     required this.isEditingName,
     required this.nameController,
     required this.onEditTap,
+    this.coverImage,
   });
 
   @override
@@ -30,7 +31,10 @@ class TripHeader extends StatelessWidget {
               bottomRight: Radius.circular(6.w),
             ),
             image: DecorationImage(
-              image: const AssetImage(AssetHelper.img_dien_son_01),
+              image: coverImage == null
+                  ? const AssetImage(AssetHelper.img_dien_son_01)
+                      as ImageProvider
+                  : NetworkImage(coverImage!),
               fit: BoxFit.cover,
               colorFilter: ColorFilter.mode(
                 Colors.black.withOpacity(0.25),
@@ -39,7 +43,6 @@ class TripHeader extends StatelessWidget {
             ),
           ),
         ),
-
         Positioned(
           bottom: 2.h,
           left: 4.w,
@@ -71,7 +74,7 @@ class TripHeader extends StatelessWidget {
                         ),
                       )
                     : Text(
-                        trip.name,
+                        title,
                         style: TextStyle(
                           fontSize: 20.sp,
                           fontWeight: FontWeight.bold,
@@ -79,9 +82,10 @@ class TripHeader extends StatelessWidget {
                           fontFamily: "Pattaya",
                           shadows: const [
                             Shadow(
-                                color: Colors.black54,
-                                blurRadius: 6,
-                                offset: Offset(0, 2)),
+                              color: Colors.black54,
+                              blurRadius: 6,
+                              offset: Offset(0, 2),
+                            ),
                           ],
                         ),
                       ),
@@ -97,8 +101,6 @@ class TripHeader extends StatelessWidget {
             ],
           ),
         ),
-
-        // 🔹 Avatar + Mời bạn đồng hành
         Positioned(
           top: 5.h,
           left: 4.w,
@@ -115,8 +117,8 @@ class TripHeader extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.blueAccent,
                   borderRadius: BorderRadius.circular(3.w),
-                  boxShadow: [
-                    const BoxShadow(
+                  boxShadow: const [
+                    BoxShadow(
                       color: Colors.black26,
                       blurRadius: 4,
                       offset: Offset(0, 2),

@@ -15,7 +15,7 @@ class AuthWrapperScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final token = UserLocal().getAccessToken;
-    print('🔥 ACCESS TOKEN IN WRAPPER: $token');
+    print('ACCESS TOKEN IN WRAPPER: $token');
     return FutureBuilder(
       future: _checkLogin(),
       builder: (context, snapshot) {

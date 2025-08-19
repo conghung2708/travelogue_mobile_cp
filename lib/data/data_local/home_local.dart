@@ -62,7 +62,7 @@ class HomeLocal {
 
   List<String> get getListLocationFavorite {
     final List? locations = boxHome.get(
-      '${StorageKey.locationFavorite}/${UserLocal().getUser().userId}',
+      '${StorageKey.locationFavorite}/${UserLocal().getUser().id}',
       defaultValue: null,
     );
 
@@ -138,7 +138,7 @@ class HomeLocal {
     }
 
     boxHome.put(
-      '${StorageKey.locationFavorite}/${UserLocal().getUser().userId}',
+      '${StorageKey.locationFavorite}/${UserLocal().getUser().id}',
       listIdFavorite,
     );
   }

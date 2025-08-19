@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:travelogue_mobile/model/booking/create_booking_tour_model.dart';
+import 'package:travelogue_mobile/model/booking/review_booking_request.dart';
 import 'package:travelogue_mobile/model/tour_guide/create_booking_tour_guide_model.dart';
 
 abstract class BookingEvent extends Equatable {
@@ -61,4 +62,21 @@ class CreateWorkshopBookingEvent extends BookingEvent {
         adultCount,
         childrenCount,
       ];
+}
+
+class CancelBookingEvent extends BookingEvent {
+  final String bookingId;
+
+  const CancelBookingEvent(this.bookingId);
+
+  @override
+  List<Object?> get props => [bookingId];
+}
+
+class ReviewBookingEvent extends BookingEvent {
+  final ReviewBookingRequest request;
+  const ReviewBookingEvent(this.request);
+
+  @override
+  List<Object?> get props => [request];
 }

@@ -15,12 +15,14 @@ import 'package:sizer/sizer.dart';
 import 'package:travelogue_mobile/core/blocs/app_bloc.dart';
 import 'package:travelogue_mobile/core/constants/color_constants.dart';
 import 'package:travelogue_mobile/data/data_local/base_local_data.dart';
+import 'package:travelogue_mobile/representation/hobby/screens/hobby_screen.dart';
+import 'package:travelogue_mobile/representation/trip_plan/screens/my_trip_plan_screen.dart';
 import 'package:travelogue_mobile/routes.dart';
 import 'package:travelogue_mobile/representation/main_screen.dart';
 
 import 'package:flutter_localizations/flutter_localizations.dart';
 
-// ✅ Khai báo navigatorKey toàn cục
+
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
@@ -48,7 +50,7 @@ void main() async {
 
     runApp(const MyApp());
   }, (error, stackTrace) async {
-    // Optional: log error here
+  
   });
 }
 
@@ -94,7 +96,7 @@ class _MyAppState extends State<MyApp> {
         builder: (context, orientation, deviceType) {
           return ShowCaseWidget(
             builder: (context) => MaterialApp(
-              navigatorKey: navigatorKey, // ✅ dùng global key ở đây
+              navigatorKey: navigatorKey, 
               title: 'Travelogue',
               theme: ThemeData(
                 fontFamily: 'Roboto',

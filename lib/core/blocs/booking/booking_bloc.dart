@@ -13,7 +13,8 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     on<CreateWorkshopBookingEvent>(_onCreateWorkshopBooking);
     on<CreatePaymentLinkEvent>(_onCreatePaymentLink);
     on<GetAllMyBookingsEvent>(_onGetAllMyBookings);
-
+    on<CancelBookingEvent>(_onCancelBooking);
+    on<ReviewBookingEvent>(_onReviewBooking);
   }
 
   Future<void> _onCreateBooking(
@@ -23,7 +24,8 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     emit(BookingLoading());
 
     try {
-      final BookingModel? booking = await bookingRepository.createBooking(event.model);
+      final BookingModel? booking =
+          await bookingRepository.createBooking(event.model);
       if (booking != null) {
         emit(BookingSuccess(booking));
       } else {
@@ -41,11 +43,13 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     emit(BookingLoading());
 
     try {
-      final BookingModel? booking = await bookingRepository.createGuideBooking(event.model);
+      final BookingModel? booking =
+          await bookingRepository.createGuideBooking(event.model);
       if (booking != null) {
         emit(BookingGuideSuccess(booking));
       } else {
-        emit(const BookingFailure('Đặt hướng dẫn viên thất bại. Vui lòng thử lại.'));
+        emit(const BookingFailure(
+            'Đặt hướng dẫn viên thất bại. Vui lòng thử lại.'));
       }
     } catch (e) {
       emit(BookingFailure(e.toString()));
@@ -59,7 +63,8 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     emit(BookingLoading());
 
     try {
-      final String? paymentUrl = await bookingRepository.createPaymentLink(event.bookingId);
+      final String? paymentUrl =
+          await bookingRepository.createPaymentLink(event.bookingId);
 
       if (paymentUrl != null) {
         if (event.fromGuide) {
@@ -76,18 +81,19 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   }
 
   Future<void> _onGetAllMyBookings(
-  GetAllMyBookingsEvent event,
-  Emitter<BookingState> emit,
-) async {
-  emit(BookingListLoading());
+    GetAllMyBookingsEvent event,
+    Emitter<BookingState> emit,
+  ) async {
+    emit(BookingListLoading());
 
-  try {
-    final bookings = await bookingRepository.getAllMyBookings();
-    emit(BookingListSuccess(bookings));
-  } catch (e) {
-    emit(BookingFailure(e.toString()));
+    try {
+      final bookings = await bookingRepository.getAllMyBookings();
+      emit(BookingListSuccess(bookings));
+    } catch (e) {
+      emit(BookingFailure(e.toString()));
+    }
   }
-}
+
   Future<void> _onCreateWorkshopBooking(
     CreateWorkshopBookingEvent event,
     Emitter<BookingState> emit,
@@ -112,5 +118,57 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       emit(BookingFailure(e.toString()));
     }
   }
-}
 
+  Future<void> _onCancelBooking(
+    CancelBookingEvent event,
+    Emitter<BookingState> emit,
+  ) async {
+    emit(BookingLoading());
+    try {
+      final fresh = await bookingRepository.getBookingById(event.bookingId);
+      if (fresh == null) {
+        emit(const BookingFailure('Không lấy được thông tin đơn hàng.'));
+        return;
+      }
+
+      final result = await bookingRepository.cancelBooking(event.bookingId);
+      if (result.ok) {
+        emit(CancelBookingSuccess(event.bookingId));
+      } else {
+        emit(BookingFailure(
+            result.message ?? 'Hủy booking thất bại. Vui lòng thử lại.'));
+      }
+    } catch (e) {
+      emit(BookingFailure(e.toString()));
+    }
+  }
+
+  Future<void> _onReviewBooking(
+    ReviewBookingEvent event,
+    Emitter<BookingState> emit,
+  ) async {
+    emit(ReviewBookingSubmitting());
+
+    try {
+      final r = event.request.rating;
+      if (r < 1 || r > 5) {
+        emit(const BookingFailure('Điểm đánh giá phải từ 1–5.'));
+        return;
+      }
+      if (event.request.comment.trim().isEmpty) {
+        emit(const BookingFailure('Vui lòng nhập nhận xét.'));
+        return;
+      }
+
+      final result = await bookingRepository.reviewBooking(event.request);
+      if (result.ok) {
+        emit(ReviewBookingSuccess(message: result.message));
+        // add(GetAllMyBookingsEvent());
+      } else {
+        emit(BookingFailure(result.message ?? 'Gửi đánh giá thất bại.'));
+      }
+    } catch (e) {
+      emit(BookingFailure(e.toString()));
+    }
+  }
+}

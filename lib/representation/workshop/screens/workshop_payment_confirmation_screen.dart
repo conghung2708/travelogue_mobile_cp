@@ -351,7 +351,6 @@ class _WorkshopPaymentConfirmationScreenState
             ? () async {
                 String? bookingId;
 
-                // Gọi API tạo booking workshop
                 final booking = await BookingRepository().createWorkshopBooking(
                   workshopId: widget.workshop.workshopId ?? '',
                   workshopScheduleId: widget.schedule.scheduleId ?? '',
@@ -369,7 +368,7 @@ class _WorkshopPaymentConfirmationScreenState
 
                 bookingId = booking.id;
 
-                // Gọi API tạo payment link
+
                 final paymentUrl =
                     await BookingRepository().createPaymentLink(bookingId);
 

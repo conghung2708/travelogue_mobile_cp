@@ -1,7 +1,4 @@
 
-import 'package:travelogue_mobile/model/tour/tour_plan_version_test_model.dart';
-import 'package:travelogue_mobile/model/tour/tour_schedule_test_model.dart';
-import 'package:travelogue_mobile/model/tour/tour_schedule_model.dart';
 
 class TourScheduleWithPrice {
   final String scheduleId;

@@ -3,6 +3,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:travelogue_mobile/core/blocs/app_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/authenicate/authenicate_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/home/home_bloc.dart';
@@ -10,6 +12,8 @@ import 'package:travelogue_mobile/core/constants/dimension_constants.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
 import 'package:travelogue_mobile/core/helpers/image_helper.dart';
 import 'package:travelogue_mobile/core/helpers/string_helper.dart';
+import 'package:travelogue_mobile/data/data_local/storage_key.dart';
+import 'package:travelogue_mobile/data/data_local/user_local.dart';
 import 'package:travelogue_mobile/model/event_model.dart';
 import 'package:travelogue_mobile/model/location_model.dart';
 import 'package:travelogue_mobile/model/place_category.dart';
@@ -76,10 +80,19 @@ class _HomeScreenState extends State<HomeScreen>
       body: AppBarContainerWidget(
         title: Padding(
           padding: const EdgeInsets.symmetric(
-              horizontal: kDefaultPadding, vertical: kDefaultPadding),
-          child: BlocBuilder<AuthenicateBloc, AuthenicateState>(
-            builder: (context, state) {
-              final String userName = state.props[0] as String;
+            horizontal: kDefaultPadding,
+            vertical: kDefaultPadding,
+          ),
+          child: ValueListenableBuilder(
+            valueListenable: Hive.box(StorageKey.boxUser)
+                .listenable(keys: [StorageKey.account]),
+            builder: (context, box, _) {
+              final local = UserLocal().getUser();
+              final String userName =
+                  (local.fullName?.trim().isNotEmpty == true)
+                      ? local.fullName!.trim()
+                      : (local.userName ?? '');
+
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -89,7 +102,7 @@ class _HomeScreenState extends State<HomeScreen>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Chào ${userName.isEmpty ? 'Bạn' : StringHelper().formatUserName(userName) ?? 'Bạn'}!',
+                            'Chào ${userName.isEmpty ? 'Bạn' : (StringHelper().formatUserName(userName) ?? 'Bạn')}!',
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
@@ -105,8 +118,11 @@ class _HomeScreenState extends State<HomeScreen>
                                 builder: (context, child) {
                                   return Transform.rotate(
                                     angle: _sunController.value * 2 * pi,
-                                    child: const Icon(Icons.wb_sunny_outlined,
-                                        color: Colors.amberAccent, size: 20),
+                                    child: const Icon(
+                                      Icons.wb_sunny_outlined,
+                                      color: Colors.amberAccent,
+                                      size: 20,
+                                    ),
                                   );
                                 },
                               ),
@@ -116,7 +132,9 @@ class _HomeScreenState extends State<HomeScreen>
                                   TypewriterAnimatedText(
                                     'Tây Ninh chờ bạn khám phá !',
                                     textStyle: const TextStyle(
-                                        color: Colors.white70, fontSize: 14),
+                                      color: Colors.white70,
+                                      fontSize: 14,
+                                    ),
                                     speed: const Duration(milliseconds: 60),
                                   ),
                                 ],
@@ -133,8 +151,11 @@ class _HomeScreenState extends State<HomeScreen>
                       if (userName.isNotEmpty)
                         Row(
                           children: [
-                            const Icon(FontAwesomeIcons.bell,
-                                size: kDefaultIconSize, color: Colors.white),
+                            const Icon(
+                              FontAwesomeIcons.bell,
+                              size: kDefaultIconSize,
+                              color: Colors.white,
+                            ),
                             const SizedBox(width: 20),
                             Container(
                               width: 40,
@@ -142,16 +163,42 @@ class _HomeScreenState extends State<HomeScreen>
                               decoration:
                                   const BoxDecoration(shape: BoxShape.circle),
                               child: ClipOval(
-                                child: ImageHelper.loadFromAsset(
-                                  AssetHelper.img_avatar,
-                                  width: 40,
-                                  height: 40,
-                                  fit: BoxFit.cover,
+                                child: Builder(
+                                  builder: (context) {
+                                    final local = UserLocal().getUser();
+                                    final avatarUrl = local
+                                        .avatarUrl; // field trong UserModel
+
+                                    if (avatarUrl != null &&
+                                        avatarUrl.isNotEmpty) {
+                                      return Image.network(
+                                        avatarUrl,
+                                        width: 40,
+                                        height: 40,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) =>
+                                            ImageHelper.loadFromAsset(
+                                          AssetHelper.img_avatar,
+                                          width: 40,
+                                          height: 40,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      );
+                                    }
+
+                                    // fallback mặc định nếu chưa có avatar
+                                    return ImageHelper.loadFromAsset(
+                                      AssetHelper.img_avatar,
+                                      width: 40,
+                                      height: 40,
+                                      fit: BoxFit.cover,
+                                    );
+                                  },
                                 ),
                               ),
                             ),
                           ],
-                        )
+                        ),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -176,14 +223,17 @@ class _HomeScreenState extends State<HomeScreen>
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                                '${_weather!.temperature?.celsius?.toStringAsFixed(0)}°C',
-                                style: const TextStyle(
-                                    color: Colors.white, fontSize: 16)),
-                            Text('${_weather!.weatherDescription}',
-                                style: const TextStyle(
-                                    color: Colors.white70, fontSize: 15)),
+                              '${_weather!.temperature?.celsius?.toStringAsFixed(0)}°C',
+                              style: const TextStyle(
+                                  color: Colors.white, fontSize: 16),
+                            ),
+                            Text(
+                              '${_weather!.weatherDescription}',
+                              style: const TextStyle(
+                                  color: Colors.white70, fontSize: 15),
+                            ),
                           ],
-                        )
+                        ),
                       ],
                     ),
                 ],

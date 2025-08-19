@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
-import 'package:travelogue_mobile/model/enums/tour_guide_status_enum.dart';
-import 'package:travelogue_mobile/model/tour_guide_test_model.dart';
+import 'package:travelogue_mobile/model/tour_guide/tour_guide_model.dart';
 
 class TourGuideProfileCard extends StatelessWidget {
-  final TourGuideTestModel guide;
+  final TourGuideModel guide;
 
   const TourGuideProfileCard({super.key, required this.guide});
+  bool get isVerified =>
+      (guide.averageRating ?? 0) >= 4.5 ||
+      (guide.userName?.toLowerCase() == 'travelogue');
 
   @override
   Widget build(BuildContext context) {
-    final statusInfo = _statusTextAndColor(guide.status);
-
     return Stack(
       children: [
         Card(
@@ -25,55 +25,58 @@ class TourGuideProfileCard extends StatelessWidget {
             padding: EdgeInsets.all(3.w),
             child: Column(
               children: [
-                CircleAvatar(
-                  radius: 28.sp,
-                  backgroundImage: AssetImage(guide.avatarUrl),
+                Container(
+                  padding: EdgeInsets.all(2.sp),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: isVerified
+                        ? Border.all(color: Colors.green, width: 2.5)
+                        : null,
+                  ),
+                  child: CircleAvatar(
+                    radius: 28.sp,
+                    backgroundImage: guide.avatarUrl != null
+                        ? NetworkImage(guide.avatarUrl!)
+                        : const AssetImage("assets/images/default_avatar.png")
+                            as ImageProvider,
+                  ),
                 ),
                 SizedBox(height: 2.h),
                 Text(
-                  guide.name,
+                  guide.userName ?? 'Không rõ tên',
                   style:
                       TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
                 ),
-                Text('${guide.age} tuổi - ${_genderText(guide.gender)}',
-                    style: TextStyle(fontSize: 14.sp)),
-                SizedBox(height: 1.h),
-                Text(
-                  guide.bio,
-                  style: TextStyle(fontSize: 13.sp),
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: 1.h),
-
-                Wrap(
-                  spacing: 6,
-                  alignment: WrapAlignment.center,
-                  children: guide.tags.map((tag) {
-                    final icon = _tagToIcon(tag);
-                    return Chip(
-                      avatar: Icon(icon, size: 14.sp, color: Colors.blue),
-                      label: Text(tag, style: TextStyle(fontSize: 12.sp)),
-                      backgroundColor: Colors.lightBlue.shade50,
-                    );
-                  }).toList(),
-                ),
-
+                if (guide.sexText != null)
+                  Text(guide.sexText!, style: TextStyle(fontSize: 14.sp)),
+                if (guide.address != null)
+                  Padding(
+                    padding: EdgeInsets.only(top: 0.5.h),
+                    child: Text(
+                      guide.address!,
+                      style: TextStyle(fontSize: 13.sp, color: Colors.grey),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                if (guide.introduction != null)
+                  Padding(
+                    padding: EdgeInsets.only(top: 1.h),
+                    child: Text(
+                      guide.introduction!,
+                      style: TextStyle(fontSize: 13.sp),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
                 SizedBox(height: 1.h),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.star, color: Colors.orange, size: 16.sp),
                     SizedBox(width: 1.w),
-                    Text('${guide.rating} (${guide.reviewsCount} đánh giá)',
-                        style: TextStyle(fontSize: 13.sp)),
-                    SizedBox(width: 2.w),
                     Text(
-                      statusInfo.text,
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        color: statusInfo.color,
-                        fontWeight: FontWeight.w500,
-                      ),
+                      '${guide.averageRating?.toStringAsFixed(1) ?? "0.0"} '
+                      '(${guide.totalReviews ?? 0} đánh giá)',
+                      style: TextStyle(fontSize: 13.sp),
                     ),
                   ],
                 ),
@@ -81,14 +84,12 @@ class TourGuideProfileCard extends StatelessWidget {
             ),
           ),
         ),
-
-        if (guide.rating > 4.5)
+        if (isVerified)
           Positioned(
             top: 10,
             right: 18,
             child: Container(
-              padding:
-                  EdgeInsets.symmetric(horizontal: 2.w, vertical: 0.5.h),
+              padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 0.5.h),
               decoration: BoxDecoration(
                 color: Colors.green,
                 borderRadius: BorderRadius.circular(2.w),
@@ -98,8 +99,7 @@ class TourGuideProfileCard extends StatelessWidget {
                   Icon(Icons.verified, size: 11.sp, color: Colors.white),
                   SizedBox(width: 1.w),
                   Text('Đã xác thực',
-                      style:
-                          TextStyle(fontSize: 10.sp, color: Colors.white)),
+                      style: TextStyle(fontSize: 10.sp, color: Colors.white)),
                 ],
               ),
             ),
@@ -107,58 +107,4 @@ class TourGuideProfileCard extends StatelessWidget {
       ],
     );
   }
-
-  String _genderText(Gender gender) {
-    switch (gender) {
-      case Gender.male:
-        return 'Nam';
-      case Gender.female:
-        return 'Nữ';
-      // ignore: no_default_cases
-      default:
-        return 'Khác';
-    }
-  }
-
-  IconData _tagToIcon(String tag) {
-    final lower = tag.toLowerCase();
-    if (lower.contains('nhiệt') || lower.contains('năng')) {
-      return Icons.wb_sunny;
-    }
-    if (lower.contains('vui')) {
-      return Icons.emoji_emotions;
-    }
-    if (lower.contains('lịch sự') || lower.contains('lịch thiệp')) {
-      return Icons.handshake;
-    }
-    if (lower.contains('kinh nghiệm')) {
-      return Icons.school;
-    }
-    if (lower.contains('thân thiện')) {
-      return Icons.people_alt;
-    }
-    return Icons.label;
-  }
-
-  _StatusInfo _statusTextAndColor(TourGuideStatus status) {
-    switch (status) {
-      case TourGuideStatus.available:
-        return _StatusInfo('Sẵn sàng', Colors.blueAccent);
-      case TourGuideStatus.pending:
-        return _StatusInfo('Đang chờ xác nhận', Colors.orange);
-      case TourGuideStatus.declined:
-        return _StatusInfo('Đã từ chối', Colors.red);
-      case TourGuideStatus.unavailable:
-        return _StatusInfo('Không hoạt động', Colors.grey);
-      case TourGuideStatus.accepted:
-        return _StatusInfo('Đồng ý nhận tour', Colors.green);
-    }
-  }
-}
-
-class _StatusInfo {
-  final String text;
-  final Color color;
-
-  _StatusInfo(this.text, this.color);
 }

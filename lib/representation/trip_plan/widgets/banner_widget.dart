@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
+import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
 
 class BannerWidget extends StatelessWidget {
   const BannerWidget({super.key});
@@ -11,8 +12,8 @@ class BannerWidget extends StatelessWidget {
       height: 20.h,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(4.w),
-        image: const DecorationImage(
-          image: NetworkImage('https://images.unsplash.com/photo-1507525428034-b723cf961d3e'),
+        image: DecorationImage(
+          image: AssetImage(AssetHelper.intro3), 
           fit: BoxFit.cover,
         ),
       ),

@@ -59,8 +59,8 @@ class _MainScreenState extends State<MainScreen> {
             unselectedItemColor: ColorPalette.primaryColor.withOpacity(0.2),
             items: [
               _buildNavItem(FontAwesomeIcons.house, "Trang chủ"),
-              _buildNavItem(FontAwesomeIcons.peopleRoof, "Hướng dẫn viên"),
-              _buildNavItem(FontAwesomeIcons.squarePen, "Tour khám phá"),
+              _buildNavItem(FontAwesomeIcons.peopleRoof, "HDV"),
+              _buildNavItem(FontAwesomeIcons.squarePen, "Tour"),
               _buildNavItem(FontAwesomeIcons.solidCalendarDays, "Thông tin"),
               _buildNavItem(FontAwesomeIcons.solidUser, "Cài đặt"),
             ],

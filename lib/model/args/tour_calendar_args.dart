@@ -1,6 +1,6 @@
 import 'package:travelogue_mobile/model/tour/tour_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_schedule_model.dart';
-import 'package:travelogue_mobile/model/tour/tour_test_model.dart';
+
 
 class TourCalendarArgs {
   final TourModel tour;
