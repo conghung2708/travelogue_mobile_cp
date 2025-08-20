@@ -359,7 +359,7 @@ class _WorkshopPaymentConfirmationScreenState
                   childrenCount: widget.children,
                 );
 
-                if (booking == null || booking.id == null) {
+                if (booking == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Tạo booking thất bại.')),
                   );

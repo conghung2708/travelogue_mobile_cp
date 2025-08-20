@@ -3,16 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sizer/sizer.dart';
 import 'package:travelogue_mobile/core/constants/color_constants.dart';
+import 'package:travelogue_mobile/model/booking/booking_participant_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_schedule_model.dart';
 import 'package:travelogue_mobile/representation/tour/screens/tour_payment_confirmation_screen.dart';
+import 'package:travelogue_mobile/representation/tour/widgets/participants_editor.dart';
 import 'package:travelogue_mobile/representation/tour/widgets/person_counter_row.dart';
 import 'package:travelogue_mobile/representation/tour/widgets/total_price_bar.dart';
 import 'package:travelogue_mobile/representation/tour/widgets/tour_back_button.dart';
 import 'package:travelogue_mobile/representation/tour/widgets/tour_team_background.dart';
 import 'package:travelogue_mobile/representation/tour/widgets/tour_team_summary_card.dart';
 import 'package:travelogue_mobile/representation/tour/widgets/tour_team_title.dart';
-
 
 class TourTeamSelectorScreen extends StatefulWidget {
   static const String routeName = '/tour-team-selector';
@@ -32,19 +33,39 @@ class TourTeamSelectorScreen extends StatefulWidget {
 }
 
 class _TourTeamSelectorScreenState extends State<TourTeamSelectorScreen> {
-  int adultCount = 1;
-  int childrenCount = 0;
   final formatter = NumberFormat('#,###');
+  final List<BookingParticipantModel> _rows = [];
+
+  @override
+  void initState() {
+    super.initState();
+    // Mặc định có 1 người lớn để không bị trống
+    _rows.add(
+      BookingParticipantModel(
+        type: 1, // 1 = người lớn
+        fullName: '',
+        gender: 1, // 1 = nam, 0 = nữ
+        dateOfBirth: DateTime(1990, 1, 1),
+      ),
+    );
+  }
 
   int get availableSlot =>
-      (widget.schedule.maxParticipant ?? 0) - (widget.schedule.currentBooked ?? 0);
-  int get totalPeople => adultCount + childrenCount;
-  int get remainingSlot => availableSlot - totalPeople;
+      (widget.schedule.maxParticipant ?? 0) -
+      (widget.schedule.currentBooked ?? 0);
+
+  int get totalPeople => _rows.length;
+  int get remainingSlot =>
+      ((availableSlot - totalPeople).clamp(0, availableSlot)).toInt();
+
+  int get adultCount => _rows.where((e) => e.type == 1).length;
+  int get childrenCount => _rows.where((e) => e.type == 2).length;
+
   double get totalPrice =>
       (adultCount * (widget.schedule.adultPrice ?? 0)) +
       (childrenCount * (widget.schedule.childrenPrice ?? 0));
 
-  bool canAdd() => totalPeople < availableSlot;
+  bool get canAdd => totalPeople < availableSlot;
 
   void _limitSnack() {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -58,7 +79,101 @@ class _TourTeamSelectorScreenState extends State<TourTeamSelectorScreen> {
     );
   }
 
+  Future<void> _pickDob(int index) async {
+    final now = DateTime.now();
+    final p = _rows[index];
+
+    DateTime firstDate, lastDate, init;
+
+    if (p.type == 2) {
+      // Trẻ em: 5–11
+      firstDate = DateTime(now.year - 11, now.month, now.day);
+      lastDate = DateTime(now.year - 5, now.month, now.day);
+      init =
+          p.dateOfBirth.isBefore(firstDate) || p.dateOfBirth.isAfter(lastDate)
+              ? DateTime(now.year - 8, now.month, now.day)
+              : p.dateOfBirth;
+    } else {
+      // Người lớn: ≥12
+      firstDate = DateTime(now.year - 100, 1, 1);
+      lastDate = DateTime(now.year - 12, now.month, now.day);
+      init =
+          p.dateOfBirth.isAfter(lastDate) || p.dateOfBirth.isBefore(firstDate)
+              ? DateTime(now.year - 30, now.month, now.day)
+              : p.dateOfBirth;
+    }
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: init,
+      firstDate: firstDate,
+      lastDate: lastDate,
+      helpText: 'Chọn ngày sinh',
+      locale: const Locale('vi', 'VN'),
+    );
+
+    if (picked != null) {
+      setState(() {
+        _rows[index] = BookingParticipantModel(
+          type: p.type,
+          fullName: p.fullName,
+          gender: p.gender,
+          dateOfBirth: picked,
+        );
+      });
+    }
+  }
+
+  void _addRow() {
+    if (!canAdd) {
+      _limitSnack();
+      return;
+    }
+    setState(() {
+      _rows.add(BookingParticipantModel(
+        type: 1,
+        fullName: '',
+        gender: 1,
+        dateOfBirth: DateTime(1990, 1, 1),
+      ));
+    });
+  }
+
+  void _removeRow(int i) {
+    setState(() => _rows.removeAt(i));
+  }
+
   void _goNext() {
+    if (_rows.isEmpty || _rows.any((p) => p.fullName.trim().isEmpty)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Vui lòng nhập đầy đủ họ tên hành khách.')),
+      );
+      return;
+    }
+
+    // Validate tuổi theo đối tượng
+    for (int i = 0; i < _rows.length; i++) {
+      final p = _rows[i];
+      final age = _ageFromDob(p.dateOfBirth);
+
+      if (p.type == 2 && (age < 5 || age > 11)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(
+                  'Hành khách ${i + 1} phải trong độ tuổi Trẻ em (5–11).')),
+        );
+        return;
+      }
+      if (p.type == 1 && age < 12) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(
+                  'Hành khách ${i + 1} (Người lớn) phải từ 12 tuổi trở lên.')),
+        );
+        return;
+      }
+    }
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -69,6 +184,7 @@ class _TourTeamSelectorScreenState extends State<TourTeamSelectorScreen> {
           adults: adultCount,
           children: childrenCount,
           media: widget.media,
+          participants: _rows,
         ),
       ),
     );
@@ -76,7 +192,10 @@ class _TourTeamSelectorScreenState extends State<TourTeamSelectorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom; // keyboard
+
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       body: Stack(
         children: [
           const TourTeamBackground(),
@@ -96,46 +215,53 @@ class _TourTeamSelectorScreenState extends State<TourTeamSelectorScreen> {
                     mediaUrl: widget.media,
                     formatter: formatter,
                   ),
-
                   SizedBox(height: 2.h),
-                  PersonCounterRow(
-                    label: "Người lớn",
-                    value: adultCount,
-                    isAdult: true,
-                    unitPrice: widget.schedule.adultPrice ?? 0,
-                    onChanged: (v) => setState(() => adultCount = v),
-                    canAdd: canAdd,
-                    onLimit: _limitSnack,
-                  ),
-                  SizedBox(height: 1.5.h),
-                  PersonCounterRow(
-                    label: "Trẻ em",
-                    value: childrenCount,
-                    isAdult: false,
-                    unitPrice: widget.schedule.childrenPrice ?? 0,
-                    onChanged: (v) => setState(() => childrenCount = v),
-                    canAdd: canAdd,
-                    onLimit: _limitSnack,
-                  ),
 
-                  SizedBox(height: 1.5.h),
-                  Text(
-                    canAdd()
-                        ? '👥 Bạn có thể thêm tối đa $remainingSlot người.'
-                        : '⚠️ Đã đạt giới hạn số người ($availableSlot)',
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      color: canAdd() ? Colors.white70 : Colors.yellow,
+                  // ⬇️ Toàn bộ phần có thể dài: cho phép scroll
+                  Expanded(
+                    child: SingleChildScrollView(
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
+                      padding: EdgeInsets.only(bottom: 2.h),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ParticipantsEditor(
+                            rows: _rows,
+                            onChanged: () => setState(() {}),
+                            onRemove: _removeRow,
+                            onAdd: _addRow,
+                            onPickDob: _pickDob,
+                          ),
+                          SizedBox(height: 1.2.h),
+                          Text(
+                            canAdd
+                                ? '👥 Bạn có thể thêm tối đa $remainingSlot người.'
+                                : '⚠️ Đã đạt giới hạn số người ($availableSlot)',
+                            style: TextStyle(
+                              fontSize: 13.sp,
+                              color: canAdd ? Colors.white70 : Colors.yellow,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
 
-                  const Spacer(),
+                  // ⬇️ Footer cố định
+                  SizedBox(height: 1.h),
                   TotalPriceBar(
                     totalPriceText: "Tổng: ${formatter.format(totalPrice)}đ",
                     buttonText: "Tiếp tục",
                     onPressed: _goNext,
                     color: ColorPalette.primaryColor,
                   ),
+
+                  // chừa khoảng cho safe area & keyboard
+                  SizedBox(
+                      height: (bottomInset > 0
+                          ? bottomInset
+                          : MediaQuery.of(context).padding.bottom)),
                 ],
               ),
             ),
@@ -144,4 +270,13 @@ class _TourTeamSelectorScreenState extends State<TourTeamSelectorScreen> {
       ),
     );
   }
+}
+
+int _ageFromDob(DateTime dob) {
+  final now = DateTime.now();
+  int age = now.year - dob.year;
+  if (now.month < dob.month || (now.month == dob.month && now.day < dob.day)) {
+    age--;
+  }
+  return age;
 }

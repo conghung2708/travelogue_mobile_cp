@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sizer/sizer.dart';
-import 'package:travelogue_mobile/core/constants/color_constants.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:travelogue_mobile/model/booking/booking_model.dart';
+import 'package:travelogue_mobile/core/constants/color_constants.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
+
+import 'package:travelogue_mobile/model/booking/booking_model.dart';
+import 'package:travelogue_mobile/model/booking/booking_participant_model.dart';
 
 class BookingDetailScreen extends StatelessWidget {
   static const routeName = '/booking_detail';
@@ -18,56 +20,15 @@ class BookingDetailScreen extends StatelessWidget {
   NumberFormat get _currency =>
       NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
 
-int _statusCodeOf(BookingModel b) {
-  final textUp = (b.statusText ?? '').trim().toUpperCase();
-
-  // Đọc status thô
-  final dynamic s = b.status;
-  int? raw;
-  if (s is int) raw = s;
-  if (s is String) raw = int.tryParse(s.trim());
-
-  // Ưu tiên số từ server
-  if (raw != null) {
-    // 3/4 mới là hủy; KHÔNG dựa vào cancelledAt
-    if (raw == 3 || raw == 4) return 3;
-    if (raw == 5) return 2; // BE của bạn: 5 = ĐÃ HOÀN THÀNH
-    if (raw == 2) return 2; // Hoàn tất
-    if (raw == 1) return 1; // Đã thanh toán/Confirmed
-    if (raw == 0) return 0; // Hết hạn/Pending/Unpaid
+  String _fmtDate(DateTime? d, {String pattern = 'dd/MM/yyyy'}) {
+    if (d == null) return '-';
+    return DateFormat(pattern).format(d);
   }
 
-  // Fallback theo chữ
-  final text = textUp.toLowerCase();
-  if (text.contains('đã hủy') || text.contains('bị hủy') || text.contains('hủy') ||
-      text.contains('canceled') || text.contains('cancelled')) return 3;
-  if (text.contains('đã hoàn tất') || text.contains('đã hoàn thành') || text.contains('completed')) return 2;
-  if (text.contains('đã thanh toán') || text.contains('confirmed') || text.contains('paid')) return 1;
-  if (text.contains('hết hạn') || text.contains('pending') || text.contains('unpaid')) return 0;
-
-  return 0;
-}
-
-
-String _statusLabelVi(BookingModel b) {
-  switch (_statusCodeOf(b)) {
-    case 0: return 'Hết hạn thanh toán';
-    case 1: return 'Đã thanh toán';
-    case 2: return 'Đã hoàn thành';
-    case 3: return 'Đã hủy';
-    default: return b.statusText ?? 'Không rõ';
+  String _fmtDateTime(DateTime? d) {
+    if (d == null) return '-';
+    return DateFormat('dd/MM/yyyy • HH:mm').format(d);
   }
-}
-
-Color _statusColor(BookingModel b) {
-  switch (_statusCodeOf(b)) {
-    case 0: return Colors.orange;
-    case 1: return Colors.blue;
-    case 2: return Colors.green;
-    case 3: return Colors.red;        // màu đỏ cho bị hủy
-    default: return Colors.grey;
-  }
-}
 
   int _bookingTypeOf(BookingModel b) {
     final t = b.bookingType.trim();
@@ -80,184 +41,129 @@ Color _statusColor(BookingModel b) {
     return -1;
   }
 
-  bool _isPersonalTrip(BookingModel b) {
-    return _bookingTypeOf(b) == 3 && b.tripPlanId != null;
-  }
+  bool _isPersonalTrip(BookingModel b) =>
+      _bookingTypeOf(b) == 3 && b.tripPlanId != null;
 
   String _typeLabelVi(BookingModel b) {
     final type = _bookingTypeOf(b);
     if (type == 1) return 'Tour';
     if (type == 2) return 'Workshop';
-    if (type == 3) {
-      return _isPersonalTrip(b) ? 'Chuyến đi cá nhân' : 'Hướng dẫn viên';
-    }
+    if (type == 3) return _isPersonalTrip(b) ? 'Chuyến đi cá nhân' : 'Hướng dẫn viên';
     return b.bookingTypeText ?? 'Khác';
   }
 
-  String _subInfoLabel(BookingModel b) {
-    final type = _bookingTypeOf(b);
-    if (type == 1) return 'Mã tour: ${b.tourId ?? '-'}';
-    if (type == 2) return 'Mã workshop: ${b.workshopId ?? '-'}';
-    if (type == 3) {
-      if (_isPersonalTrip(b)) {
-        return 'Mã kế hoạch cá nhân: ${b.tripPlanId ?? '-'}';
-      }
-      return 'Mã hướng dẫn viên: ${b.tourGuideId ?? '-'}';
-    }
-    return 'Mã đặt chỗ: ${b.id}';
-  }
-
   ImageProvider _headerImage(BookingModel b) {
-    if (b.tour?.mediaList.isNotEmpty == true) {
-      final url = b.tour!.mediaList.first.mediaUrl;
+    if (b.tour?.medias.isNotEmpty == true) {
+      final url = b.tour!.medias.first.mediaUrl;
       if (url != null && url.startsWith('http')) return NetworkImage(url);
     }
     return const AssetImage(AssetHelper.img_tay_ninh_login);
   }
 
+  ({Color fg, Color bg, Color border, IconData icon}) _statusStyle(BookingModel b) {
+    switch (b.rawStatus) {
+      case BookingModel.kPending:
+      case BookingModel.kExpired:
+        return (fg: const Color(0xFFB46900), bg: const Color(0xFFFFEDD5),
+                border: const Color(0xFFB46900).withOpacity(.38),
+                icon: Icons.hourglass_bottom_rounded);
+      case BookingModel.kConfirmed:
+        return (fg: const Color(0xFF0B6EEF), bg: const Color(0xFFE6F0FF),
+                border: const Color(0xFF0B6EEF).withOpacity(.38),
+                icon: Icons.verified_rounded);
+      case BookingModel.kCompleted:
+        return (fg: Colors.white, bg: Colors.green.shade600,
+                border: Colors.green.shade700, icon: Icons.check_circle_rounded);
+      case BookingModel.kCancelledUnpaid:
+        return (fg: Colors.orange.shade900, bg: const Color(0xFFFFF3E0),
+                border: Colors.orange.shade400,
+                icon: Icons.cancel_schedule_send_rounded);
+      case BookingModel.kCancelledPaid:
+        return (fg: Colors.red.shade700, bg: const Color(0xFFFFE6E6),
+                border: Colors.red.shade400, icon: Icons.cancel_rounded);
+      case BookingModel.kCancelledByProvider:
+        return (fg: Colors.purple.shade700, bg: const Color(0xFFF3E5F5),
+                border: Colors.purple.shade300,
+                icon: Icons.report_gmailerrorred_rounded);
+      default:
+        return (fg: Colors.white, bg: Colors.teal.shade600,
+                border: Colors.teal.shade700, icon: Icons.info_rounded);
+    }
+  }
+
   Widget _statusChip(BookingModel b) {
-  final code  = _statusCodeOf(b);
-  final label = _statusLabelVi(b);
-
-  late Color fg;       
-  late Color bg;      
-  late Color border;   
-  late IconData icon;
-
-  switch (code) {
-    case 0: 
-      fg = const Color(0xFFB46900);
-      bg = const Color(0xFFFFEDD5);
-      border = const Color(0xFFB46900).withOpacity(.38);
-      icon = Icons.hourglass_bottom_rounded;
-      break;
-    case 1: 
-      fg = const Color(0xFF0B6EEF);
-      bg = const Color(0xFFE6F0FF);
-      border = const Color(0xFF0B6EEF).withOpacity(.38);
-      icon = Icons.verified_rounded;
-      break;
-    case 2: 
-      fg = Colors.white;
-      bg = Colors.green.shade600;
-      border = Colors.green.shade700;
-      icon = Icons.check_circle_rounded;
-      break;
-    case 3: 
-      fg = Colors.red.shade700;
-      bg = const Color(0xFFFFE6E6);
-      border = Colors.red.shade400;
-      icon = Icons.cancel_rounded;
-      break;
-    default:
-      fg = Colors.white;
-      bg = Colors.teal.shade600;
-      border = Colors.teal.shade700;
-      icon = Icons.info_rounded;
-  }
-
-  return Container(
-    padding: EdgeInsets.symmetric(horizontal: 3.6.w, vertical: 0.9.h),
-    decoration: BoxDecoration(
-      color: bg,
-      borderRadius: BorderRadius.circular(40),
-
-      border: Border.all(color: code == 2 ? bg : border, width: 1),
-      boxShadow: [
-        if (code == 2)
-          BoxShadow(color: Colors.black.withOpacity(.12), blurRadius: 10, offset: const Offset(0, 4)),
-      ],
-    ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 16.sp, color: fg),
-        SizedBox(width: 2.4.w),
-        Text(
-          label,
-          style: TextStyle(
-            color: fg,
-            fontSize: 12.5.sp,
-            fontWeight: FontWeight.w800,
-            letterSpacing: .2,
-          ),
+    final style = _statusStyle(b);
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 3.6.w, vertical: 0.9.h),
+      decoration: BoxDecoration(
+        color: style.bg,
+        borderRadius: BorderRadius.circular(40),
+        border: Border.all(
+          color: b.rawStatus == BookingModel.kCompleted ? style.bg : style.border,
+          width: 1,
         ),
-      ],
-    ),
-  );
-}
-
-IconData _statusIcon(int code) {
-  switch (code) {
-    case 0: return Icons.hourglass_bottom_rounded;
-    case 1: return Icons.verified_rounded;
-    case 2: return Icons.check_circle_rounded;
-    case 3: return Icons.cancel_rounded;   // icon hủy
-    default: return Icons.help_outline_rounded;
+        boxShadow: [
+          if (b.rawStatus == BookingModel.kCompleted)
+            BoxShadow(
+              color: Colors.black.withOpacity(.12),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(style.icon, size: 16.sp, color: style.fg),
+          SizedBox(width: 2.4.w),
+          Text(
+            b.statusTextUi,
+            style: TextStyle(
+              color: style.fg,
+              fontSize: 12.5.sp,
+              fontWeight: FontWeight.w800,
+              letterSpacing: .2,
+            ),
+          ),
+        ],
+      ),
+    );
   }
-}
 
   Widget _sectionTitle(String title, {IconData? icon}) {
     return Row(
       children: [
         if (icon != null) Icon(icon, size: 18.sp, color: Colors.black87),
         if (icon != null) SizedBox(width: 2.4.w),
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 15.sp,
-            fontWeight: FontWeight.w900,
-            letterSpacing: .2,
-          ),
-        ),
+        Text(title,
+            style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w900, letterSpacing: .2)),
       ],
     );
   }
 
-  Widget _kv(String label, String value, {IconData? icon}) {
+  Widget _kv(String label, String value, {IconData? icon, TextAlign align = TextAlign.right}) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (icon != null) Icon(icon, size: 16.sp, color: Colors.grey[700]),
         if (icon != null) SizedBox(width: 2.4.w),
-        Expanded(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 13.sp,
-              color: Colors.grey[700],
-            ),
-          ),
-        ),
+        Expanded(child: Text(label, style: TextStyle(fontSize: 13.sp, color: Colors.grey[700]))),
         SizedBox(width: 3.w),
         Expanded(
           child: Text(
-            value,
-            textAlign: TextAlign.right,
-            style: TextStyle(
-              fontSize: 13.2.sp,
-              fontWeight: FontWeight.w700,
-              color: Colors.black87,
-            ),
+            value.isEmpty ? '-' : value,
+            textAlign: align,
+            style: TextStyle(fontSize: 13.2.sp, fontWeight: FontWeight.w700, color: Colors.black87),
           ),
         ),
       ],
     );
   }
 
-  Widget _priceRow(String label, String value,
-      {bool strong = false, Color? color}) {
+  Widget _priceRow(String label, String value, {bool strong = false, Color? color}) {
     return Row(
       children: [
-        Expanded(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 13.sp,
-              color: Colors.grey[700],
-            ),
-          ),
-        ),
+        Expanded(child: Text(label, style: TextStyle(fontSize: 13.sp, color: Colors.grey[700]))),
         Text(
           value,
           style: TextStyle(
@@ -279,11 +185,7 @@ IconData _statusIcon(int code) {
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         boxShadow: const [
-          BoxShadow(
-            color: Color(0x13000000),
-            blurRadius: 14,
-            offset: Offset(0, 6),
-          ),
+          BoxShadow(color: Color(0x13000000), blurRadius: 14, offset: Offset(0, 6)),
         ],
         border: Border.all(color: Colors.grey.withOpacity(.08)),
       ),
@@ -297,12 +199,10 @@ IconData _statusIcon(int code) {
       final uri = Uri(scheme: 'tel', path: _supportPhone);
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri);
-      } else {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Không thể thực hiện cuộc gọi.')),
-          );
-        }
+      } else if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Không thể thực hiện cuộc gọi.')),
+        );
       }
     }
   }
@@ -314,8 +214,7 @@ IconData _statusIcon(int code) {
       builder: (ctx) {
         return Dialog(
           insetPadding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 3.h),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -325,8 +224,7 @@ IconData _statusIcon(int code) {
                 decoration: const BoxDecoration(
                   borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                   gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+                    begin: Alignment.topLeft, end: Alignment.bottomRight,
                     colors: [Color(0xFF4FACFE), Color(0xFF00F2FE)],
                   ),
                 ),
@@ -342,15 +240,11 @@ IconData _statusIcon(int code) {
                           color: Colors.white, size: 30),
                     ),
                     SizedBox(height: 1.2.h),
-                    Text(
-                      'Gọi hỗ trợ',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 1.sp,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: .2,
-                      ),
-                    ),
+                    const Text('Gọi hỗ trợ',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900)),
                   ],
                 ),
               ),
@@ -361,16 +255,11 @@ IconData _statusIcon(int code) {
                     Text(
                       'Bạn có muốn liên hệ qua số điện thoại sau?',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        color: Colors.black87,
-                        height: 1.4,
-                      ),
+                      style: TextStyle(fontSize: 14.sp, color: Colors.black87, height: 1.4),
                     ),
                     SizedBox(height: 1.2.h),
                     Container(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 4.w, vertical: 1.2.h),
+                      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.2.h),
                       decoration: BoxDecoration(
                         color: Colors.blue.withOpacity(.06),
                         borderRadius: BorderRadius.circular(12),
@@ -381,15 +270,12 @@ IconData _statusIcon(int code) {
                         children: [
                           const Icon(Icons.phone_rounded, color: Colors.blue),
                           SizedBox(width: 2.w),
-                          Text(
-                            _supportPhone,
-                            style: TextStyle(
-                              fontSize: 14.5.sp,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: .3,
-                              color: Colors.blue.shade700,
-                            ),
-                          ),
+                          Text(_supportPhone,
+                              style: TextStyle(
+                                  fontSize: 14.5.sp,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: .3,
+                                  color: Colors.blue.shade700)),
                         ],
                       ),
                     ),
@@ -407,8 +293,7 @@ IconData _statusIcon(int code) {
                           padding: EdgeInsets.symmetric(vertical: 1.6.h),
                           side: BorderSide(color: Colors.grey.shade300),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                              borderRadius: BorderRadius.circular(12)),
                           foregroundColor: Colors.black87,
                         ),
                         child: const Text('Huỷ'),
@@ -425,8 +310,7 @@ IconData _statusIcon(int code) {
                           backgroundColor: Colors.blueAccent,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                              borderRadius: BorderRadius.circular(12)),
                           elevation: 0,
                         ),
                       ),
@@ -441,6 +325,102 @@ IconData _statusIcon(int code) {
     );
   }
 
+  String _genderLabel(int g, String? text) {
+    if (text != null && text.trim().isNotEmpty) return text;
+    switch (g) {
+      case 1:
+        return 'Nam';
+      case 2:
+        return 'Nữ';
+      default:
+        return 'Khác';
+    }
+  }
+
+  String _participantTypeLabel(int t) {
+    switch (t) {
+      case 1:
+        return 'Người lớn';
+      case 2:
+        return 'Trẻ em';
+      case 3:
+        return 'Em bé';
+      default:
+        return 'Khác';
+    }
+  }
+
+  // ---------- Participants (đồng nhất) ----------
+  Widget _participantsCard(List<BookingParticipantModel> list) {
+    if (list.isEmpty) return const SizedBox.shrink();
+
+    final totalQty = list.fold<int>(0, (sum, p) => sum + p.quantity);
+    final totalAmount =
+        list.fold<double>(0.0, (sum, p) => sum + p.pricePerParticipant * p.quantity);
+
+    return _card(
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionTitle('Hành khách', icon: Icons.groups_2_rounded),
+          SizedBox(height: 1.2.h),
+
+          // Mỗi ô dùng 1 widget chuẩn để đảm bảo giống nhau
+          ...List.generate(list.length, (i) {
+            final p = list[i];
+            return Padding(
+              padding: EdgeInsets.only(bottom: 1.0.h),
+              child: _ParticipantTile(
+                index: i + 1,
+                fullName: p.fullName,
+                typeText: _participantTypeLabel(p.type),
+                genderText: _genderLabel(p.gender, p.genderText),
+                dobText: _fmtDate(p.dateOfBirth),
+                quantity: p.quantity,
+                priceText: _currency.format(p.pricePerParticipant),
+              ),
+            );
+          }),
+
+          Divider(height: 2.2.h),
+          Row(
+            children: [
+              Expanded(child: Text('Tổng khách', style: TextStyle(color: Colors.grey[700]))),
+              Text('$totalQty', style: const TextStyle(fontWeight: FontWeight.w900)),
+            ],
+          ),
+          SizedBox(height: 0.6.h),
+          Row(
+            children: [
+              Expanded(child: Text('Tổng theo danh sách', style: TextStyle(color: Colors.grey[700]))),
+              Text(_currency.format(totalAmount),
+                  style: const TextStyle(fontWeight: FontWeight.w900)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _miniChip(IconData icon, String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.black.withOpacity(.08)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: Colors.black54),
+          const SizedBox(width: 6),
+          Text(text, style: const TextStyle(fontWeight: FontWeight.w600)),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final BookingModel b =
@@ -448,8 +428,20 @@ IconData _statusIcon(int code) {
 
     final headerImg = _headerImage(b);
 
+    // days count (nếu có)
+    int? totalDays;
+    if (b.startDate != null && b.endDate != null) {
+      totalDays = b.endDate!.difference(b.startDate!).inDays + 1;
+      if (totalDays < 1) totalDays = null;
+    }
+
+    // khoảng trống động để FAB không đè
+    final double fabGap =
+        MediaQuery.of(context).padding.bottom + 100; // ~56(FAB) + margin
+
     return Scaffold(
       backgroundColor: const Color(0xFFF3F5F9),
+      extendBody: true,
       body: SafeArea(
         bottom: false,
         child: CustomScrollView(
@@ -469,8 +461,7 @@ IconData _statusIcon(int code) {
                     Container(
                       decoration: const BoxDecoration(
                         gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
+                          begin: Alignment.topCenter, end: Alignment.bottomCenter,
                           colors: [Colors.transparent, Colors.black54],
                         ),
                       ),
@@ -535,88 +526,105 @@ IconData _statusIcon(int code) {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Thông tin đơn
                     _card(
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _sectionTitle('Thông tin đơn',
-                              icon: Icons.receipt_long_outlined),
+                          _sectionTitle('Thông tin đơn', icon: Icons.receipt_long_outlined),
                           SizedBox(height: 1.8.h),
                           _kv('Mã đơn', b.id, icon: Icons.qr_code_2_rounded),
                           SizedBox(height: 1.4.h),
-                          _kv('Loại đơn', _typeLabelVi(b),
-                              icon: Icons.category_outlined),
+                          _kv('Loại đơn', _typeLabelVi(b), icon: Icons.category_outlined),
                           SizedBox(height: 1.4.h),
-                          _kv(
-                            'Ngày đặt',
-                            DateFormat('dd/MM/yyyy • HH:mm')
-                                .format(b.bookingDate),
-                            icon: Icons.calendar_month_rounded,
-                          ),
+                          _kv('Tên người đặt', b.userName ?? '-', icon: Icons.person_rounded),
                           SizedBox(height: 1.4.h),
-                          _kv('Thanh toán', _statusLabelVi(b),
-                              icon: Icons.payments_outlined),
+                          _kv('Ngày đặt', _fmtDateTime(b.bookingDate), icon: Icons.calendar_month_rounded),
                           SizedBox(height: 1.4.h),
-                          _kv('Thông tin liên quan', _subInfoLabel(b),
-                              icon: Icons.info_outline_rounded),
+                          _kv('Trạng thái', b.statusTextUi, icon: Icons.payments_outlined),
+                          if (b.cancelledAt != null) ...[
+                            SizedBox(height: 1.4.h),
+                            _kv('Thời điểm huỷ', _fmtDateTime(b.cancelledAt),
+                                icon: Icons.cancel_schedule_send_rounded),
+                          ],
                         ],
                       ),
                     ),
                     SizedBox(height: 2.h),
+
+                    // Lịch & thời gian
                     _card(
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _sectionTitle('Thanh toán',
-                              icon: Icons.credit_card_rounded),
+                          _sectionTitle('Lịch & thời gian', icon: Icons.event_rounded),
                           SizedBox(height: 1.8.h),
-                          _priceRow(
-                              'Giá gốc', _currency.format(b.originalPrice)),
-                          SizedBox(height: 1.0.h),
-                          _priceRow(
-                            'Khuyến mãi',
-                            '- ${_currency.format(b.discountAmount)}',
-                            color: Colors.teal,
-                          ),
-                          Divider(height: 3.2.h, thickness: 1),
-                          _priceRow(
-                            'Tổng thanh toán',
-                            _currency.format(b.finalPrice),
-                            strong: true,
-                            color: Colors.black,
-                          ),
+                          _kv('Ngày khởi hành', _fmtDate(b.departureDate),
+                              icon: Icons.flight_takeoff_rounded),
+                          SizedBox(height: 1.4.h),
+                          _kv('Bắt đầu', _fmtDate(b.startDate),
+                              icon: Icons.play_circle_fill_rounded),
+                          SizedBox(height: 1.4.h),
+                          _kv('Kết thúc', _fmtDate(b.endDate),
+                              icon: Icons.flag_rounded),
+                          if (totalDays != null) ...[
+                            SizedBox(height: 1.4.h),
+                            _kv('Số ngày', '$totalDays ngày',
+                                icon: Icons.timeline_rounded),
+                          ],
                         ],
                       ),
                     ),
                     SizedBox(height: 2.h),
-                    if (b.paymentLinkId != null && b.paymentLinkId!.isNotEmpty)
+
+                    // Thông tin liên hệ
+                    if ((b.contactName ?? b.contactEmail ?? b.contactPhone ?? b.contactAddress) != null)
                       _card(
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _sectionTitle('Liên kết thanh toán',
-                                icon: Icons.link_rounded),
-                            SizedBox(height: 1.2.h),
-                            Text(
-                              'Mã liên kết: ${b.paymentLinkId}',
-                              style: TextStyle(
-                                fontSize: 13.sp,
-                                color: Colors.grey[800],
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            SizedBox(height: 0.8.h),
-                            Text(
-                              'Bạn có thể dùng để tra cứu thông tin thanh toán nếu cần.',
-                              style: TextStyle(
-                                fontSize: 12.5.sp,
-                                color: Colors.grey[600],
-                              ),
-                            ),
+                            _sectionTitle('Thông tin liên hệ', icon: Icons.contact_phone_rounded),
+                            SizedBox(height: 1.8.h),
+                            _kv('Họ tên', b.contactName ?? '-', icon: Icons.badge_rounded),
+                            SizedBox(height: 1.4.h),
+                            _kv('Email', b.contactEmail ?? '-', icon: Icons.alternate_email_rounded),
+                            SizedBox(height: 1.4.h),
+                            _kv('Số điện thoại', b.contactPhone ?? '-', icon: Icons.phone_rounded),
+                            SizedBox(height: 1.4.h),
+                            _kv('Địa chỉ', b.contactAddress ?? '-', icon: Icons.location_on_rounded),
                           ],
                         ),
                       ),
-                    SizedBox(height: 12.h),
+                    if ((b.contactName ?? b.contactEmail ?? b.contactPhone ?? b.contactAddress) != null)
+                      SizedBox(height: 2.h),
+
+                    // Hành khách (đồng nhất)
+                    _participantsCard(b.participants),
+                    if (b.participants.isNotEmpty) SizedBox(height: 2.h),
+
+                    // Thanh toán
+                    _card(
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _sectionTitle('Thanh toán', icon: Icons.credit_card_rounded),
+                          SizedBox(height: 1.8.h),
+                          _priceRow('Giá gốc', _currency.format(b.originalPrice)),
+                          SizedBox(height: 1.0.h),
+                          _priceRow('Khuyến mãi',
+                              '- ${_currency.format(b.discountAmount)}',
+                              color: Colors.teal),
+                          Divider(height: 3.2.h, thickness: 1),
+                          _priceRow('Tổng thanh toán',
+                              _currency.format(b.finalPrice),
+                              strong: true,
+                              color: Colors.black),
+                        ],
+                      ),
+                    ),
+
+                    // chừa khoảng trống cho FAB (động)
+                    SizedBox(height: fabGap),
                   ],
                 ),
               ),
@@ -624,42 +632,40 @@ IconData _statusIcon(int code) {
           ],
         ),
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: InkWell(
-          onTap: () => _confirmAndCall(context),
-          borderRadius: BorderRadius.circular(30),
-          child: Ink(
-            decoration: BoxDecoration(
-              gradient: Gradients.defaultGradientBackground,
-              borderRadius: BorderRadius.circular(30),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x33000000),
-                  blurRadius: 10,
-                  offset: Offset(0, 4),
-                ),
-              ],
-            ),
-            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: const [
-                Icon(Icons.support_agent_rounded, color: Colors.white),
-                SizedBox(width: 8),
-                Text(
-                  'Hỗ trợ',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+      // floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      // floatingActionButton: SafeArea(
+      //   minimum: const EdgeInsets.only(bottom: 8),
+      //   child: InkWell(
+      //     onTap: () => _confirmAndCall(context),
+      //     borderRadius: BorderRadius.circular(30),
+      //     child: Ink(
+      //       decoration: BoxDecoration(
+      //         gradient: Gradients.defaultGradientBackground,
+      //         borderRadius: BorderRadius.circular(30),
+      //         boxShadow: const [
+      //           BoxShadow(
+      //             color: Color(0x33000000),
+      //             blurRadius: 10,
+      //             offset: Offset(0, 4),
+      //           ),
+      //         ],
+      //       ),
+      //       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      //       child: const Row(
+      //         mainAxisSize: MainAxisSize.min,
+      //         children: [
+      //           Icon(Icons.support_agent_rounded, color: Colors.white),
+      //           SizedBox(width: 8),
+      //           Text('Hỗ trợ',
+      //               style: TextStyle(
+      //                   color: Colors.white,
+      //                   fontWeight: FontWeight.w700,
+      //                   fontSize: 16)),
+      //         ],
+      //       ),
+      //     ),
+      //   ),
+      // ),
     );
   }
 
@@ -682,6 +688,97 @@ IconData _statusIcon(int code) {
           ],
         ),
         child: Icon(icon, size: 18.sp, color: Colors.black87),
+      ),
+    );
+  }
+}
+
+// ====== Ô hành khách đồng nhất ======
+class _ParticipantTile extends StatelessWidget {
+  final int index;
+  final String fullName;
+  final String typeText;
+  final String genderText;
+  final String dobText;
+  final int quantity;
+  final String priceText;
+
+  const _ParticipantTile({
+    required this.index,
+    required this.fullName,
+    required this.typeText,
+    required this.genderText,
+    required this.dobText,
+    required this.quantity,
+    required this.priceText,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 92),
+      padding: EdgeInsets.symmetric(vertical: 1.0.h, horizontal: 3.w),
+      decoration: BoxDecoration(
+        color: Colors.grey.withOpacity(.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.withOpacity(.15)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header: Hành khách X — Tên
+          Row(
+            children: [
+              Text('Hành khách $index',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12.8.sp)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  fullName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.right,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12.2.sp,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 0.8.h),
+          Wrap(
+            spacing: 10,
+            runSpacing: 8,
+            children: [
+              _miniChip(Icons.badge_rounded, typeText),
+              _miniChip(Icons.wc_rounded, genderText),
+              _miniChip(Icons.cake_rounded, dobText),
+              _miniChip(Icons.reduce_capacity_rounded, 'SL: $quantity'),
+              _miniChip(Icons.sell_rounded, priceText),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _miniChip(IconData icon, String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.black.withOpacity(.08)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: Colors.black54),
+          const SizedBox(width: 6),
+          Text(text, style: const TextStyle(fontWeight: FontWeight.w600)),
+        ],
       ),
     );
   }

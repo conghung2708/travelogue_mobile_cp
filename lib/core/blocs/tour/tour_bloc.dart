@@ -37,7 +37,7 @@ class TourBloc extends Bloc<TourEvent, TourState> {
 
       emit(GetToursSuccess(tours: tourList));
     } catch (e) {
-      emit(TourError("Lỗi khi tải tour: ${e.toString()}"));
+      emit(TourError("Lỗi khi tải tour: $e"));
     }
   }
 
@@ -57,7 +57,7 @@ class TourBloc extends Bloc<TourEvent, TourState> {
 
       emit(GetToursWithGuideSuccess(toursWithGuide: result));
     } catch (e) {
-      emit(TourError("Lỗi khi tải tour có hướng dẫn viên: ${e.toString()}"));
+      emit(TourError("Lỗi khi tải tour có hướng dẫn viên: $e"));
     }
   }
 
@@ -92,7 +92,7 @@ class TourBloc extends Bloc<TourEvent, TourState> {
         tourDetail: TourDetailCompositeModel(tour: tour, guide: guide),
       ));
     } catch (e) {
-      emit(TourError("Lỗi khi tải tour chi tiết: ${e.toString()}"));
+      emit(TourError("Lỗi khi tải tour chi tiết: $e"));
     }
   }
 }

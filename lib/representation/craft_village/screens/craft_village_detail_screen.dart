@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_tts/flutter_tts.dart';
@@ -37,7 +36,6 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
   double currentRating = 4.5;
   late final TabController _tabController;
 
-  // FlutterTTS & Map controller
   FlutterTts flutterTts = FlutterTts();
   bool isSpeaking = false;
   vietmap.VietmapController? _mapController;
@@ -82,7 +80,7 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
     if (village?.content?.isNotEmpty == true) {
       await flutterTts.setLanguage("vi-VN");
       await flutterTts.setSpeechRate(0.45);
-      await flutterTts.setPitch(1.0);
+      await flutterTts.setPitch(1);
       setState(() => isSpeaking = true);
       await flutterTts.speak(village!.content!);
       flutterTts.setCompletionHandler(() {
@@ -134,7 +132,9 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
                             ReviewsScreen<ReviewCraftVillageTestModel>(
                                 reviews: [], averageRating: currentRating)),
                   );
-                  if (res != null) setState(() => currentRating = res);
+                  if (res != null) {
+                    setState(() => currentRating = res);
+                  }
                 },
               ),
             ],
@@ -148,8 +148,7 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
             children: [
               AvatarGlow(
                 animate: isSpeaking,
-                glowColor:
-                    isSpeaking ? Colors.redAccent : Colors.blueAccent,
+                glowColor: isSpeaking ? Colors.redAccent : Colors.blueAccent,
                 child: InkWell(
                   onTap: _speakContent,
                   borderRadius: BorderRadius.circular(30),
@@ -163,7 +162,7 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
                             : [Colors.blueAccent, Colors.blue],
                       ),
                       boxShadow: [
-                        BoxShadow(
+                        const BoxShadow(
                           color: Colors.black12,
                           blurRadius: 4,
                           offset: Offset(0, 2),
@@ -181,8 +180,8 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
             ],
           ),
           if (isSpeaking)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
+            const Padding(
+              padding: EdgeInsets.only(top: 4),
               child: Align(
                 alignment: Alignment.centerRight,
                 child: Text(
@@ -199,7 +198,7 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
           SizedBox(height: 1.h),
           Padding(
             padding: EdgeInsets.only(right: 55.w),
-            child: TitleWithCustoneUnderline(text: 'Giới ', text2: 'thiệu : '),
+            child: const TitleWithCustoneUnderline(text: 'Giới ', text2: 'thiệu : '),
           ),
           SizedBox(height: 1.h),
           MarkdownBody(
@@ -213,7 +212,7 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
           SizedBox(height: 2.5.h),
           Padding(
             padding: EdgeInsets.only(right: 55.w),
-            child: TitleWithCustoneUnderline(
+            child: const TitleWithCustoneUnderline(
               text: 'Hình ',
               text2: 'ảnh :',
             ),
@@ -238,73 +237,73 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
           SizedBox(height: 3.h),
 
           // Bản đồ
-        Container(
-  width: double.infinity,
-  height: 40.h,
-  decoration: BoxDecoration(
-    border: Border.all(color: Colors.grey),
-    borderRadius: BorderRadius.circular(20),
-  ),
-  child: ClipRRect(
-    borderRadius: BorderRadius.circular(20),
-    child: Stack(
-      children: [
-        vietmap.VietmapGL(
-          myLocationEnabled: false,
-          trackCameraPosition: true,
-          rotateGesturesEnabled: false,
-          scrollGesturesEnabled: false,
-          zoomGesturesEnabled: false,
-          tiltGesturesEnabled: false,
-          styleString:
-              'https://maps.vietmap.vn/api/maps/light/styles.json?apikey=840f8a8247cb32578fc81fec50af42b8ede321173a31804b',
-          initialCameraPosition: vietmap.CameraPosition(
-            target: vietmap.LatLng(
-              village!.latitude ?? 10.762622,
-              village!.longitude ?? 106.660172,
+          Container(
+            width: double.infinity,
+            height: 40.h,
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey),
+              borderRadius: BorderRadius.circular(20),
             ),
-            zoom: 12,
-          ),
-          onMapCreated: (controller) {
-            setState(() {
-              _mapController = controller;
-            });
-          },
-          onMapClick: (point, latlng) {
-            Navigator.pushNamed(
-              context,
-              VietMapLocationScreen.routeName,
-              arguments: vietmap.LatLng(
-                village!.latitude ?? 10.762622,
-                village!.longitude ?? 106.660172,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Stack(
+                children: [
+                  vietmap.VietmapGL(
+                    myLocationEnabled: false,
+                    trackCameraPosition: true,
+                    rotateGesturesEnabled: false,
+                    scrollGesturesEnabled: false,
+                    zoomGesturesEnabled: false,
+                    tiltGesturesEnabled: false,
+                    styleString:
+                        'https://maps.vietmap.vn/api/maps/light/styles.json?apikey=840f8a8247cb32578fc81fec50af42b8ede321173a31804b',
+                    initialCameraPosition: vietmap.CameraPosition(
+                      target: vietmap.LatLng(
+                        village!.latitude ?? 10.762622,
+                        village!.longitude ?? 106.660172,
+                      ),
+                      zoom: 12,
+                    ),
+                    onMapCreated: (controller) {
+                      setState(() {
+                        _mapController = controller;
+                      });
+                    },
+                    onMapClick: (point, latlng) {
+                      Navigator.pushNamed(
+                        context,
+                        VietMapLocationScreen.routeName,
+                        arguments: vietmap.LatLng(
+                          village!.latitude ?? 10.762622,
+                          village!.longitude ?? 106.660172,
+                        ),
+                      );
+                    },
+                  ),
+                  if (_mapController != null)
+                    vietmap.MarkerLayer(
+                      markers: [
+                        vietmap.Marker(
+                          alignment: Alignment.bottomCenter,
+                          height: 30,
+                          width: 30,
+                          child: const Icon(
+                            Icons.location_on,
+                            color: Colors.red,
+                            size: 30,
+                          ),
+                          latLng: vietmap.LatLng(
+                            village!.latitude ?? 10.762622,
+                            village!.longitude ?? 106.660172,
+                          ),
+                        ),
+                      ],
+                      mapController: _mapController!,
+                    ),
+                ],
               ),
-            );
-          },
-        ),
-        if (_mapController != null)
-          vietmap.MarkerLayer(
-            markers: [
-              vietmap.Marker(
-                alignment: Alignment.bottomCenter,
-                height: 30,
-                width: 30,
-                child: const Icon(
-                  Icons.location_on,
-                  color: Colors.red,
-                  size: 30,
-                ),
-                latLng: vietmap.LatLng(
-                  village!.latitude ?? 10.762622,
-                  village!.longitude ?? 106.660172,
-                ),
-              ),
-            ],
-            mapController: _mapController!,
+            ),
           ),
-      ],
-    ),
-  ),
-),
 
           SizedBox(height: 4.h),
         ],

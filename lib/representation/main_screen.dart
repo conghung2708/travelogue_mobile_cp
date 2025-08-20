@@ -8,13 +8,11 @@ import 'package:travelogue_mobile/core/blocs/main/main_event.dart';
 import 'package:travelogue_mobile/core/blocs/main/main_state.dart';
 import 'package:travelogue_mobile/core/constants/color_constants.dart';
 import 'package:travelogue_mobile/core/helpers/login_redirect_helper.dart';
-import 'package:travelogue_mobile/data/data_local/user_local.dart';
 import 'package:travelogue_mobile/representation/home/screens/home_screen.dart';
 import 'package:travelogue_mobile/representation/event/screens/event_screen.dart';
 import 'package:travelogue_mobile/representation/tour/screens/tour_screen.dart';
 import 'package:travelogue_mobile/representation/tour_guide/screens/tour_guide_screen.dart';
 import 'package:travelogue_mobile/representation/user/screens/user_profile_screen.dart';
-import 'package:travelogue_mobile/representation/auth/screens/login_screen.dart';
 
 class MainScreen extends StatefulWidget {
   static const routeName = '/main_screen';
@@ -50,7 +48,9 @@ class _MainScreenState extends State<MainScreen> {
                   context: context,
                   redirectTabIndex: index,
                 );
-                if (!isLoggedIn) return;
+                if (!isLoggedIn) {
+                  return;
+                }
               }
 
               AppBloc.mainBloc.add(OnChangeIndexEvent(indexChange: index));

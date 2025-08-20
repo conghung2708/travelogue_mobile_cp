@@ -364,10 +364,9 @@ class _WithdrawRequestScreenState extends State<WithdrawRequestScreen> {
   }
 }
 
-/// ================== STYLE / PALETTE ==================
+
 class _P {
   static const primary = Color(0xFF3A7DFF);
-  static const primarySoft = Color(0xFF6EA5FF);
   static const bg = Color(0xFFF6F9FF);
   static const card = Colors.white;
   static final stroke = const Color(0xFF3A7DFF).withOpacity(.16);
@@ -375,7 +374,7 @@ class _P {
   static final fill = const Color(0xFF3A7DFF).withOpacity(.06);
 }
 
-/// ================== HEADER ==================
+
 class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {

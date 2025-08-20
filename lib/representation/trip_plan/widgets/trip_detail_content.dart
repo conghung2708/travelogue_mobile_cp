@@ -3,9 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:sizer/sizer.dart';
 import 'package:intl/intl.dart';
-
 import 'package:travelogue_mobile/model/trip_plan/trip_plan_detail_model.dart';
-import 'package:travelogue_mobile/model/booking/booking_model.dart';
 import 'package:travelogue_mobile/model/tour_guide/tour_guide_model.dart';
 import 'package:travelogue_mobile/representation/trip_plan/widgets/trip_overview_header.dart';
 import 'package:travelogue_mobile/representation/trip_plan/widgets/timeline_card_item.dart';
@@ -208,9 +206,15 @@ class _TripDetailContentState extends State<TripDetailContent> {
 
   String _getTimeLabel(DateTime time) {
     final hour = time.hour;
-    if (hour < 11) return '🌅 Buổi sáng';
-    if (hour < 13) return '🌞 Buổi trưa';
-    if (hour < 18) return '🌇 Buổi chiều';
+    if (hour < 11) {
+      return '🌅 Buổi sáng';
+    }
+    if (hour < 13) {
+      return '🌞 Buổi trưa';
+    }
+    if (hour < 18) {
+      return '🌇 Buổi chiều';
+    }
     return '🌃 Buổi tối';
   }
 }

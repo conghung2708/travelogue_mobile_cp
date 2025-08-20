@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
-import 'package:travelogue_mobile/core/blocs/app_bloc.dart';
-import 'package:travelogue_mobile/core/blocs/festival/festival_bloc.dart';
 import 'package:travelogue_mobile/core/constants/color_constants.dart';
 import 'package:travelogue_mobile/model/month_model.dart';
 

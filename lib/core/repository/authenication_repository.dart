@@ -7,8 +7,7 @@ import 'package:travelogue_mobile/data/data_local/user_local.dart';
 import 'package:travelogue_mobile/model/user_model.dart';
 
 class AuthenicationRepository {
-
-    Future<UserModel> fetchCurrentUser() async {
+  Future<UserModel> fetchCurrentUser() async {
     final res = await BaseRepository().getRoute(Endpoints.getCurrentUser);
 
     if (res.statusCode == StatusCode.ok) {
@@ -24,8 +23,7 @@ class AuthenicationRepository {
     throw Exception('HTTP ${res.statusCode}');
   }
 
-
- // chỉnh login: sau khi lưu token → gọi fetchCurrentUser()
+  // chỉnh login: sau khi lưu token → gọi fetchCurrentUser()
   Future<(UserModel?, String?)> login({
     required String email,
     required String password,
@@ -52,7 +50,6 @@ class AuthenicationRepository {
       return (null, message);
     }
   }
-
 
   Future<(bool, String)> register({
     required String email,
@@ -93,6 +90,7 @@ class AuthenicationRepository {
       return (true, '');
     } else {
       final String message = response.data['Message'];
+      print('🛑 sendOTPEmail failed with message: $message'); // 👈
       return (false, message);
     }
   }
@@ -139,6 +137,7 @@ class AuthenicationRepository {
       return (false, message);
     }
   }
+
   // chỉnh loginGoogle tương tự
   Future<(UserModel?, String?)> loginGoogle({
     required String token,
@@ -158,7 +157,8 @@ class AuthenicationRepository {
 
       final current = await fetchCurrentUser();
       // optional: update display name nếu cần
-      final merged = current.copyWith(username: current.username ?? user.displayName);
+      final merged =
+          current.copyWith(username: current.username ?? user.displayName);
 
       UserLocal().saveAccount(merged);
       return (merged, null);

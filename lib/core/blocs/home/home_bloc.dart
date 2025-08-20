@@ -46,7 +46,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     }
   }
 Future<void> _onGetAllLocation(GetAllLocationEvent event, Emitter<HomeState> emit) async {
-  emit(HomeLoading()); 
+  emit(const HomeLoading()); 
 
   final allLocations = await HomeRepository().getAllLocation();
   print('📡 Gọi API lấy địa điểm...');
@@ -85,7 +85,9 @@ Future<void> _onGetAllLocation(GetAllLocationEvent event, Emitter<HomeState> emi
   Future<void> _onGetLocationFavorite(
       GetLocationFavoriteEvent event, Emitter<HomeState> emit) async {
     final listFavorite = await HomeRepository().getLocationFavorite();
-    if (listFavorite.isEmpty) return;
+    if (listFavorite.isEmpty) {
+      return;
+    }
 
     locationFavorites
       ..clear()
@@ -106,7 +108,9 @@ Future<void> _onGetAllLocation(GetAllLocationEvent event, Emitter<HomeState> emi
 void _onFilterLocationByCategory(
     FilterLocationByCategoryEvent event, Emitter<HomeState> emit) {
   final all = HomeLocal().getAllLocations();
-  if (all == null) return;
+  if (all == null) {
+    return;
+  }
 
   final filtered = all.where((e) {
     final cat = e.category?.toLowerCase().trim();
@@ -134,7 +138,9 @@ void _onFilterLocationByCategory(
         : await HomeRepository()
             .deletedLikedLocation(locationId: event.locationId);
 
-    if (!success) return;
+    if (!success) {
+      return;
+    }
 
     event.isLiked
         ? listIdFavorite.add(event.locationId)

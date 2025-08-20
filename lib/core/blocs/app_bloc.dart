@@ -47,13 +47,11 @@ class AppBloc {
   static final MediaUploadBloc mediaUploadBloc = MediaUploadBloc();
   static final RefundBloc refundBloc = RefundBloc(RefundRepository());
   static final BankAccountBloc bankAccountBloc =
-    BankAccountBloc(BankAccountRepository());
-static final BankLookupCubit bankLookupCubit =
-    BankLookupCubit(BankLookupRepository());
-    static final WalletBloc walletBloc =
-    WalletBloc(walletRepository: WalletRepository());
-    
-    
+      BankAccountBloc(BankAccountRepository());
+  static final BankLookupCubit bankLookupCubit =
+      BankLookupCubit(BankLookupRepository());
+  static final WalletBloc walletBloc =
+      WalletBloc(walletRepository: WalletRepository());
 
   List<BlocProvider> providers = [
     BlocProvider<MainBloc>(
@@ -97,9 +95,9 @@ static final BankLookupCubit bankLookupCubit =
     BlocProvider<RefundBloc>.value(
       value: refundBloc,
     ),
-      BlocProvider<BankAccountBloc>.value(value: bankAccountBloc),
-  BlocProvider<BankLookupCubit>.value(value: bankLookupCubit),
-  BlocProvider<WalletBloc>.value(value: walletBloc),
+    BlocProvider<BankAccountBloc>.value(value: bankAccountBloc),
+    BlocProvider<BankLookupCubit>.value(value: bankLookupCubit),
+    BlocProvider<WalletBloc>.value(value: walletBloc),
   ];
 
   void initial() {
@@ -112,15 +110,15 @@ static final BankLookupCubit bankLookupCubit =
       initialLoggedin();
     }
 
-    homeBloc.add(GetLocationTypeEvent());
-    homeBloc.add(GetAllLocationEvent());
-    homeBloc.add(GetEventHomeEvent());
+    homeBloc.add(const GetLocationTypeEvent());
+    homeBloc.add(const GetAllLocationEvent());
+    homeBloc.add(const GetEventHomeEvent());
     newsBloc.add(GetAllNewsEvent());
     festivalBloc.add(GetAllFestivalEvent());
   }
 
   void initialLoggedin() {
-    homeBloc.add(GetLocationFavoriteEvent());
+    homeBloc.add(const GetLocationFavoriteEvent());
     authenicateBloc.add(OnCheckAccountEvent());
   }
 
@@ -146,9 +144,9 @@ static final BankLookupCubit bankLookupCubit =
     nearestDataBloc.close();
     mediaUploadBloc.close();
     refundBloc.close();
-      bankAccountBloc.close();
-  bankLookupCubit.close();
-  walletBloc.close();
+    bankAccountBloc.close();
+    bankLookupCubit.close();
+    walletBloc.close();
   }
 
   ///Singleton factory

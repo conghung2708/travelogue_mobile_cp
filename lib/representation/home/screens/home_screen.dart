@@ -3,10 +3,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:travelogue_mobile/core/blocs/app_bloc.dart';
-import 'package:travelogue_mobile/core/blocs/authenicate/authenicate_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/home/home_bloc.dart';
 import 'package:travelogue_mobile/core/constants/dimension_constants.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
@@ -21,7 +19,6 @@ import 'package:travelogue_mobile/representation/home/screens/search_screen.dart
 import 'package:travelogue_mobile/representation/home/widgets/app_bar_container.dart';
 import 'package:travelogue_mobile/representation/home/widgets/rotating_suprise_button.dart';
 import 'package:travelogue_mobile/representation/home/widgets/upcoming_festivals.dart';
-import 'package:travelogue_mobile/representation/widgets/build_item_category.dart';
 import 'package:travelogue_mobile/representation/home/widgets/hot_location.dart';
 import 'package:weather/weather.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
@@ -47,7 +44,7 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
-    AppBloc.homeBloc.add(GetAllLocationEvent());
+    AppBloc.homeBloc.add(const GetAllLocationEvent());
     wf = WeatherFactory(apiKey, language: Language.VIETNAMESE);
     _getWeather();
     _sunController = AnimationController(
@@ -167,7 +164,7 @@ class _HomeScreenState extends State<HomeScreen>
                                   builder: (context) {
                                     final local = UserLocal().getUser();
                                     final avatarUrl = local
-                                        .avatarUrl; // field trong UserModel
+                                        .avatarUrl; 
 
                                     if (avatarUrl != null &&
                                         avatarUrl.isNotEmpty) {
@@ -393,7 +390,7 @@ class _HomeScreenState extends State<HomeScreen>
                           );
                         }
                         return const Padding(
-                          padding: EdgeInsets.only(top: 80.0),
+                          padding: EdgeInsets.only(top: 80),
                           child: Center(child: CircularProgressIndicator()),
                         );
                       },

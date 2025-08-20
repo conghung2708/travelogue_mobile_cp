@@ -5,7 +5,6 @@ import 'package:flutter/gestures.dart';
 import 'package:sizer/sizer.dart';
 import 'package:intl/intl.dart';
 import 'package:travelogue_mobile/core/repository/booking_repository.dart';
-import 'package:travelogue_mobile/representation/trip_plan/screens/my_trip_plan_screen.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 
@@ -65,7 +64,9 @@ class _TourGuideQrPaymentScreenState extends State<TourGuideQrPaymentScreen> {
 
     final elapsed = DateTime.now().difference(widget.startTime);
     _remaining = const Duration(minutes: 5) - elapsed;
-    if (_remaining.isNegative) _remaining = Duration.zero;
+    if (_remaining.isNegative) {
+      _remaining = Duration.zero;
+    }
 
     _startCountdown();
 
@@ -146,7 +147,9 @@ void _handleCancel() async {
 }
 
   void _finishFlow() {
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
 
     final goToIndex = (widget.tripPlanId?.isNotEmpty == true) ? 2 : 1;
 
@@ -173,6 +176,7 @@ void _handleCancel() async {
         : "Không rõ";
     final name = widget.guide.userName ?? "Hướng dẫn viên";
 
+    // ignore: deprecated_member_use
     return WillPopScope(
       onWillPop: () => showLeaveConfirmDialog(context, onConfirm: _finishFlow),
       child: Scaffold(

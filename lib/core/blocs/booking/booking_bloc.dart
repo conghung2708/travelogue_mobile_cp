@@ -147,7 +147,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     ReviewBookingEvent event,
     Emitter<BookingState> emit,
   ) async {
-    emit(ReviewBookingSubmitting());
+    emit(const ReviewBookingSubmitting());
 
     try {
       final r = event.request.rating;

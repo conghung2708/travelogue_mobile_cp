@@ -75,9 +75,9 @@ class _TourScheduleCalendarScreenState
 
                       final matched = getScheduleForDay(selected);
                       if (matched != null) {
-                        final media = (tour.mediaList.isNotEmpty &&
-                                tour.mediaList.first.mediaUrl?.isNotEmpty == true)
-                            ? tour.mediaList.first.mediaUrl!
+                        final media = (tour.medias.isNotEmpty &&
+                                tour.medias.first.mediaUrl?.isNotEmpty == true)
+                            ? tour.medias.first.mediaUrl!
                             : AssetHelper.img_tay_ninh_login;
 
                         ScheduleConfirmDialog.show(

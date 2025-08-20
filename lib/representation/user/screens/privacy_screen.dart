@@ -6,10 +6,9 @@ class PrivacyScreen extends StatelessWidget {
 
   static const routeName = '/privacy_screen';
 
-  // Accent colors
-  static const _blue = Color(0xFF1E88E5);       // primary accent
-  static const _blueSoft = Color(0xFFE8F3FF);   // soft bg
-  static const _blueBorder = Color(0xFFE3F2FD); // soft border
+  static const _blue = Color(0xFF1E88E5);
+  static const _blueSoft = Color(0xFFE8F3FF);
+  static const _blueBorder = Color(0xFFE3F2FD);
 
   static const _supportEmail = 'support@travelogue.com';
   static const _versionText = 'Phiên bản 1.0';
@@ -19,7 +18,7 @@ class PrivacyScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    final hTitle = theme.textTheme.headlineSmall?.copyWith(
+    theme.textTheme.headlineSmall?.copyWith(
       fontWeight: FontWeight.w800,
       color: Colors.black87,
       height: 1.2,
@@ -59,15 +58,13 @@ class PrivacyScreen extends StatelessWidget {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            // Giới hạn độ rộng tối đa cho trải nghiệm đọc tốt hơn
             return Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 720),
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
                   children: [
-                    // Banner giới thiệu nhẹ với accent xanh
-                    _IntroBanner(
+                    const _IntroBanner(
                       title: 'Travelogue tôn trọng và bảo vệ dữ liệu của bạn',
                       subtitle:
                           'Chính sách này mô tả cách chúng tôi thu thập, sử dụng và bảo vệ thông tin cá nhân. '
@@ -93,7 +90,9 @@ class PrivacyScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Tùy tính năng bạn sử dụng, chúng tôi có thể thu thập:', style: body),
+                          Text(
+                              'Tùy tính năng bạn sử dụng, chúng tôi có thể thu thập:',
+                              style: body),
                           const SizedBox(height: 8),
                           _Bullets(
                             items: const [
@@ -202,8 +201,6 @@ class PrivacyScreen extends StatelessWidget {
   }
 }
 
-/// ---------- Sub-widgets (UX polished) ----------
-
 class _IntroBanner extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -239,11 +236,13 @@ class _IntroBanner extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            Wrap(
+            const Wrap(
               spacing: 10,
               runSpacing: 8,
-              children: const [
-                _Pill(icon: Icons.verified_user_outlined, label: 'Minh bạch & kiểm soát'),
+              children: [
+                _Pill(
+                    icon: Icons.verified_user_outlined,
+                    label: 'Minh bạch & kiểm soát'),
                 _Pill(icon: Icons.lock_outline, label: 'Mã hóa & bảo mật'),
                 _Pill(icon: Icons.update, label: 'Cập nhật định kỳ'),
               ],
@@ -302,7 +301,9 @@ class _SectionCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 10),
-                Icon(icon, color: PrivacyScreen._blue, semanticLabel: 'Biểu tượng mục'),
+                Icon(icon,
+                    color: PrivacyScreen._blue,
+                    semanticLabel: 'Biểu tượng mục'),
               ],
             ),
             const SizedBox(width: 12),
@@ -412,7 +413,9 @@ class _ContactBlock extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Nếu có câu hỏi hoặc yêu cầu liên quan đến quyền riêng tư, hãy liên hệ:', style: bodyStyle),
+        Text(
+            'Nếu có câu hỏi hoặc yêu cầu liên quan đến quyền riêng tư, hãy liên hệ:',
+            style: bodyStyle),
         const SizedBox(height: 10),
         Row(
           children: [
@@ -468,7 +471,8 @@ class _PrimaryButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onPressed;
-  const _PrimaryButton({required this.icon, required this.label, required this.onPressed});
+  const _PrimaryButton(
+      {required this.icon, required this.label, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -487,11 +491,13 @@ class _PrimaryButton extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _TextButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onPressed;
-  const _TextButton({required this.icon, required this.label, required this.onPressed});
+  const _TextButton(
+      {required this.icon, required this.label, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {

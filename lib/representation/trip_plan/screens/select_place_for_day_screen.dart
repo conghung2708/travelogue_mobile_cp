@@ -84,8 +84,8 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
       context: context,
       builder: (ctx) => _wrapDialog(
         AlertDialog(
-          title: Row(
-            children: const [
+          title: const Row(
+            children: [
               Icon(Icons.info_outline, color: _kBlue),
               SizedBox(width: 8),
               Expanded(child: Text('')),
@@ -131,7 +131,7 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
       context: context,
       builder: (ctx) => _wrapDialog(
         AlertDialog(
-          title: Row(children: const [Icon(Icons.tune, color: _kBlue), SizedBox(width: 8), Text('Thiết lập')]),
+          title: const Row(children: [Icon(Icons.tune, color: _kBlue), SizedBox(width: 8), Text('Thiết lập')]),
           contentPadding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -248,13 +248,19 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
   }
 
   void _hydrateSelectedFromCatalog() {
-    if (_didHydrateCoords) return;
-    if (_allLocations.isEmpty || _itinerary.isEmpty) return;
+    if (_didHydrateCoords) {
+      return;
+    }
+    if (_allLocations.isEmpty || _itinerary.isEmpty) {
+      return;
+    }
 
     for (int i = 0; i < _itinerary.length; i++) {
       final stop = _itinerary[i];
       final pid = stop.place.id ?? '';
-      if (pid.isEmpty) continue;
+      if (pid.isEmpty) {
+        continue;
+      }
 
       final found = _allLocations.firstWhere(
         (l) => (l.id ?? '') == pid,
@@ -277,7 +283,9 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
       (l) => (l.id ?? '') == lastId,
       orElse: () => LocationModel(id: null),
     );
-    if (anchor.id != null) _anchorPlace = anchor;
+    if (anchor.id != null) {
+      _anchorPlace = anchor;
+    }
 
     _didHydrateCoords = true;
   }
@@ -364,7 +372,7 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider<HomeBloc>(
-      create: (_) => HomeBloc()..add(GetAllLocationEvent()),
+      create: (_) => HomeBloc()..add(const GetAllLocationEvent()),
       child: Scaffold(
         backgroundColor: Colors.white,
         appBar: _buildIconOnlyAppBar(context),
@@ -623,8 +631,8 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: const [
+              const Row(
+                children: [
                   Icon(Icons.motorcycle, color: _kBlue),
                   SizedBox(width: 8),
                   Text('Giới hạn khoảng cách',
@@ -802,11 +810,15 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
                     } catch (_) {}
                   }
                 }
-                if (!continueRemove) return;
+                if (!continueRemove) {
+                  return;
+                }
 
                 await _handleRemoveAt(idx);
 
-                if (!context.mounted) return;
+                if (!context.mounted) {
+                  return;
+                }
                 if (_selectedActivities.isEmpty) {
                   Navigator.pop(context);
                 } else {
@@ -840,48 +852,6 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
     );
   }
 
-  Widget _buildGradientCompleteButton() {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF2196F3), Color(0xFF64B5F6)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: const [
-          BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 3))
-        ],
-      ),
-      child: ElevatedButton.icon(
-        style: ElevatedButton.styleFrom(
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 1.8.h),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-        ),
-        onPressed: () {
-          final payload = _toTplList();
-          Navigator.pop(context, {
-            'tpl': payload,
-            'acts': List<TripActivityModel>.from(_selectedActivities),
-          });
-        },
-        icon: Icon(Icons.check_circle, size: 20.sp, color: Colors.white),
-        label: Text(
-          'HOÀN TẤT',
-          style: TextStyle(
-            fontSize: 14.sp,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-            letterSpacing: 1.2,
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _buildCompleteButton({bool alwaysEnabled = false}) {
     final hasAny = _selectedActivities.isNotEmpty;
@@ -954,7 +924,9 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
 
     if (isSelected) {
       final idx = _selectedActivities.indexWhere((a) => a.locationId == id);
-      if (!await _confirmDistanceAfterRemoval(idx)) return;
+      if (!await _confirmDistanceAfterRemoval(idx)) {
+        return;
+      }
       await _handleRemoveAt(idx);
       return;
     }
@@ -965,7 +937,9 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
     }
 
     final stay = await RouteDialogs.askStayMinutes(context);
-    if (stay == null || stay <= 0) return;
+    if (stay == null || stay <= 0) {
+      return;
+    }
 
     if (_selectedActivities.isEmpty) {
       if (loc.safeLat == null || loc.safeLng == null) {
@@ -1006,7 +980,9 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
         depart: depart,
         stayMinutes: stay,
       );
-      if (!ok) return;
+      if (!ok) {
+        return;
+      }
 
       final act = _makeActivityFromLocation(
         loc: loc,
@@ -1073,7 +1049,9 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
           ),
         );
 
-        if (confirm != true) return;
+        if (confirm != true) {
+          return;
+        }
       }
 
       final arrival =
@@ -1094,7 +1072,9 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
         arrival: arrival,
         depart: depart,
       );
-      if (!ok) return;
+      if (!ok) {
+        return;
+      }
 
       final act = _makeActivityFromLocation(
         loc: loc,
@@ -1121,6 +1101,7 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
       });
 
       _unawaited(_refreshMatrixFor(_allLocations));
+    // ignore: nullable_type_in_catch_clause
     } on dynamic catch (e, st) {
       try {
         final status = (e as dynamic).response?.statusCode;
@@ -1136,15 +1117,21 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
   }
 
   void _recalcTimesForSelected({int startFromIndex = 0}) {
-    if (_selectedActivities.isEmpty) return;
+    if (_selectedActivities.isEmpty) {
+      return;
+    }
 
     DateTime cursor = TimeUtils.combine(_dayDate, _dayStart);
     final earliest =
         TimeUtils.combine(_dayDate, const TimeOfDay(hour: minHour, minute: 0));
-    if (cursor.isBefore(earliest)) cursor = earliest;
+    if (cursor.isBefore(earliest)) {
+      cursor = earliest;
+    }
 
     for (int i = 0; i < _selectedActivities.length; i++) {
-      if (i < startFromIndex && i != 0) continue;
+      if (i < startFromIndex && i != 0) {
+        continue;
+      }
 
       final oldAct = _selectedActivities[i];
       final oldStop = _itinerary[i];
@@ -1186,14 +1173,14 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
   }) {
     final type = _vnTypeLabelFromCategory(loc.category);
     final durationMin = depart.difference(arrival).inMinutes;
-    final img = (loc.imgUrlFirst).toString().trim();
+    final img = loc.imgUrlFirst.trim();
 
     return TripActivityModel(
-      locationId: (loc.id ?? ''),
+      locationId: loc.id ?? '',
       type: type,
-      name: (loc.name ?? 'Địa điểm không tên'),
-      description: (loc.description ?? ''),
-      address: (loc.address ?? ''),
+      name: loc.name ?? 'Địa điểm không tên',
+      description: loc.description ?? '',
+      address: loc.address ?? '',
       startTime: arrival,
       endTime: depart,
       startTimeFormatted: DateFormat('HH:mm').format(arrival),
@@ -1251,9 +1238,15 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
 
   String _mapCategoryToType(String? category) {
     final c = (category ?? '').toLowerCase();
-    if (c.contains('lịch sử')) return 'history';
-    if (c.contains('làng nghề')) return 'craft';
-    if (c.contains('ẩm thực')) return 'food';
+    if (c.contains('lịch sử')) {
+      return 'history';
+    }
+    if (c.contains('làng nghề')) {
+      return 'craft';
+    }
+    if (c.contains('ẩm thực')) {
+      return 'food';
+    }
     return 'scenic';
   }
 
@@ -1287,13 +1280,21 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
 
   TimeOfDay? _parseOpenTime({String? itemOpenTime}) {
     final s = itemOpenTime?.trim();
-    if (s == null || s.isEmpty) return null;
+    if (s == null || s.isEmpty) {
+      return null;
+    }
     final m = RegExp(r'(\d{1,2})(?:[:hHgG]?(\d{2}))?').firstMatch(s);
-    if (m == null) return null;
+    if (m == null) {
+      return null;
+    }
     final h = int.tryParse(m.group(1) ?? '');
     final mm = int.tryParse(m.group(2) ?? '0') ?? 0;
-    if (h == null || h < 0 || h > 23) return null;
-    if (mm < 0 || mm > 59) return null;
+    if (h == null || h < 0 || h > 23) {
+      return null;
+    }
+    if (mm < 0 || mm > 59) {
+      return null;
+    }
     return TimeOfDay(hour: h, minute: mm);
   }
 
@@ -1308,27 +1309,39 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
 
   Future<void> _refreshMatrixFor(List<LocationModel> targets) async {
     final a = _anchorPlace;
-    if (a == null) return;
+    if (a == null) {
+      return;
+    }
     final aLat = a.safeLat, aLng = a.safeLng;
-    if (aLat == null || aLng == null) return;
+    if (aLat == null || aLng == null) {
+      return;
+    }
 
     final usableTargets = <LocationModel>[];
     final coords = <List<double>>[];
     for (final t in targets) {
       final tId = (t.id ?? t.name) ?? '';
       final aId = (a.id ?? a.name) ?? '';
-      if (tId == aId) continue;
+      if (tId == aId) {
+        continue;
+      }
       final lat = t.safeLat, lng = t.safeLng;
-      if (lat == null || lng == null) continue;
+      if (lat == null || lng == null) {
+        continue;
+      }
 
       final key = _roadKey(a.id, a.name, t.id, t.name);
-      if (_roadKmCache.containsKey(key)) continue;
+      if (_roadKmCache.containsKey(key)) {
+        continue;
+      }
 
       usableTargets.add(t);
       coords.add([lat, lng]);
     }
 
-    if (coords.isEmpty) return;
+    if (coords.isEmpty) {
+      return;
+    }
 
     try {
       final kms = await _vietmap.matrixDistanceKm(
@@ -1341,11 +1354,15 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
       for (var i = 0; i < usableTargets.length; i++) {
         final t = usableTargets[i];
         final km = kms[i];
-        if (km == null) continue;
+        if (km == null) {
+          continue;
+        }
         final key = _roadKey(a.id, a.name, t.id, t.name);
         _roadKmCache[key] = km;
       }
-      if (mounted) setState(() {});
+      if (mounted) {
+        setState(() {});
+      }
     } catch (_) {}
   }
 

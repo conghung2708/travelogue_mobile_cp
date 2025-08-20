@@ -33,7 +33,9 @@ class TripDayCard extends StatelessWidget {
   TripDayModel? _findDayData(TripPlanDetailModel detail, DateTime day) {
     final target = _ymd(day);
     for (final d in detail.days) {
-      if (_ymd(d.date) == target) return d;
+      if (_ymd(d.date) == target) {
+        return d;
+      }
     }
     return null;
   }
@@ -193,7 +195,6 @@ class TripDayCard extends StatelessWidget {
               SizedBox(height: 2.h),
               Column(
                 children: activities.asMap().entries.map((entry) {
-                  final index = entry.key;
                   final act = entry.value;
 
                   final title = act.name ?? 'Hoạt động';

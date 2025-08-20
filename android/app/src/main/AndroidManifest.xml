@@ -14,7 +14,7 @@
 
     <application
 
-        android:label="Go Young"
+        android:label="Travelogue"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
         <meta-data

@@ -1,14 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
-import 'package:travelogue_mobile/core/blocs/booking/booking_bloc.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
-import 'package:travelogue_mobile/core/repository/booking_repository.dart';
 import 'package:travelogue_mobile/model/args/reviews_screen_args.dart';
-import 'package:travelogue_mobile/model/args/tour_calendar_args.dart';
 import 'package:travelogue_mobile/model/booking/booking_model.dart';
-import 'package:travelogue_mobile/model/composite/tour_detail_composite_model.dart';
-import 'package:travelogue_mobile/model/event_model.dart';
 import 'package:travelogue_mobile/model/location_model.dart';
 import 'package:travelogue_mobile/model/news_model.dart';
 import 'package:travelogue_mobile/model/review_test_model.dart';
@@ -28,7 +22,6 @@ import 'package:travelogue_mobile/representation/festival/screens/festival_detai
 import 'package:travelogue_mobile/representation/festival/screens/festival_screen.dart';
 import 'package:travelogue_mobile/representation/home/screens/home_screen.dart';
 import 'package:travelogue_mobile/representation/review/screens/reviews_screen.dart';
-import 'package:travelogue_mobile/representation/hotel/screens/hotel_detail_screen.dart';
 import 'package:travelogue_mobile/representation/intro/screens/intro_screen.dart';
 import 'package:travelogue_mobile/representation/main_screen.dart';
 import 'package:travelogue_mobile/representation/home/screens/place_detail_screen.dart';
@@ -179,20 +172,28 @@ final Map<String, WidgetBuilder> routes = {
 
       // numbers: chấp nhận int/double/string
       int toInt(dynamic v, {int fallback = 0}) {
-        if (v is int) return v;
-        if (v is num) return v.toInt();
+        if (v is int) {
+          return v;
+        }
+        if (v is num) {
+          return v.toInt();
+        }
         return int.tryParse(v?.toString() ?? '') ?? fallback;
       }
 
       double toDouble(dynamic v, {double fallback = 0.0}) {
-        if (v is double) return v;
-        if (v is num) return v.toDouble();
+        if (v is double) {
+          return v;
+        }
+        if (v is num) {
+          return v.toDouble();
+        }
         return double.tryParse(v?.toString() ?? '') ?? fallback;
       }
 
       final adults = toInt(args['adults'], fallback: 1);
       final children = toInt(args['children'], fallback: 0);
-      final totalPrice = toDouble(args['totalPrice'], fallback: 0.0);
+      final totalPrice = toDouble(args['totalPrice'], fallback: 0);
 
       final startTime = args['startTime'] is DateTime
           ? args['startTime'] as DateTime
@@ -309,7 +310,7 @@ final Map<String, WidgetBuilder> routes = {
       );
     } catch (e) {
       return Scaffold(
-        body: Center(child: Text('Lỗi dữ liệu: ${e.toString()}')),
+        body: Center(child: Text('Lỗi dữ liệu: $e')),
       );
     }
   },

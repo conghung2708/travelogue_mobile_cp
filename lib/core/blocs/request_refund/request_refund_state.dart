@@ -1,5 +1,4 @@
 import 'package:equatable/equatable.dart';
-import 'package:travelogue_mobile/model/refund_request/refund_create_model.dart';
 import 'package:travelogue_mobile/model/refund_request/refund_request_model.dart';
 
 abstract class RefundState extends Equatable {
@@ -24,7 +23,6 @@ class RefundFailure extends RefundState {
   List<Object?> get props => [error];
 }
 
-// Khi load danh sách refund thành công
 class RefundListLoaded extends RefundState {
   final List<RefundRequestModel> refunds;
 
@@ -34,7 +32,6 @@ class RefundListLoaded extends RefundState {
   List<Object?> get props => [refunds];
 }
 
-// Khi load danh sách refund thất bại
 class RefundListLoadFailure extends RefundState {
   final String error;
 

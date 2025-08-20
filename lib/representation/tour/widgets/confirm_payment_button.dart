@@ -1,4 +1,4 @@
-// lib/features/tour/presentation/widgets/confirm_payment_button.dart
+// lib/representation/tour/widgets/confirm_payment_button.dart
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import 'package:travelogue_mobile/core/constants/color_constants.dart';
@@ -18,6 +18,10 @@ class ConfirmPaymentButton extends StatefulWidget {
   final String? bookingId;
   final String? media;
 
+  /// Truyền hàm này từ màn xác nhận:
+  ///   ({CreateBookingTourModel? model, String? error}) Function()
+  final ({CreateBookingTourModel? model, String? error}) Function()? payloadBuilder;
+
   const ConfirmPaymentButton({
     super.key,
     required this.enabled,
@@ -28,6 +32,7 @@ class ConfirmPaymentButton extends StatefulWidget {
     required this.children,
     required this.bookingId,
     required this.media,
+    this.payloadBuilder,
   });
 
   @override
@@ -38,22 +43,34 @@ class _ConfirmPaymentButtonState extends State<ConfirmPaymentButton> {
   bool _loading = false;
 
   Future<void> _handleConfirm(BuildContext context) async {
-    setState(() => _loading = true);
+    if (!widget.enabled || _loading) return;
 
+    setState(() => _loading = true);
     try {
       String? bookingId = widget.bookingId;
 
+      // 1) Chưa có booking → tạo mới bằng payloadBuilder
       if (bookingId == null) {
-        final booking = await BookingRepository().createBooking(
-          CreateBookingTourModel(
-            tourId: widget.tour.tourId!,
-            scheduledId: widget.schedule.scheduleId!,
-            promotionCode: null,
-            adultCount: widget.adults,
-            childrenCount: widget.children,
-          ),
-        );
+        final res = widget.payloadBuilder?.call();
+        if (res == null) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Không thể chuẩn bị dữ liệu đặt chỗ.')),
+            );
+          }
+          return;
+        }
+        if (res.error != null) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(res.error!)),
+            );
+          }
+          return;
+        }
 
+        final model = res.model!;
+        final booking = await BookingRepository().createBooking(model);
         if (booking == null || booking.id == null) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -62,10 +79,10 @@ class _ConfirmPaymentButtonState extends State<ConfirmPaymentButton> {
           }
           return;
         }
-
         bookingId = booking.id;
       }
 
+      // 2) Tạo link thanh toán
       final paymentUrl = await BookingRepository().createPaymentLink(bookingId);
       if (paymentUrl == null) {
         if (mounted) {
@@ -76,6 +93,7 @@ class _ConfirmPaymentButtonState extends State<ConfirmPaymentButton> {
         return;
       }
 
+      // 3) Điều hướng sang màn QR
       if (!mounted) return;
       Navigator.push(
         context,
@@ -86,10 +104,10 @@ class _ConfirmPaymentButtonState extends State<ConfirmPaymentButton> {
             startTime: widget.startTime ?? DateTime.now(),
             adults: widget.adults,
             children: widget.children,
-            totalPrice: (widget.adults * (widget.schedule.adultPrice ?? 0).toDouble()) +
-                (widget.children * (widget.schedule.childrenPrice ?? 0).toDouble()),
+            totalPrice: (widget.adults * (widget.schedule.adultPrice ?? 0)) +
+                (widget.children * (widget.schedule.childrenPrice ?? 0)),
             checkoutUrl: paymentUrl,
-               bookingId: bookingId,
+            bookingId: bookingId,
           ),
         ),
       );
@@ -110,7 +128,11 @@ class _ConfirmPaymentButtonState extends State<ConfirmPaymentButton> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
         child: _loading
-            ? SizedBox(height: 2.4.h, width: 2.4.h, child: const CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+            ? SizedBox(
+                height: 2.4.h,
+                width: 2.4.h,
+                child: const CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+              )
             : Text(
                 "Xác nhận và thanh toán",
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.sp, color: Colors.white),

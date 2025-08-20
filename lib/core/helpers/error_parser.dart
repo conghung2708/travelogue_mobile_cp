@@ -1,7 +1,9 @@
 // lib/core/network/error_parser.dart
 
 String? pickErrorMessage(dynamic body) {
-  if (body == null) return null;
+  if (body == null) {
+    return null;
+  }
   try {
     if (body is Map<String, dynamic>) {
       // data.message

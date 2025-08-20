@@ -1,3 +1,4 @@
+// lib/representation/tour/widgets/tour_detail_content.dart
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
@@ -75,7 +76,7 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
           isBooked: isBooked,
         ),
         DefaultTabController(
-          length: 3,
+          length: 4, 
           child: Column(
             children: [
               TabBar(
@@ -86,15 +87,17 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
                   Tab(text: 'Chi tiết Tour'),
                   Tab(text: 'Lưu ý'),
                   Tab(text: 'Trưởng đoàn'),
+                  Tab(text: 'Đánh giá'), 
                 ],
               ),
               SizedBox(
                 height: 60.h,
                 child: TabBarView(
                   children: [
-                    _buildTimeline(),
+                    _buildDetailTab(context), 
                     _buildMarkdownNotice(context),
                     _buildTourGuideInfo(),
+                    _buildReviewsTab(), 
                   ],
                 ),
               )
@@ -105,56 +108,74 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
     );
   }
 
- Widget _buildTimeline() {
-  final List<TourDayModel> days = tour.days ?? [];
-
-  return ListView.builder(
-    itemCount: days.length,
-    shrinkWrap: true,
-    physics: const ClampingScrollPhysics(),
-    itemBuilder: (context, index) {
-      final day = days[index];
-      final activities = day.activities ?? [];
-
-      return Card(
-        margin: EdgeInsets.symmetric(vertical: 1.h, horizontal: 4.w),
-        color: Colors.blue.shade50,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: ExpansionTile(
-          maintainState: true,
-          tilePadding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
-          childrenPadding: EdgeInsets.only(bottom: 2.h),
-          title: Text(
-            'Ngày ${day.dayNumber ?? index + 1}',
-            style: TextStyle(
-              color: Colors.blue,
-              fontWeight: FontWeight.bold,
-              fontSize: 14.sp,
-            ),
+  Widget _buildDetailTab(BuildContext context) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.symmetric(vertical: 1.h),
+      child: Column(
+        children: [
+          _StartEndStrip(
+            startName: tour.startLocation?.name,
+            startAddress: tour.startLocation?.address,
+            endName: tour.endLocation?.name,
+            endAddress: tour.endLocation?.address,
           ),
-          children: activities.map((activity) {
-            final imageUrl = activity.imageUrl?.isNotEmpty == true
-                ? activity.imageUrl!
-                : AssetHelper.img_default;
+          SizedBox(height: 1.h),
+          _buildTimeline(),
+        ],
+      ),
+    );
+  }
 
-            return Padding(
-              padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
-              child: TimelineCardTourItem(
-                item: activity,
-                name: activity.name ?? 'Hoạt động',
-                imageUrls: [imageUrl],
-                description: activity.description ?? '',
-                duration: activity.duration,
-                note: activity.notes,
+  Widget _buildTimeline() {
+    final List<TourDayModel> days = tour.days ?? [];
+
+    return ListView.builder(
+      itemCount: days.length,
+      shrinkWrap: true,
+      physics: const ClampingScrollPhysics(),
+      itemBuilder: (context, index) {
+        final day = days[index];
+        final activities = day.activities ?? [];
+
+        return Card(
+          margin: EdgeInsets.symmetric(vertical: 1.h, horizontal: 4.w),
+          color: Colors.blue.shade50,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: ExpansionTile(
+            maintainState: true,
+            tilePadding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
+            childrenPadding: EdgeInsets.only(bottom: 2.h),
+            title: Text(
+              'Ngày ${day.dayNumber ?? index + 1}',
+              style: TextStyle(
+                color: Colors.blue,
+                fontWeight: FontWeight.bold,
+                fontSize: 14.sp,
               ),
-            );
-          }).toList(),
-        ),
-      );
-    },
-  );
-}
+            ),
+            children: activities.map((activity) {
+              final imageUrl = activity.imageUrl?.isNotEmpty == true
+                  ? activity.imageUrl!
+                  : AssetHelper.img_default;
 
+              return Padding(
+                padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+                child: TimelineCardTourItem(
+                  item: activity,
+                  name: activity.name ?? 'Hoạt động',
+                  imageUrls: [imageUrl],
+                  description: activity.description ?? '',
+                  duration: activity.duration,
+                  note: activity.notes,
+                ),
+              );
+            }).toList(),
+          ),
+        );
+      },
+    );
+  }
 
   Widget _buildMarkdownNotice(BuildContext context) {
     return SingleChildScrollView(
@@ -168,6 +189,7 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
     );
   }
 
+
   Widget _buildTourGuideInfo() {
     if (guide != null) {
       return TourGuideProfile(guide: guide!);
@@ -180,5 +202,188 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
         ),
       );
     }
+  }
+
+
+  Widget _buildReviewsTab() {
+    final reviews = tour.reviews ?? [];
+    final avg = tour.averageRating;
+    final total = tour.totalReviews ?? reviews.length;
+
+    if (reviews.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.all(4.w),
+          child: Text('Chưa có đánh giá cho tour này',
+              style: TextStyle(fontSize: 12.5.sp)),
+        ),
+      );
+    }
+
+    return ListView(
+      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+      children: [
+
+        Container(
+          padding: EdgeInsets.all(3.w),
+          decoration: BoxDecoration(
+            color: Colors.amber.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.star_rate_rounded,
+                  size: 22.sp, color: Colors.amber[800]),
+              SizedBox(width: 2.w),
+              Text(
+                '${avg?.toStringAsFixed(1) ?? '-'} / 5.0',
+                style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w700),
+              ),
+              const Spacer(),
+              Text('$total đánh giá',
+                  style: TextStyle(fontSize: 12.sp, color: Colors.black54)),
+            ],
+          ),
+        ),
+        SizedBox(height: 1.5.h),
+
+        ...reviews.map((r) {
+          return Card(
+            elevation: 0,
+            margin: EdgeInsets.only(bottom: 1.h),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            color: Colors.blueGrey.withOpacity(0.05),
+            child: ListTile(
+              contentPadding:
+                  EdgeInsets.symmetric(horizontal: 4.w, vertical: 0.6.h),
+              leading: CircleAvatar(
+                child: Text((r.userName?.isNotEmpty == true
+                    ? r.userName!.substring(0, 1)
+                    : '?')),
+              ),
+              title: Text(r.userName ?? 'Ẩn danh',
+                  style: const TextStyle(fontWeight: FontWeight.w600)),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: 0.5.h),
+                  Row(
+                    children: List.generate(5, (i) {
+                      final filled = (r.rating ?? 0) > i;
+                      return Icon(
+                        filled ? Icons.star_rounded : Icons.star_border_rounded,
+                        size: 16.sp,
+                        color: Colors.amber[700],
+                      );
+                    }),
+                  ),
+                  SizedBox(height: 0.5.h),
+                  Text(r.comment ?? ''),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
+      ],
+    );
+  }
+}
+
+class _StartEndStrip extends StatelessWidget {
+  final String? startName;
+  final String? startAddress;
+  final String? endName;
+  final String? endAddress;
+
+  const _StartEndStrip({
+    required this.startName,
+    required this.startAddress,
+    required this.endName,
+    required this.endAddress,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hasStart = (startName ?? '').isNotEmpty;
+    final hasEnd = (endName ?? '').isNotEmpty;
+
+    if (!hasStart && !hasEnd) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+      padding: EdgeInsets.all(3.w),
+      decoration: BoxDecoration(
+        color: Colors.green.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.green.withOpacity(0.2)),
+      ),
+      child: Column(
+        children: [
+          if (hasStart)
+            _LocRow(
+                icon: Icons.flag_circle_rounded,
+                label: 'Điểm bắt đầu',
+                name: startName!,
+                address: startAddress),
+          if (hasStart && hasEnd)
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 0.6.h),
+              child: Divider(height: 0, color: Colors.green.withOpacity(0.2)),
+            ),
+          if (hasEnd)
+            _LocRow(
+                icon: Icons.check_circle_rounded,
+                label: 'Điểm kết thúc',
+                name: endName!,
+                address: endAddress),
+        ],
+      ),
+    );
+  }
+}
+
+class _LocRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String name;
+  final String? address;
+
+  const _LocRow({
+    required this.icon,
+    required this.label,
+    required this.name,
+    this.address,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, color: Colors.green[700]),
+        SizedBox(width: 3.w),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label,
+                  style: TextStyle(
+                      fontSize: 12.sp,
+                      color: Colors.green[700],
+                      fontWeight: FontWeight.w600)),
+              SizedBox(height: 0.3.h),
+              Text(name,
+                  style: TextStyle(
+                      fontSize: 13.sp, fontWeight: FontWeight.w700)),
+              if ((address ?? '').isNotEmpty)
+                Text(address!,
+                    style: TextStyle(fontSize: 11.sp, color: Colors.black54)),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }

@@ -6,16 +6,16 @@ import 'package:sizer/sizer.dart';
 import 'package:travelogue_mobile/core/blocs/booking/booking_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/booking/booking_event.dart';
 import 'package:travelogue_mobile/core/blocs/booking/booking_state.dart';
-import 'package:travelogue_mobile/core/constants/color_constants.dart';
+
 import 'package:travelogue_mobile/model/tour_guide/create_booking_tour_guide_model.dart';
 import 'package:travelogue_mobile/model/tour_guide/tour_guide_model.dart';
 import 'package:travelogue_mobile/representation/tour_guide/screens/tour_guide_qr_payment_screen.dart';
+import 'package:travelogue_mobile/representation/tour_guide/widgets/confirm_total_bar.dart';
+import 'package:travelogue_mobile/representation/tour_guide/widgets/exit_confirm_dialog.dart';
+import 'package:travelogue_mobile/representation/tour_guide/widgets/guide_info_card.dart';
+import 'package:travelogue_mobile/representation/tour_guide/widgets/guide_policy_card.dart';
+import 'package:travelogue_mobile/representation/tour_guide/widgets/guide_top_banner.dart';
 
-import '../widgets/guide_top_banner.dart';
-import '../widgets/guide_info_card.dart';
-import '../widgets/guide_policy_card.dart';
-import '../widgets/confirm_total_bar.dart';
-import '../widgets/exit_confirm_dialog.dart';
 
 class GuideBookingConfirmationScreen extends StatefulWidget {
   static const String routeName = '/guide-booking-confirmation';
@@ -55,7 +55,9 @@ class _GuideBookingConfirmationScreenState
   bool get _lockedByTripPlan => _tripPlanId.isNotEmpty;
 
   void _showInfo(String msg) {
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(msg)),
     );
@@ -164,6 +166,7 @@ class _GuideBookingConfirmationScreenState
           _showError(state.error);
         }
       },
+      // ignore: deprecated_member_use
       child: WillPopScope(
         onWillPop: () async => await ExitConfirmDialog.show(context) ?? false,
         child: Stack(
@@ -177,7 +180,9 @@ class _GuideBookingConfirmationScreenState
                       guide: widget.guide,
                       onBackPressed: () async {
                         final ok = await ExitConfirmDialog.show(context);
-                        if (ok == true && mounted) Navigator.pop(context);
+                        if (ok == true && mounted) {
+                          Navigator.pop(context);
+                        }
                       },
                     ),
                     Expanded(

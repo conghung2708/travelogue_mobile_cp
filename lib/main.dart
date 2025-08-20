@@ -15,8 +15,6 @@ import 'package:sizer/sizer.dart';
 import 'package:travelogue_mobile/core/blocs/app_bloc.dart';
 import 'package:travelogue_mobile/core/constants/color_constants.dart';
 import 'package:travelogue_mobile/data/data_local/base_local_data.dart';
-import 'package:travelogue_mobile/representation/hobby/screens/hobby_screen.dart';
-import 'package:travelogue_mobile/representation/trip_plan/screens/my_trip_plan_screen.dart';
 import 'package:travelogue_mobile/routes.dart';
 import 'package:travelogue_mobile/representation/main_screen.dart';
 

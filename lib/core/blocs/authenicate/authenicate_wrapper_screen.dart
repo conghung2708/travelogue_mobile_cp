@@ -19,9 +19,10 @@ class AuthWrapperScreen extends StatelessWidget {
     return FutureBuilder(
       future: _checkLogin(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData)
+        if (!snapshot.hasData) {
           return const Scaffold(
               body: Center(child: CircularProgressIndicator()));
+        }
         return snapshot.data! ? const MainScreen() : const LoginScreen();
       },
     );

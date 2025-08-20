@@ -16,7 +16,7 @@ class FestivalDetailScreenBackground extends StatelessWidget {
       child: ClipPath(
         clipper: ImageClipper(),
         child: Image.network(
-          festival.imgUrlFirst ?? '',
+          festival.imgUrlFirst,
           fit: BoxFit.cover,
           width: screenWidth,
           color: const Color(0x99000000),

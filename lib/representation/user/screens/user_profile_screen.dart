@@ -1,5 +1,5 @@
-// lib/representation/user/screens/user_profile_screen.dart
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 import 'package:sizer/sizer.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
@@ -28,11 +28,9 @@ class UserProfileScreen extends StatefulWidget {
 }
 
 class _UserProfileScreenState extends State<UserProfileScreen> {
-  static const int _minWithdraw = 10000; // tối thiểu 10.000 đ
-
   bool _loading = true;
   String? _error;
-  late var _user = UserLocal().getUser(); // có local thì show trước
+  late var _user = UserLocal().getUser();
 
   @override
   void initState() {
@@ -60,7 +58,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         );
       }
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _loading = false);
+      }
     }
   }
 
@@ -86,8 +86,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               SizedBox(height: 5.h),
               _buildProfileHeader(context),
               SizedBox(height: 2.h),
-
-              // Ví của tôi
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 5.w),
                 child: WalletCard(
@@ -108,17 +106,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     Navigator.pushNamed(
                       context,
                       WithdrawRequestScreen.routeName,
-                      arguments:
-                          WithdrawRequestArgs(balance: wallet), // 👈 gửi số dư
+                      arguments: WithdrawRequestArgs(balance: wallet),
                     );
                   },
                 ),
               ),
-
               SizedBox(height: 2.h),
-
-              // Nội dung còn lại
-              Container(
+              DecoratedBox(
                 decoration: const BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
@@ -163,7 +157,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         "Yêu cầu rút tiền",
                         context: context,
                         onTap: () {
-                          // cũng chặn ở menu
                           final walletNow =
                               (_user.userWalletAmount ?? 0).toDouble();
                           // if (walletNow < _minWithdraw) {
@@ -273,8 +266,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       ),
     );
   }
-
-  // ---- UI pieces ----
 
   Widget _buildProfileHeader(BuildContext context) {
     final user = _user;
@@ -432,8 +423,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     );
   }
 
-  // ---- Actions ----
-
   Future<void> _openOrderManager(BuildContext context) async {
     showDialog(
       context: context,
@@ -443,7 +432,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     try {
       final bookings = await BookingRepository().getAllMyBookings();
       if (context.mounted) {
-        Navigator.of(context).pop(); // close loader
+        Navigator.of(context).pop();
         Navigator.pushNamed(
           context,
           MyBookingScreen.routeName,
@@ -487,15 +476,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           title: SizedBox(
             height: 160,
             width: double.infinity,
-            child: Image.asset(
-              AssetHelper.img_nui_ba_den_3,
-              fit: BoxFit.cover,
-              errorBuilder: (c, e, st) => Container(
-                color: const Color(0xFFE3F2FD),
-                alignment: Alignment.center,
-                child: const Icon(Icons.flight_takeoff,
-                    size: 48, color: Color(0xFF1565C0)),
-              ),
+            child: Lottie.asset(
+              'assets/animations/sad_face.json',
+              fit: BoxFit.contain,
+              repeat: true,
             ),
           ),
           content: const SingleChildScrollView(
@@ -530,7 +514,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   style: TextStyle(fontWeight: FontWeight.w600)),
             ),
             ElevatedButton.icon(
-              icon: const Icon(Icons.logout, size: 18),
+              icon: const Icon(Icons.logout, size: 18, color: Colors.white),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF1565C0),
                 shape: RoundedRectangleBorder(
@@ -543,7 +527,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 onLogoutSuccess();
               },
               label: const Text("Tạm biệt",
-                  style: TextStyle(fontWeight: FontWeight.w600)),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white, // ✅ Chữ trắng
+                  )),
             ),
           ],
         );
@@ -552,106 +539,104 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   }
 
   // ---- Dialog: số dư chưa đủ ----
-  void _showMinBalanceDialog(
-    BuildContext context, {
-    required num current,
-    required num requiredAmount,
-  }) {
-    final primary = const Color(0xFF1565C0);
-    showDialog(
-      context: context,
-      builder: (_) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // header gradient + icon
-            Container(
-              height: 120,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [primary.withOpacity(.95), primary],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(18)),
-              ),
-              child: const Center(
-                child: CircleAvatar(
-                  radius: 34,
-                  backgroundColor: Colors.white,
-                  child: Icon(Icons.info_rounded,
-                      size: 34, color: Color(0xFF1565C0)),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
-              child: Text(
-                'Số dư chưa đủ để rút',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 18,
-                  color: primary,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Text(
-                'Bạn cần tối thiểu ${_formatVND(requiredAmount)} để thực hiện yêu cầu rút tiền.\n'
-                'Số dư hiện tại: ${_formatVND(current)}.',
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 14),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: primary,
-                        side: BorderSide(color: primary),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
-                      ),
-                      child: const Text(
-                        'Đã hiểu',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primary,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
-                      ),
-                      child: const Text('Đóng'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  // void _showMinBalanceDialog(
+  //   BuildContext context, {
+  //   required num current,
+  //   required num requiredAmount,
+  // }) {
+  //   final primary = const Color(0xFF1565C0);
+  //   showDialog(
+  //     context: context,
+  //     builder: (_) => Dialog(
+  //       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+  //       child: Column(
+  //         mainAxisSize: MainAxisSize.min,
+  //         children: [
+  //           // header gradient + icon
+  //           Container(
+  //             height: 120,
+  //             width: double.infinity,
+  //             decoration: BoxDecoration(
+  //               gradient: LinearGradient(
+  //                 colors: [primary.withOpacity(.95), primary],
+  //                 begin: Alignment.topLeft,
+  //                 end: Alignment.bottomRight,
+  //               ),
+  //               borderRadius:
+  //                   const BorderRadius.vertical(top: Radius.circular(18)),
+  //             ),
+  //             child: const Center(
+  //               child: CircleAvatar(
+  //                 radius: 34,
+  //                 backgroundColor: Colors.white,
+  //                 child: Icon(Icons.info_rounded,
+  //                     size: 34, color: Color(0xFF1565C0)),
+  //               ),
+  //             ),
+  //           ),
+  //           Padding(
+  //             padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+  //             child: Text(
+  //               'Số dư chưa đủ để rút',
+  //               textAlign: TextAlign.center,
+  //               style: TextStyle(
+  //                 fontSize: 18,
+  //                 color: primary,
+  //                 fontWeight: FontWeight.w800,
+  //               ),
+  //             ),
+  //           ),
+  //           Padding(
+  //             padding: const EdgeInsets.symmetric(horizontal: 20),
+  //             child: Text(
+  //               'Bạn cần tối thiểu ${_formatVND(requiredAmount)} để thực hiện yêu cầu rút tiền.\n'
+  //               'Số dư hiện tại: ${_formatVND(current)}.',
+  //               textAlign: TextAlign.center,
+  //               style: const TextStyle(fontSize: 14),
+  //             ),
+  //           ),
+  //           const SizedBox(height: 12),
+  //           Padding(
+  //             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+  //             child: Row(
+  //               children: [
+  //                 Expanded(
+  //                   child: OutlinedButton(
+  //                     onPressed: () => Navigator.of(context).pop(),
+  //                     style: OutlinedButton.styleFrom(
+  //                       foregroundColor: primary,
+  //                       side: BorderSide(color: primary),
+  //                       shape: RoundedRectangleBorder(
+  //                           borderRadius: BorderRadius.circular(10)),
+  //                     ),
+  //                     child: const Text(
+  //                       'Đã hiểu',
+  //                       style: TextStyle(color: Colors.white),
+  //                     ),
+  //                   ),
+  //                 ),
+  //                 const SizedBox(width: 10),
+  //                 Expanded(
+  //                   child: ElevatedButton(
+  //                     onPressed: () => Navigator.of(context).pop(),
+  //                     style: ElevatedButton.styleFrom(
+  //                       backgroundColor: primary,
+  //                       shape: RoundedRectangleBorder(
+  //                           borderRadius: BorderRadius.circular(10)),
+  //                     ),
+  //                     child: const Text('Đóng'),
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
 
-  // ---- Utils ----
   String _formatVND(num value) {
-    // giữ ký tự "đ" theo mong muốn của bạn
     final s = value.toStringAsFixed(0);
     final rev = s.split('').reversed.join();
     final parts = <String>[];
@@ -662,7 +647,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   }
 }
 
-// ---------- Wallet Card ----------
 class WalletCard extends StatelessWidget {
   const WalletCard({
     super.key,
@@ -697,7 +681,6 @@ class WalletCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Leading icon chip
           Container(
             width: 40,
             height: 40,
@@ -709,7 +692,6 @@ class WalletCard extends StatelessWidget {
                 color: primary),
           ),
           const SizedBox(width: 12),
-          // Title + balance
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -732,7 +714,6 @@ class WalletCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          // Actions: a compact “pill” with 2 mini buttons
           Container(
             height: 40,
             decoration: BoxDecoration(
@@ -743,7 +724,6 @@ class WalletCard extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Refresh (icon-only)
                 _PillIconButton(
                   icon: isLoading
                       ? const SizedBox(
@@ -755,14 +735,12 @@ class WalletCard extends StatelessWidget {
                   onTap: isLoading ? null : () => onRefresh(),
                   tooltip: 'Làm mới',
                 ),
-                // Divider chấm nhỏ
                 Container(
                   width: 1,
                   height: 16,
                   margin: const EdgeInsets.symmetric(horizontal: 2),
                   color: primary.withOpacity(.15),
                 ),
-                // Withdraw (tiny filled button)
                 Padding(
                   padding: const EdgeInsets.only(right: 6, left: 2),
                   child: ElevatedButton(
@@ -804,16 +782,6 @@ class _PillIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final btn = InkWell(
-      onTap: onTap,
-      customBorder: const CircleBorder(),
-      child: const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        child: SizedBox.shrink(), // placeholder, icon injected below
-      ),
-    );
-
-    // wrap to place icon correctly
     return Tooltip(
       message: tooltip ?? '',
       triggerMode: tooltip == null

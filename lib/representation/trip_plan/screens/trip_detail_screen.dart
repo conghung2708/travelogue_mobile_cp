@@ -40,7 +40,7 @@ class TripDetailScreen extends StatelessWidget {
                 return Center(child: Text(state.message));
               } else if (state is GetTripPlanDetailSuccess) {
                 final TripPlanDetailModel trip = state.tripPlanDetail;
-                final days = _getTripDays(trip.startDate, trip.endDate);
+                _getTripDays(trip.startDate, trip.endDate);
                 final currencyFormat =
                     NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
 

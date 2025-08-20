@@ -10,9 +10,7 @@ import 'package:travelogue_mobile/core/blocs/authenicate/authenicate_bloc.dart';
 import 'package:travelogue_mobile/data/data_local/user_local.dart';
 import 'package:travelogue_mobile/representation/user/screens/otp_vertification_screen.dart';
 
-// Repositories + models
 import 'package:travelogue_mobile/core/repository/user_repository.dart';
-import 'package:travelogue_mobile/model/user/user_profile_model.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -24,27 +22,21 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen>
     with SingleTickerProviderStateMixin {
-  // Controllers & state
   final _nameController = TextEditingController();
   final _addressController = TextEditingController();
   final _phoneController = TextEditingController();
 
-  // Email (readonly, giữ nguyên như yêu cầu)
   String _email = "";
   late final TextEditingController _emailReadonlyController;
 
-  // Animation an toàn
   AnimationController? _animController;
   Animation<double>? _fadeAnim;
 
-  // Avatar
   File? _avatarFile;
   String? _avatarUrl;
 
-  // Save state
   bool _saving = false;
 
-  // Repo
   final _userRepo = UserRepository();
 
   @override
@@ -55,14 +47,11 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     _email = user.email ?? '';
     _emailReadonlyController = TextEditingController(text: _email);
 
-    // Optional fields
     _addressController.text = user.address ?? '';
     _phoneController.text = user.phoneNumber ?? '';
 
-    // Avatar
     _avatarUrl = user.avatarUrl;
 
-    // init animation
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -89,10 +78,14 @@ class _EditProfileScreenState extends State<EditProfileScreen>
         source: ImageSource.gallery,
         imageQuality: 85,
       );
-      if (picked == null) return;
+      if (picked == null) {
+        return;
+      }
       setState(() => _avatarFile = File(picked.path));
     } on PlatformException catch (e) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Không thể chọn ảnh: ${e.message}')),
       );
@@ -109,11 +102,12 @@ class _EditProfileScreenState extends State<EditProfileScreen>
       return;
     }
 
-    if (_saving) return;
+    if (_saving) {
+      return;
+    }
     setState(() => _saving = true);
 
     try {
-      // 1) Upload avatar nếu có file mới chọn
       if (_avatarFile != null) {
         print('[➡️ UPDATE AVATAR] file=${_avatarFile!.path}');
         final newUrl = await _userRepo.updateAvatar(_avatarFile!);
@@ -123,13 +117,13 @@ class _EditProfileScreenState extends State<EditProfileScreen>
           _avatarUrl = newUrl;
           final merged = user.copyWith(avatarUrl: newUrl);
           UserLocal().saveUser(merged);
-          if (mounted) setState(() {});
+          if (mounted) {
+            setState(() {});
+          }
         } else {
           print('[⚠️] Upload avatar không trả về URL.');
         }
       }
-
-      // 2) Update profile (tên, sđt, địa chỉ…)
       final name = _nameController.text.trim();
       final phone = _phoneController.text.trim().isEmpty
           ? null
@@ -148,7 +142,6 @@ class _EditProfileScreenState extends State<EditProfileScreen>
       );
       print('[⬅️ UPDATE PROFILE] $updated');
 
-      // Cập nhật cache local
       if (updated != null) {
         final merged = user.copyWith(
           fullName: updated.fullName ?? name,
@@ -166,19 +159,25 @@ class _EditProfileScreenState extends State<EditProfileScreen>
         );
         UserLocal().saveUser(merged);
       }
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Thông tin đã được cập nhật!")),
       );
       Navigator.pop(context, true);
     } catch (e) {
       print('[❌ UPDATE PROFILE ERROR] $e');
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Lỗi cập nhật: $e')),
       );
     } finally {
-      if (mounted) setState(() => _saving = false);
+      if (mounted) {
+        setState(() => _saving = false);
+      }
     }
   }
 
@@ -202,22 +201,24 @@ class _EditProfileScreenState extends State<EditProfileScreen>
         ) ??
         false;
 
-    if (!ok) return;
+    if (!ok) {
+      return;
+    }
 
-    // GIỮ NGUYÊN logic gửi OTP
     AppBloc.authenicateBloc.add(
       SendOTPEmailEvent(
         context: context,
         email: _email,
       ),
     );
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
     Navigator.pushNamed(context, OtpVerificationScreen.routeName);
   }
 
   @override
   Widget build(BuildContext context) {
-    // Fallback animation nếu hot-reload chưa init kịp
     final opacityAnim = _fadeAnim ?? const AlwaysStoppedAnimation<double>(1);
 
     return Scaffold(
@@ -249,7 +250,6 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     );
   }
 
-  /// Header Gradient
   Widget _buildHeader(BuildContext context) {
     return Container(
       width: double.infinity,
@@ -285,7 +285,6 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     );
   }
 
-  /// Profile Card (đẹp + gọn)
   Widget _buildProfileCard() {
     return Card(
       elevation: 10,
@@ -390,7 +389,6 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     );
   }
 
-  /// Change Password (GIỮ NGUYÊN)
   Widget _buildChangePasswordSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -426,7 +424,6 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     );
   }
 
-  /// Save Button (gradient, loading state)
   Widget _buildSaveButton() {
     return SizedBox(
       width: double.infinity,
@@ -476,7 +473,6 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     );
   }
 
-  /// Label
   Widget _buildLabel(String text) {
     return Padding(
       padding: EdgeInsets.only(left: 1.w, bottom: 0.8.h),
@@ -490,7 +486,6 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     );
   }
 
-  /// Text Field với icon nền tròn xanh nhạt
   Widget _buildTextField(
     TextEditingController controller, {
     IconData? icon,
