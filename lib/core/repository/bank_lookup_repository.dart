@@ -6,7 +6,6 @@ import 'package:travelogue_mobile/model/bank_account/bank_lookup_models.dart';
 class BankLookupRepository {
   final Dio _dio;
 
-  // ⚠️ Dev only: hardcode cho nhanh
   static const String _apiKey    = '243d0133-27ee-413b-a006-1363e6c4629ekey';
   static const String _apiSecret = '9214afd9-f1bb-4b49-ba0c-f2e84c03d548secret';
 
@@ -33,7 +32,7 @@ class BankLookupRepository {
         'Content-Type': 'application/json',
       };
 
-  /// Danh sách ngân hàng
+
   Future<List<BankLookupItem>> listBanks() async {
     try {
       final res = await _dio.get('/api/bank/list', options: Options(headers: _headers()));
@@ -53,7 +52,7 @@ class BankLookupRepository {
     }
   }
 
-  /// Tra cứu tên chủ TK
+
   Future<String> verifyAccount({
     required String bankCode,
     required String accountNumber,
@@ -62,7 +61,7 @@ class BankLookupRepository {
 
     try {
       final res = await _dio.post(
-        '/api/bank/id-lookup-prod',        // ✅ endpoint đúng theo doc mới
+        '/api/bank/id-lookup-prod',
         options: Options(headers: _headers()),
         data: {'bank': bankCode, 'account': accountNumber},
       );
