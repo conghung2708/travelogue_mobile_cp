@@ -5,14 +5,22 @@ import 'package:sizer/sizer.dart';
 
 import 'package:travelogue_mobile/core/constants/color_constants.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
+
+import 'package:travelogue_mobile/model/booking/booking_participant_model.dart';
 import 'package:travelogue_mobile/model/workshop/schedule_model.dart';
 import 'package:travelogue_mobile/model/workshop/workshop_detail_model.dart';
+
+import 'package:travelogue_mobile/representation/tour/widgets/participants_editor.dart';
+import 'package:travelogue_mobile/representation/tour/widgets/tour_back_button.dart';
+import 'package:travelogue_mobile/representation/tour/widgets/tour_team_background.dart';
+import 'package:travelogue_mobile/representation/tour/widgets/tour_team_title.dart';
+
 import 'package:travelogue_mobile/representation/workshop/screens/workshop_payment_confirmation_screen.dart';
 
 class WorkshopBookingScreen extends StatefulWidget {
   final String workshopName;
   final ScheduleModel schedule;
-    final WorkshopDetailModel workshop; 
+  final WorkshopDetailModel workshop;
 
   const WorkshopBookingScreen({
     super.key,
@@ -26,28 +34,144 @@ class WorkshopBookingScreen extends StatefulWidget {
 }
 
 class _WorkshopBookingScreenState extends State<WorkshopBookingScreen> {
-  int adultCount = 1;
-  int childrenCount = 0;
+  final fmt = NumberFormat('#,###');
+
+  // ==== Participants like selector ====
+  final List<BookingParticipantModel> _rows = [];
+
+  @override
+  void initState() {
+    super.initState();
+    // luôn có sẵn 1 người lớn để không bị trống
+    _rows.add(
+      BookingParticipantModel(
+        type: 1,
+        fullName: '',
+        gender: 1,
+        dateOfBirth: DateTime(1990, 1, 1),
+      ),
+    );
+  }
+
+  // ==== Derived values ====
+  int get adultCount => _rows.where((e) => e.type == 1).length;
+  int get childrenCount => _rows.where((e) => e.type == 2).length;
 
   int get maxSlot => widget.schedule.maxParticipant ?? 0;
   int get booked => widget.schedule.currentBooked ?? 0;
-  int get available => maxSlot - booked;
-  int get totalPeople => adultCount + childrenCount;
-  int get remaining => available - totalPeople;
+  int get available => (maxSlot > 0) ? (maxSlot - booked) : 999999;
 
-  final fmt = NumberFormat('#,###');
+  double get _adultPrice => widget.schedule.adultPrice?.toDouble() ?? 0;
+  double get _childPrice => widget.schedule.childrenPrice?.toDouble() ?? 0;
 
   double get totalPrice =>
-      (adultCount * (widget.schedule.adultPrice ?? 0)) +
-      (childrenCount * (widget.schedule.childrenPrice ?? 0));
+      adultCount * _adultPrice + childrenCount * _childPrice;
 
-  bool canAdd() => totalPeople < available;
-
-  void _showLimitSnack() {
+  // ==== Helpers ====
+  void _limitSnack(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Chỉ còn $available chỗ trống.'),
-        backgroundColor: Colors.redAccent,
+      SnackBar(content: Text(message), backgroundColor: Colors.redAccent),
+    );
+  }
+
+  Future<void> _pickDob(int index) async {
+    final now = DateTime.now();
+    final p = _rows[index];
+
+    DateTime firstDate, lastDate, init;
+
+    if (p.type == 2) {
+      // Trẻ em: 5–11
+      firstDate = DateTime(now.year - 11, now.month, now.day);
+      lastDate = DateTime(now.year - 5, now.month, now.day);
+      init = (p.dateOfBirth.isBefore(firstDate) ||
+              p.dateOfBirth.isAfter(lastDate))
+          ? DateTime(now.year - 8, now.month, now.day)
+          : p.dateOfBirth;
+    } else {
+      // Người lớn: ≥12
+      firstDate = DateTime(now.year - 100, 1, 1);
+      lastDate = DateTime(now.year - 12, now.month, now.day);
+      init = (p.dateOfBirth.isAfter(lastDate) ||
+              p.dateOfBirth.isBefore(firstDate))
+          ? DateTime(now.year - 30, now.month, now.day)
+          : p.dateOfBirth;
+    }
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: init,
+      firstDate: firstDate,
+      lastDate: lastDate,
+      helpText: 'Chọn ngày sinh',
+      locale: const Locale('vi', 'VN'),
+    );
+
+    if (picked != null) {
+      setState(() {
+        _rows[index] = BookingParticipantModel(
+          type: p.type,
+          fullName: p.fullName,
+          gender: p.gender,
+          dateOfBirth: picked,
+        );
+      });
+    }
+  }
+
+  void _addRow() {
+    // không chặn ở đây (để user thêm thoải mái), sẽ check khi bấm xác nhận
+    setState(() {
+      _rows.add(
+        BookingParticipantModel(
+          type: 1,
+          fullName: '',
+          gender: 1,
+          dateOfBirth: DateTime(1990, 1, 1),
+        ),
+      );
+    });
+  }
+
+  void _removeRow(int i) => setState(() => _rows.removeAt(i));
+
+  void _onConfirm() {
+    // validate tên
+    if (_rows.isEmpty || _rows.any((p) => p.fullName.trim().isEmpty)) {
+      _limitSnack('Vui lòng nhập đầy đủ họ tên hành khách.');
+      return;
+    }
+    // validate tuổi theo type
+    for (int i = 0; i < _rows.length; i++) {
+      final p = _rows[i];
+      final age = _ageFromDob(p.dateOfBirth);
+      if (p.type == 2 && (age < 5 || age > 11)) {
+        _limitSnack('Hành khách ${i + 1} phải trong độ tuổi Trẻ em (5–11).');
+        return;
+      }
+      if (p.type == 1 && age < 12) {
+        _limitSnack(
+            'Hành khách ${i + 1} (Người lớn) phải từ 12 tuổi trở lên.');
+        return;
+      }
+    }
+    // check slot
+    final totalPeople = _rows.length;
+    if (totalPeople > available) {
+      _limitSnack('Chỉ còn $available chỗ trống.');
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => WorkshopPaymentConfirmationScreen(
+          workshop: widget.workshop,
+          schedule: widget.schedule,
+          adults: adultCount,
+          children: childrenCount,
+          participants: _rows,
+        ),
       ),
     );
   }
@@ -66,36 +190,40 @@ class _WorkshopBookingScreenState extends State<WorkshopBookingScreen> {
                   children: [
                     _backBtn(context),
                     SizedBox(height: 3.h),
-                    Text('Đặt chỗ Workshop',
-                        style:
-                            TextStyle(fontSize: 18.sp, color: Colors.white)),
+
+                    // tiêu đề giống selector
+                    const TourTeamTitle(),
+
                     SizedBox(height: 0.5.h),
-                    Text(widget.workshopName,
-                        style: TextStyle(
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white)),
+                    Text(
+                      widget.workshopName,
+                      style: TextStyle(
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
                     _summaryCard(),
                     SizedBox(height: 2.h),
-                    _counter('Người lớn', adultCount, (v) {
-                      setState(() => adultCount = v);
-                    }, widget.schedule.adultPrice ?? 0, minAdult: 1),
-                    SizedBox(height: 1.5.h),
-                    _counter('Trẻ em', childrenCount, (v) {
-                      setState(() => childrenCount = v);
-                    }, widget.schedule.childrenPrice ?? 0, minAdult: 0),
-                    SizedBox(height: 1.5.h),
-                    Text(
-                      remaining >= 0
-                          ? '👥 Còn có thể thêm $remaining người.'
-                          : '⚠️ Vượt quá số chỗ trống!',
-                      style: TextStyle(
-                          fontSize: 12.sp,
-                          color: remaining >= 0
-                              ? Colors.white70
-                              : Colors.yellowAccent),
+
+                    // ==== ParticipantsEditor (selector style) ====
+                    Expanded(
+                      child: SingleChildScrollView(
+                        keyboardDismissBehavior:
+                            ScrollViewKeyboardDismissBehavior.onDrag,
+                        padding: EdgeInsets.only(bottom: 2.h),
+                        child: ParticipantsEditor(
+                          rows: _rows,
+                          onChanged: () => setState(() {}),
+                          onRemove: _removeRow,
+                          onAdd: _addRow,
+                          onPickDob: _pickDob,
+                        ),
+                      ),
                     ),
-                    const Spacer(),
+
+                    // Footer
+                    SizedBox(height: 1.h),
                     _totalBar(),
                   ],
                 ),
@@ -170,7 +298,8 @@ class _WorkshopBookingScreenState extends State<WorkshopBookingScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _iconText(Icons.location_on_rounded, 'Làng nghề'),
+                    _iconText(Icons.location_on_rounded,
+                        widget.workshop.craftVillageName ?? 'Làng nghề'),
                     SizedBox(height: .6.h),
                     _iconText(Icons.calendar_month, d),
                     _iconText(Icons.schedule, t),
@@ -233,128 +362,52 @@ class _WorkshopBookingScreenState extends State<WorkshopBookingScreen> {
     );
   }
 
-  Widget _counter(String label, int value, Function(int) onChanged,
-      double unitPrice,
-      {required int minAdult}) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 1.6.h),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white24),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('$label – ${fmt.format(unitPrice)}đ',
+  Widget _totalBar() => Padding(
+        padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 1.h),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Tổng: ${fmt.format(totalPrice)}đ',
                 style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white)),
-            SizedBox(height: 0.3.h),
-            Text(
-              label == 'Người lớn'
-                  ? '(Từ 12 tuổi trở lên)'
-                  : '(1 – dưới 12 tuổi)',
-              style: TextStyle(
-                  fontSize: 12.sp,
-                  color: Colors.white70,
-                  fontStyle: FontStyle.italic),
-            ),
-          ]),
-          Row(children: [
-            _roundBtn(Icons.remove,
-                (value > minAdult) ? () => onChanged(value - 1) : null),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 4.w),
-              child: Text('$value',
-                  style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white)),
-            ),
-            _roundBtn(Icons.add, canAdd()
-                ? () => onChanged(value + 1)
-                : () => _showLimitSnack()),
-          ])
-        ],
-      ),
-    );
-  }
-
-  Widget _roundBtn(IconData icon, VoidCallback? onTap) => InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(50),
-        child: Container(
-          padding: EdgeInsets.all(1.8.h),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: onTap == null
-                ? Colors.grey.withOpacity(.2)
-                : Colors.white.withOpacity(.15),
-            boxShadow: [
-              if (onTap != null)
-                BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 6,
-                    offset: const Offset(0, 2))
-            ],
-          ),
-          child: Icon(icon, color: Colors.white),
-        ),
-      );
-
-Widget _totalBar() => Padding(
-      padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 1.h),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              'Tổng: ${fmt.format(totalPrice)}đ',
-              style: TextStyle(
-                  fontSize: 17.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white),
-            ),
-          ),
-         InkWell(
-  onTap: remaining >= 0
-      ? () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => WorkshopPaymentConfirmationScreen(
-                workshop: widget.workshop,
-                schedule: widget.schedule,
-                adults: adultCount,
-                children: childrenCount,
+                    fontSize: 17.sp,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white),
               ),
             ),
-          );
-        }
-      : null,
-  borderRadius: BorderRadius.circular(50),
-  child: Container(
-    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 1.5.h),
-    decoration: BoxDecoration(
-      gradient: Gradients.defaultGradientBackground,
-      borderRadius: BorderRadius.circular(50),
-      boxShadow: [
-        BoxShadow(
-            color: Colors.black26, blurRadius: 6, offset: const Offset(0, 3))
-      ],
-    ),
-    child: const Text(
-      'Xác nhận',
-      style: TextStyle(
-          color: Colors.white, fontWeight: FontWeight.bold),
-    ),
-  ),
-)
+            InkWell(
+              onTap: _onConfirm,
+              borderRadius: BorderRadius.circular(50),
+              child: Container(
+                padding:
+                    EdgeInsets.symmetric(horizontal: 8.w, vertical: 1.5.h),
+                decoration: BoxDecoration(
+                  gradient: Gradients.defaultGradientBackground,
+                  borderRadius: BorderRadius.circular(50),
+                  boxShadow: [
+                    BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 6,
+                        offset: const Offset(0, 3))
+                  ],
+                ),
+                child: const Text(
+                  'Xác nhận',
+                  style:
+                      TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+              ),
+            )
+          ],
+        ),
+      );
+}
 
-        ],
-      ),
-    );
-
+int _ageFromDob(DateTime dob) {
+  final now = DateTime.now();
+  int age = now.year - dob.year;
+  if (now.month < dob.month || (now.month == dob.month && now.day < dob.day)) {
+    age--;
+  }
+  return age;
 }

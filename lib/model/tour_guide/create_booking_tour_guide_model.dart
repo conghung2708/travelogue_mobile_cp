@@ -1,32 +1,58 @@
+import 'package:intl/intl.dart';
+import 'package:travelogue_mobile/model/booking/booking_participant_model.dart';
+
 class CreateBookingTourGuideModel {
+  // required
   final String tourGuideId;
-  final String? tripPlanId;
   final DateTime startDate;
   final DateTime endDate;
-  final int adultCount;
-  final int childrenCount;
+
+  // optional
+  final String? tripPlanId;
   final String? promotionCode;
-  final String? note;
+
+  // contact (API yêu cầu)
+  final String contactName;
+  final String contactEmail;
+  final String contactPhone;
+  final String contactAddress;
+
+  // optional
+  final List<BookingParticipantModel>? participants;
 
   CreateBookingTourGuideModel({
     required this.tourGuideId,
-    this.tripPlanId,
     required this.startDate,
     required this.endDate,
-    required this.adultCount,
-    required this.childrenCount,
+    required this.contactName,
+    required this.contactEmail,
+    required this.contactPhone,
+    required this.contactAddress,
+    this.tripPlanId,
     this.promotionCode,
-    this.note,
+    this.participants,
   });
 
-  Map<String, dynamic> toJson() => {
-        "tourGuideId": tourGuideId,
-        "tripPlanId": tripPlanId,
-        "startDate": startDate.toIso8601String(),
-        "endDate": endDate.toIso8601String(),
-        "adultCount": adultCount,
-        "childrenCount": childrenCount,
-        "promotionCode": promotionCode,
-        "note": note,
-      };
+  Map<String, dynamic> toJson() {
+    final dateFmt = DateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+    return {
+      "tourGuideId": tourGuideId,
+      "startDate": dateFmt.format(startDate),
+      "endDate": dateFmt.format(endDate),
+
+      // optional
+      if (tripPlanId != null && tripPlanId!.isNotEmpty) "tripPlanId": tripPlanId,
+      if (promotionCode != null && promotionCode!.isNotEmpty) "promotionCode": promotionCode,
+
+      // contact (required)
+      "contactName": contactName,
+      "contactEmail": contactEmail,
+      "contactPhone": contactPhone,
+      "contactAddress": contactAddress,
+
+      // optional
+      if (participants != null && participants!.isNotEmpty)
+        "participants": participants!.map((p) => p.toJson()).toList(),
+    };
+  }
 }

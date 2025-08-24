@@ -1,14 +1,8 @@
 plugins {
-    id "com.android.application"
-    id "kotlin-android"
-    id "dev.flutter.flutter-gradle-plugin"
+    id 'com.android.application'
+    id 'kotlin-android'
+    id 'dev.flutter.flutter-gradle-plugin'
     id 'com.google.gms.google-services'
-}
-
-dependencies {
-    implementation 'com.google.android.gms:play-services-measurement-api:21.5.0'
-    implementation platform('com.google.firebase:firebase-bom:33.12.0')
-    implementation 'com.google.firebase:firebase-analytics'
 }
 
 def keystoreProperties = new Properties()
@@ -22,28 +16,16 @@ android {
     compileSdk = 35
     ndkVersion = "27.0.12077973"
 
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
-    }
-    kotlinOptions {
-        jvmTarget = '17'
-        freeCompilerArgs += [
-                "-Xskip-metadata-version-check",
-                "-Xskip-prerelease-check"
-        ]
-    }
-
     defaultConfig {
         applicationId = "com.travelogue_mobile"
         minSdk = 24
         targetSdk = 35
         versionCode = 3
-        versionName = '3.0.0'
+        versionName = "3.0.0"
+        multiDexEnabled = true
     }
 
     signingConfigs {
-        // Release vẫn giữ lại, bạn có thể dùng khi muốn xuất APK/AAB
         release {
             keyAlias keystoreProperties['keyAlias']
             keyPassword keystoreProperties['keyPassword']
@@ -56,17 +38,43 @@ android {
         release {
             signingConfig signingConfigs.release
             shrinkResources true
-            multiDexEnabled true
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
-
             minifyEnabled false
             shrinkResources false
         }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+        freeCompilerArgs += [
+            "-Xskip-metadata-version-check",
+            "-Xskip-prerelease-check"
+        ]
     }
 }
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    implementation platform('com.google.firebase:firebase-bom:33.12.0')
+
+    // Firebase SDKs
+    implementation 'com.google.firebase:firebase-analytics'
+    implementation 'com.google.firebase:firebase-auth' // 👈 Google Sign-In
+
+    // Optional Firebase services
+    // implementation 'com.google.firebase:firebase-firestore'
+
+    // Google Play Services
+    implementation 'com.google.android.gms:play-services-measurement-api:21.5.0'
 }

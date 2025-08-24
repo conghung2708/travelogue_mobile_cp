@@ -7,16 +7,30 @@ import 'package:travelogue_mobile/data/data_local/user_local.dart';
 import 'package:travelogue_mobile/model/user_model.dart';
 
 class AuthenicationRepository {
+  Future<UserModel> fetchCurrentUser() async {
+    final res = await BaseRepository().getRoute(Endpoints.getCurrentUser);
+
+    if (res.statusCode == StatusCode.ok) {
+      final data = res.data is Map ? res.data['data'] : null;
+      if (data is Map<String, dynamic>) {
+        final user = UserModel.fromMap(data);
+        // lưu vào local cho toàn app dùng
+        UserLocal().saveAccount(user);
+        return user;
+      }
+      throw const FormatException('Dữ liệu user không hợp lệ');
+    }
+    throw Exception('HTTP ${res.statusCode}');
+  }
+
+  // chỉnh login: sau khi lưu token → gọi fetchCurrentUser()
   Future<(UserModel?, String?)> login({
     required String email,
     required String password,
   }) async {
     final Response response = await BaseRepository().postRoute(
       gateway: Endpoints.login,
-      data: {
-        'email': email,
-        'password': password,
-      },
+      data: {'email': email, 'password': password},
     );
 
     if (response.statusCode == StatusCode.ok) {
@@ -24,10 +38,13 @@ class AuthenicationRepository {
       final String token = dataJson['verificationToken'];
       final String refreshToken = dataJson['refreshTokens'];
 
-      final UserModel accountModel = UserModel.fromMap(dataJson);
+      // lưu token trước
       UserLocal().saveAccessToken(token, refreshToken);
-      UserLocal().saveAccount(accountModel);
-      return (accountModel, null);
+
+      // lấy full profile từ /get-current-user
+      final user = await fetchCurrentUser();
+
+      return (user, null);
     } else {
       final String message = response.data['Message'];
       return (null, message);
@@ -73,6 +90,7 @@ class AuthenicationRepository {
       return (true, '');
     } else {
       final String message = response.data['Message'];
+      print('🛑 sendOTPEmail failed with message: $message'); // 👈
       return (false, message);
     }
   }
@@ -120,28 +138,30 @@ class AuthenicationRepository {
     }
   }
 
+  // chỉnh loginGoogle tương tự
   Future<(UserModel?, String?)> loginGoogle({
     required String token,
     required User user,
   }) async {
     final Response response = await BaseRepository().postRoute(
       gateway: Endpoints.loginGoogle,
-      data: {
-        'token': token,
-      },
+      data: {'token': token},
     );
 
     if (response.statusCode == StatusCode.ok) {
       final dataJson = response.data['data'];
-      final String token = dataJson['verificationToken'];
-      final String refreshToken = dataJson['refreshTokens'];
+      final String access = dataJson['verificationToken'];
+      final String refresh = dataJson['refreshTokens'];
 
-      final UserModel accountModel = UserModel.fromMap(dataJson).copyWith(
-        username: user.displayName,
-      );
-      UserLocal().saveAccessToken(token, refreshToken);
-      UserLocal().saveAccount(accountModel);
-      return (accountModel, null);
+      UserLocal().saveAccessToken(access, refresh);
+
+      final current = await fetchCurrentUser();
+      // optional: update display name nếu cần
+      final merged =
+          current.copyWith(username: current.username ?? user.displayName);
+
+      UserLocal().saveAccount(merged);
+      return (merged, null);
     } else {
       final String message = response.data['message'];
       return (null, message);

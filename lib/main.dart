@@ -20,7 +20,7 @@ import 'package:travelogue_mobile/representation/main_screen.dart';
 
 import 'package:flutter_localizations/flutter_localizations.dart';
 
-// ✅ Khai báo navigatorKey toàn cục
+
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
@@ -48,7 +48,7 @@ void main() async {
 
     runApp(const MyApp());
   }, (error, stackTrace) async {
-    // Optional: log error here
+  
   });
 }
 
@@ -94,7 +94,7 @@ class _MyAppState extends State<MyApp> {
         builder: (context, orientation, deviceType) {
           return ShowCaseWidget(
             builder: (context) => MaterialApp(
-              navigatorKey: navigatorKey, // ✅ dùng global key ở đây
+              navigatorKey: navigatorKey, 
               title: 'Travelogue',
               theme: ThemeData(
                 fontFamily: 'Roboto',

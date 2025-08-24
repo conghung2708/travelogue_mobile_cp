@@ -11,8 +11,10 @@ import 'package:travelogue_mobile/core/helpers/image_helper.dart';
 import 'package:travelogue_mobile/model/information_category_model.dart';
 import 'package:travelogue_mobile/model/news_model.dart';
 import 'package:travelogue_mobile/representation/event/screens/event_detail.dart';
+import 'package:travelogue_mobile/representation/event/screens/event_screen.dart';
 import 'package:travelogue_mobile/representation/event/widgets/event_category.dart';
 import 'package:travelogue_mobile/representation/event/widgets/news_card.dart';
+import 'package:travelogue_mobile/representation/experience/screens/experience_detail_screen.dart';
 import 'package:travelogue_mobile/representation/experience/screens/experience_screen.dart';
 import 'package:travelogue_mobile/representation/festival/screens/festival_screen.dart';
 import 'package:travelogue_mobile/representation/news/screens/news_screen.dart';
@@ -94,7 +96,7 @@ class _EventContentState extends State<EventContent> {
                             return GestureDetector(
                               onTap: () {
                                 Navigator.of(context).pushNamed(
-                                  EventDetailScreen.routeName,
+                                  ExperienceDetailScreen.routeName,
                                   arguments: listNews[index],
                                 );
                               },

@@ -68,3 +68,32 @@ class WorkshopBookingSuccess extends BookingState {
   @override
   List<Object?> get props => [booking];
 }
+
+class CancelBookingSuccess extends BookingState {
+  final String bookingId;
+
+  const CancelBookingSuccess(this.bookingId);
+
+  @override
+  List<Object?> get props => [bookingId];
+}
+
+class ReviewBookingSubmitting extends BookingState {
+  const ReviewBookingSubmitting();
+}
+
+class ReviewBookingSuccess extends BookingState {
+  final String? message;
+  const ReviewBookingSuccess({this.message});
+
+  @override
+  List<Object?> get props => [message];
+}
+
+class MyReviewsLoaded extends BookingState {
+  final Set<String> bookingIds;
+  const MyReviewsLoaded(this.bookingIds);
+
+  @override
+  List<Object?> get props => [bookingIds];
+}

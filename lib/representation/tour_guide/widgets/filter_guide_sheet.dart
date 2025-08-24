@@ -7,8 +7,15 @@ import 'package:travelogue_mobile/core/constants/color_constants.dart';
 
 class FilterGuideSheet extends StatefulWidget {
   final void Function(TourGuideFilterModel) onApplyFilter;
+  final DateTime? initialStartDate;
+  final DateTime? initialEndDate;
 
-  const FilterGuideSheet({super.key, required this.onApplyFilter});
+  const FilterGuideSheet({
+    super.key,
+    required this.onApplyFilter,
+    this.initialStartDate,
+    this.initialEndDate,
+  });
 
   @override
   State<FilterGuideSheet> createState() => _FilterGuideSheetState();
@@ -23,6 +30,13 @@ class _FilterGuideSheetState extends State<FilterGuideSheet> {
   double maxPrice = 1000000;
   int minRating = 0;
   int maxRating = 5;
+
+  @override
+  void initState() {
+    super.initState();
+    startDate = widget.initialStartDate;
+    endDate = widget.initialEndDate;
+  }
 
   Future<void> _selectDateRange() async {
     final now = DateTime.now();
@@ -72,7 +86,7 @@ class _FilterGuideSheetState extends State<FilterGuideSheet> {
       endDate = null;
       minPrice = 0;
       maxPrice = 1000000;
-      minRating = 1;
+      minRating = 0;
       maxRating = 5;
     });
   }
@@ -167,7 +181,6 @@ class _FilterGuideSheetState extends State<FilterGuideSheet> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-             
                         Row(
                           children: [
                             Container(

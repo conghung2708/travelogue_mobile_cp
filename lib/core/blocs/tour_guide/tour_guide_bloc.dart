@@ -2,7 +2,6 @@ import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:travelogue_mobile/core/blocs/tour_guide/tour_guide_event.dart';
 import 'package:travelogue_mobile/core/repository/tour_guide_repository.dart';
-import 'package:travelogue_mobile/model/tour_guide/tour_guide_filter_model.dart';
 import 'package:travelogue_mobile/model/tour_guide/tour_guide_model.dart';
 part 'tour_guide_state.dart';
 
@@ -32,7 +31,7 @@ class TourGuideBloc extends Bloc<TourGuideEvent, TourGuideState> {
 
       emit(TourGuideLoaded(guides));
     } catch (e) {
-      emit(TourGuideError("Lỗi khi tải danh sách hướng dẫn viên: ${e.toString()}"));
+      emit(TourGuideError("Lỗi khi tải danh sách hướng dẫn viên: $e"));
     }
   }
 
@@ -51,7 +50,7 @@ class TourGuideBloc extends Bloc<TourGuideEvent, TourGuideState> {
 
       emit(TourGuideDetailLoaded(guide));
     } catch (e) {
-      emit(TourGuideError("Lỗi khi tải hướng dẫn viên: ${e.toString()}"));
+      emit(TourGuideError("Lỗi khi tải hướng dẫn viên: $e"));
     }
   }
 
@@ -75,7 +74,7 @@ Future<void> _handleFilterTourGuide(
 
     emit(TourGuideLoaded(guides, isFiltered: true));
   } catch (e) {
-    emit(TourGuideError("Lỗi khi lọc hướng dẫn viên: ${e.toString()}"));
+    emit(TourGuideError("Lỗi khi lọc hướng dẫn viên: $e"));
   }
 }
 

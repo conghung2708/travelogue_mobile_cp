@@ -1,25 +1,20 @@
 enum TripStatus {
-  noGuide,       
-  planning,       
-  finalized,     
-  booked,
-  deleted         
-}
+  draft,
+  sketch,
+  booked
+}       
+
 
 
 extension TripStatusExtension on TripStatus {
   String get label {
     switch (this) {
-      case TripStatus.noGuide:
-        return 'Chưa chọn Hướng Dẫn Viên';
-      case TripStatus.planning:
-        return 'Đang lên kế hoạch';
-      case TripStatus.finalized:
-        return 'Đã hoàn tất lịch trình';
+      case TripStatus.draft:
+        return 'Bản nháp';
+      case TripStatus.sketch:
+        return 'Phác thảo';
       case TripStatus.booked:
-        return 'Đã đặt tour thành công';
-          case TripStatus.deleted:
-        return 'Đã xoá tour thành công';  
+        return 'Đã đặt';
     }
   }
 

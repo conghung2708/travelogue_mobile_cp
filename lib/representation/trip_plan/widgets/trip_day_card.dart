@@ -1,29 +1,76 @@
 import 'package:flutter/material.dart';
-import 'package:sizer/sizer.dart';
 import 'package:intl/intl.dart';
-import 'package:travelogue_mobile/model/trip_plan.dart';
+import 'package:sizer/sizer.dart';
+
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
+import 'package:travelogue_mobile/model/trip_plan/trip_plan_detail_model.dart';
+import 'package:travelogue_mobile/model/trip_plan/trip_day_model.dart';
+import 'package:travelogue_mobile/model/trip_plan/trip_activity_model.dart';
+import 'package:travelogue_mobile/model/trip_plan/trip_plan_location_model.dart';
+
 import 'package:travelogue_mobile/representation/trip_plan/screens/select_place_for_day_screen.dart';
 
 class TripDayCard extends StatelessWidget {
   final DateTime day;
-  final TripPlan trip;
-  final List<dynamic> selectedItems;
-  final List<dynamic> otherSelected;
-  final void Function(List<dynamic>) onUpdate;
+  final TripPlanDetailModel detail;
+
+  /// Cập nhật UI: truyền lại danh sách FINAL sau khi thêm mới (append + de-dup)
+  final void Function(List<TripActivityModel> activities)? onUpdateActivities;
+
+  /// Gọi PUT: nhận payload TripPlanLocationModel (parent sẽ bỏ qua nội dung và PUT full list)
+  final void Function(List<TripPlanLocationModel> locations)? onUpdateLocations;
 
   const TripDayCard({
     super.key,
     required this.day,
-    required this.trip,
-    required this.selectedItems,
-    required this.otherSelected,
-    required this.onUpdate,
+    required this.detail,
+    this.onUpdateActivities,
+    this.onUpdateLocations,
   });
+
+  DateTime _ymd(DateTime d) => DateTime(d.year, d.month, d.day);
+
+  TripDayModel? _findDayData(TripPlanDetailModel detail, DateTime day) {
+    final target = _ymd(day);
+    for (final d in detail.days) {
+      if (_ymd(d.date) == target) {
+        return d;
+      }
+    }
+    return null;
+  }
+
+  // safe cast helper
+  List<T> _castList<T>(dynamic v) {
+    if (v is List) {
+      try {
+        return v.cast<T>();
+      } catch (_) {
+        if (T == TripPlanLocationModel && v.isNotEmpty && v.first is Map) {
+          return v
+              .map<TripPlanLocationModel>((e) =>
+                  TripPlanLocationModel.fromJson(e as Map<String, dynamic>))
+              .cast<T>()
+              .toList();
+        }
+        if (T == TripActivityModel && v.isNotEmpty && v.first is Map) {
+          return v
+              .map<TripActivityModel>(
+                  (e) => TripActivityModel.fromJson(e as Map<String, dynamic>))
+              .cast<T>()
+              .toList();
+        }
+      }
+    }
+    return const [];
+  }
 
   @override
   Widget build(BuildContext context) {
     final dayName = DateFormat('EEEE, dd MMM', 'vi').format(day);
+
+    final TripDayModel? dayData = _findDayData(detail, day);
+    final List<TripActivityModel> activities = dayData?.activities ?? const [];
 
     return Container(
       width: double.infinity,
@@ -41,7 +88,7 @@ class TripDayCard extends StatelessWidget {
           BoxShadow(
             color: Colors.indigo.withOpacity(0.1),
             blurRadius: 10,
-            offset: Offset(0, 0.5.h),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -58,18 +105,80 @@ class TripDayCard extends StatelessWidget {
             SizedBox(height: 1.h),
             ElevatedButton.icon(
               onPressed: () async {
+                final allDays = detail.days;
+
+                final TripDayModel? currentDayData = _findDayData(detail, day);
+                final List<TripActivityModel> activities =
+                    currentDayData?.activities ?? [];
+
+                final otherSelected = allDays
+                    .where((d) => _ymd(d.date) != _ymd(day))
+                    .expand((d) => d.activities)
+                    .toList();
+
                 final result = await Navigator.pushNamed(
                   context,
                   SelectPlaceForDayScreen.routeName,
                   arguments: {
-                    'trip': trip,
+                    'detail': detail,
                     'day': day,
-                    'selected': selectedItems,
+                    'selected': activities,
                     'allSelectedOtherDays': otherSelected,
                   },
                 );
-                if (result != null && result is List) {
-                  onUpdate(result);
+
+                if (result is Map) {
+                  final bool clearDay = result['clearDay'] == true ||
+                      (result['tpl'] == null && result['acts'] == null);
+
+                  if (clearDay) {
+                    onUpdateActivities?.call(<TripActivityModel>[]);
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      onUpdateLocations?.call(const []);
+                    });
+                    return;
+                  }
+
+                  final finalActs =
+                      _castList<TripActivityModel>(result['acts']);
+                  if (finalActs.isNotEmpty) {
+                    onUpdateActivities?.call(finalActs);
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      onUpdateLocations?.call(const []);
+                    });
+                    return;
+                  }
+
+                  final tplNew =
+                      _castList<TripPlanLocationModel>(result['tpl']);
+                  if (tplNew.isNotEmpty) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      onUpdateLocations?.call(const []);
+                    });
+                    return;
+                  }
+
+                  return;
+                }
+
+                if (result is List<TripActivityModel> && result.isNotEmpty) {
+                  print(
+                      'TripDayCard: got List<TripActivityModel>=${result.length} -> REPLACE');
+                  onUpdateActivities
+                      ?.call(List<TripActivityModel>.from(result));
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    onUpdateLocations?.call(const []);
+                  });
+                  return;
+                }
+
+                if (result is List<TripPlanLocationModel> &&
+                    result.isNotEmpty) {
+                  print(
+                      'TripDayCard: got List<TripPlanLocationModel>=${result.length} -> ask parent PUT');
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    onUpdateLocations?.call(const []);
+                  });
                 }
               },
               icon: Icon(Icons.add_location_alt_outlined, size: 14.sp),
@@ -82,30 +191,27 @@ class TripDayCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(3.w)),
               ),
             ),
-            if (selectedItems.isNotEmpty) ...[
+            if (activities.isNotEmpty) ...[
               SizedBox(height: 2.h),
               Column(
-                children: selectedItems.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final item = entry.value;
-                  final type = item.runtimeType.toString();
-                  String title = '';
-                  String subtitle = '';
-                  String? imageUrl;
+                children: activities.asMap().entries.map((entry) {
+                  final act = entry.value;
 
-                  if (type.contains('TripPlanLocation')) {
-                    title = item.location?.name ?? 'Địa điểm không tên';
-                    subtitle = '🏜️ Địa điểm tham quan';
-                    imageUrl = item.location?.imgUrlFirst;
-                  } else if (type.contains('TripPlanCuisine')) {
-                    title = item.restaurant?.name ?? 'Nhà hàng không tên';
-                    subtitle = '🍽️ Ẩm thực';
-                    imageUrl = item.restaurant?.imgUrlFirst;
-                  } else if (type.contains('TripPlanCraftVillage')) {
-                    title = item.craftVillage?.name ?? 'Làng nghề không tên';
-                    subtitle = '🧺 Làng nghề';
-                    imageUrl = item.craftVillage?.imageList.first;
-                  }
+                  final title = act.name ?? 'Hoạt động';
+                  final typeText = act.type ?? 'Hoạt động';
+                  final startF = act.startTimeFormatted ??
+                      DateFormat('HH:mm').format(act.startTime);
+                  final endF = act.endTimeFormatted ??
+                      DateFormat('HH:mm').format(act.endTime);
+                  final duration = act.duration ?? '';
+
+                  final subtitle = [
+                    typeText,
+                    '$startF–$endF',
+                    if (duration.isNotEmpty) '($duration)',
+                  ].join(' • ');
+
+                  final img = act.imageUrl?.trim();
 
                   return Card(
                     shape: RoundedRectangleBorder(
@@ -114,27 +220,20 @@ class TripDayCard extends StatelessWidget {
                     child: ListTile(
                       leading: ClipRRect(
                         borderRadius: BorderRadius.circular(8),
-                        child: imageUrl != null && imageUrl.isNotEmpty
-                            ? Image.network(imageUrl,
+                        child: (img?.isNotEmpty == true)
+                            ? Image.network(img!,
                                 width: 48, height: 48, fit: BoxFit.cover)
                             : const Icon(Icons.image_not_supported, size: 32),
                       ),
                       title: Text(title, style: TextStyle(fontSize: 13.sp)),
                       subtitle:
                           Text(subtitle, style: TextStyle(fontSize: 11.5.sp)),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () {
-                          final updatedList = List.of(selectedItems);
-                          updatedList.removeAt(index);
-                          onUpdate(updatedList);
-                        },
-                      ),
+                      trailing: null,
                     ),
                   );
                 }).toList(),
               ),
-            ]
+            ],
           ],
         ),
       ),

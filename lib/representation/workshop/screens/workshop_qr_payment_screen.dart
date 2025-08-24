@@ -7,7 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:marquee/marquee.dart';
 import 'package:travelogue_mobile/core/blocs/app_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/main/main_event.dart';
-import 'package:travelogue_mobile/representation/home/screens/home_screen.dart';
+
 import 'package:travelogue_mobile/representation/main_screen.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
@@ -16,7 +16,6 @@ import 'package:travelogue_mobile/core/constants/color_constants.dart';
 import 'package:travelogue_mobile/core/repository/booking_repository.dart';
 import 'package:travelogue_mobile/model/workshop/workshop_detail_model.dart';
 import 'package:travelogue_mobile/model/workshop/schedule_model.dart';
-import 'package:travelogue_mobile/representation/tour/screens/payment_success_sreen.dart';
 
 class WorkshopQrPaymentScreen extends StatefulWidget {
   static const routeName = '/workshop-qr-payment';
@@ -44,7 +43,6 @@ class WorkshopQrPaymentScreen extends StatefulWidget {
   State<WorkshopQrPaymentScreen> createState() =>
       _WorkshopQrPaymentScreenState();
 }
-
 class _WorkshopQrPaymentScreenState extends State<WorkshopQrPaymentScreen> {
   late final WebViewController _webViewController;
   final _gestureRecognizers = {Factory(() => EagerGestureRecognizer())};
@@ -58,15 +56,16 @@ class _WorkshopQrPaymentScreenState extends State<WorkshopQrPaymentScreen> {
     super.initState();
 
     final elapsed = DateTime.now().difference(widget.startTime);
-    _remaining = Duration(minutes: 5) - elapsed;
-    if (_remaining.isNegative) _remaining = Duration.zero;
-
+    _remaining = const Duration(minutes: 5) - elapsed;
+    if (_remaining.isNegative) {
+      _remaining = Duration.zero;
+    }
     _startCountdown();
 
     if (widget.checkoutUrl != null) {
       _loadWebViewFromUrl(widget.checkoutUrl!);
     } else {
-      _createBookingAndPayment();
+      _showErrorDialog('Không tìm thấy liên kết thanh toán. Vui lòng quay lại.');
     }
   }
 
@@ -79,34 +78,6 @@ class _WorkshopQrPaymentScreenState extends State<WorkshopQrPaymentScreen> {
         _onCountdownFinished();
       }
     });
-  }
-
-  Future<void> _createBookingAndPayment() async {
-    try {
-      final booking = await BookingRepository().createWorkshopBooking(
-        workshopId: widget.workshop.workshopId ?? '',
-        workshopScheduleId: widget.schedule.scheduleId ?? '',
-        promotionCode: null,
-        adultCount: widget.adults,
-        childrenCount: widget.children,
-      );
-
-      if (booking == null) {
-        _showErrorDialog('Tạo booking thất bại. Vui lòng thử lại.');
-        return;
-      }
-
-      final paymentUrl =
-          await BookingRepository().createPaymentLink(booking.id ?? '');
-      if (paymentUrl == null) {
-        _showErrorDialog('Không tạo được liên kết thanh toán.');
-        return;
-      }
-
-      _loadWebViewFromUrl(paymentUrl);
-    } catch (e) {
-      _showErrorDialog('Lỗi khi xử lý thanh toán: $e');
-    }
   }
 
   void _loadWebViewFromUrl(String url) {
@@ -127,11 +98,10 @@ class _WorkshopQrPaymentScreenState extends State<WorkshopQrPaymentScreen> {
               Navigator.of(context).popUntil(
                 (route) => route.settings.name == MainScreen.routeName,
               );
-              AppBloc.mainBloc.add(OnChangeIndexEvent(indexChange: 0));
+              AppBloc.mainBloc.add(const OnChangeIndexEvent(indexChange: 0));
             });
             return NavigationDecision.prevent;
           }
-
           return NavigationDecision.navigate;
         },
       ));
@@ -184,13 +154,13 @@ class _WorkshopQrPaymentScreenState extends State<WorkshopQrPaymentScreen> {
   //     (route) => false,
   //   );
   // }
-void _completePayment() {
-  Navigator.of(context).pushNamedAndRemoveUntil(
-    MainScreen.routeName,
-    (route) => false,
-  );
-  AppBloc.mainBloc.add(OnChangeIndexEvent(indexChange: 0));
-}
+  void _completePayment() {
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      MainScreen.routeName,
+      (route) => false,
+    );
+    AppBloc.mainBloc.add(const OnChangeIndexEvent(indexChange: 0));
+  }
 
   Future<bool> _onWillPop() async {
     final result = await showDialog<bool>(
@@ -211,13 +181,13 @@ void _completePayment() {
       ),
     );
 
-if (result == true) {
-  Navigator.of(context).pushNamedAndRemoveUntil(
-    MainScreen.routeName,
-    (route) => false,
-  );
-  AppBloc.mainBloc.add(OnChangeIndexEvent(indexChange: 0));
-}
+    if (result == true) {
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        MainScreen.routeName,
+        (route) => false,
+      );
+      AppBloc.mainBloc.add(const OnChangeIndexEvent(indexChange: 0));
+    }
 
     return false;
   }
@@ -239,6 +209,7 @@ if (result == true) {
     final currency = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
     final price = currency.format(widget.totalPrice);
 
+    // ignore: deprecated_member_use
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
@@ -255,19 +226,21 @@ if (result == true) {
                 ),
                 child: Column(
                   children: [
-                    Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.arrow_back_ios,
-                              color: Colors.white),
-                          onPressed: () async {
-                            final confirm = await _onWillPop();
-                            if (confirm) Navigator.pop(context);
-                          },
-                        ),
-                        const Spacer(),
-                      ],
-                    ),
+                    // Row(
+                    //   children: [
+                    //     IconButton(
+                    //       icon: const Icon(Icons.arrow_back_ios,
+                    //           color: Colors.white),
+                    //       onPressed: () async {
+                    //         final confirm = await _onWillPop();
+                    //         if (confirm) {
+                    //           Navigator.pop(context);
+                    //         }
+                    //       },
+                    //     ),
+                    //     const Spacer(),
+                    //   ],
+                    // ),
                     Icon(Icons.web_rounded, size: 32.sp, color: Colors.white),
                     SizedBox(height: 1.h),
                     Text('Thanh toán Workshop',

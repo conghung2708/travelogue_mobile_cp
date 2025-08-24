@@ -8,7 +8,7 @@ import 'package:travelogue_mobile/model/tour/tour_model.dart';
 class TourConfirmedActionCard extends StatelessWidget {
   final TourModel tour;
   final NumberFormat currencyFormat;
-  final DateTime? departureDate;
+  final DateTime? startTime;
   final double price;
   final VoidCallback? onConfirmed;
   final bool? readOnly;
@@ -19,7 +19,7 @@ class TourConfirmedActionCard extends StatelessWidget {
     required this.tour,
     required this.currencyFormat,
     required this.price,
-    this.departureDate,
+    this.startTime,
     this.onConfirmed,
     this.readOnly = false,
     this.isBooked = false,
@@ -27,8 +27,8 @@ class TourConfirmedActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String tripDate = departureDate != null
-        ? DateFormat('dd/MM/yyyy').format(departureDate!)
+    final String tripDate = startTime != null
+        ? DateFormat('dd/MM/yyyy').format(startTime!)
         : 'Chưa chọn ngày';
     final String formattedPrice = currencyFormat.format(price);
 

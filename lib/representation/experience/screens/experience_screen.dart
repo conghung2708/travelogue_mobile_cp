@@ -36,7 +36,6 @@ class _ExperienceScreenState extends State<ExperienceScreen> {
       ),
       body: BlocBuilder<NewsBloc, NewsState>(
         builder: (context, state) {
-          // Lấy toàn bộ news có newsCategory == 3
           final List<NewsModel> experiences =
               (state.props[0] as List<NewsModel>)
                   .where((news) => news.newsCategory == 3)
@@ -49,7 +48,6 @@ class _ExperienceScreenState extends State<ExperienceScreen> {
                 : ListView(
                     children: [
                       SizedBox(height: 2.h),
-                      // Carousel
                       CarouselSlider(
                         carouselController: _carouselController,
                         options: CarouselOptions(
@@ -70,7 +68,7 @@ class _ExperienceScreenState extends State<ExperienceScreen> {
                             builder: (BuildContext context) {
                               return ExperienceSlideCard(
                                 news: news,
-                                categoryName: news.categoryName ?? '',
+                                categoryName: "Trải nghiệm",
                               );
                             },
                           );
@@ -79,7 +77,6 @@ class _ExperienceScreenState extends State<ExperienceScreen> {
 
                       SizedBox(height: 1.h),
 
-                      // Smooth Page Indicator
                       Center(
                         child: AnimatedSmoothIndicator(
                           activeIndex: _currentCarouselIndex,
@@ -100,7 +97,7 @@ class _ExperienceScreenState extends State<ExperienceScreen> {
                       ...experiences.map(
                         (news) => ExperienceNewsCard(
                           news: news,
-                          categoryName: news.categoryName ?? '',
+               
                           onTap: () {
                             Navigator.pushNamed(
                               context,

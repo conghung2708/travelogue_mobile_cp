@@ -14,7 +14,7 @@ class TourGuideProfile extends StatelessWidget {
         ? NetworkImage(guide.avatarUrl!)
         : const AssetImage(AssetHelper.img_logo_travelogue) as ImageProvider;
 
-    final rating = guide.rating ?? 0.0;
+    final rating = guide.averageRating ?? 0.0;
 
     return Stack(
       children: [

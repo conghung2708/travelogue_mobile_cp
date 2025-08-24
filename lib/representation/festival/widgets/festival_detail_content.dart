@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
-import 'package:intl/intl.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
 import 'package:travelogue_mobile/core/utils/html_widget.dart';
-import 'package:travelogue_mobile/model/event_model.dart';
 import 'package:travelogue_mobile/model/news_model.dart';
 import 'package:travelogue_mobile/representation/widgets/image_grid_preview.dart';
 
@@ -16,9 +14,6 @@ class FestivalDetailContent extends StatelessWidget {
     final festival = Provider.of<NewsModel>(context);
     final screenWidth = MediaQuery.of(context).size.width;
 
-    String formatDate(DateTime date) {
-      return DateFormat('dd/MM/yyyy').format(date);
-    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,

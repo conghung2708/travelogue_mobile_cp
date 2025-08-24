@@ -1,3 +1,4 @@
+// lib/representation/workshop/screens/workshop_payment_confirmation_screen.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sizer/sizer.dart';
@@ -5,9 +6,14 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 
 import 'package:travelogue_mobile/core/constants/color_constants.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
+import 'package:travelogue_mobile/core/repository/authenication_repository.dart';
 import 'package:travelogue_mobile/core/repository/booking_repository.dart';
+
+import 'package:travelogue_mobile/model/booking/booking_participant_model.dart';
+import 'package:travelogue_mobile/model/workshop/create_booking_workshop_model.dart';
 import 'package:travelogue_mobile/model/workshop/workshop_detail_model.dart';
 import 'package:travelogue_mobile/model/workshop/schedule_model.dart';
+
 import 'package:travelogue_mobile/representation/workshop/screens/workshop_detail_screen.dart';
 import 'package:travelogue_mobile/representation/workshop/screens/workshop_qr_payment_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -18,12 +24,16 @@ class WorkshopPaymentConfirmationScreen extends StatefulWidget {
   final int adults;
   final int children;
 
+  /// Danh sách hành khách từ màn selector (bắt buộc để gửi API)
+  final List<BookingParticipantModel>? participants;
+
   const WorkshopPaymentConfirmationScreen({
     super.key,
     required this.workshop,
     required this.schedule,
     this.adults = 1,
     this.children = 0,
+    this.participants,
   });
 
   @override
@@ -34,6 +44,98 @@ class WorkshopPaymentConfirmationScreen extends StatefulWidget {
 class _WorkshopPaymentConfirmationScreenState
     extends State<WorkshopPaymentConfirmationScreen> {
   bool _agreed = false;
+
+  // Contact controllers
+  final _nameCtl = TextEditingController();
+  final _emailCtl = TextEditingController();
+  final _phoneCtl = TextEditingController();
+  final _addrCtl = TextEditingController();
+
+  // 🔥 Form key + autovalidate realtime
+  final _formKey = GlobalKey<FormState>();
+
+  bool _loadingUser = true;
+  String? _loadError;
+
+  @override
+  void initState() {
+    super.initState();
+    _prefillCurrentUser();
+  }
+
+  Future<void> _prefillCurrentUser() async {
+    try {
+      final user = await AuthenicationRepository().fetchCurrentUser();
+      _nameCtl.text = user.fullName ?? user.username ?? '';
+      _emailCtl.text = user.email ?? '';
+      _phoneCtl.text = user.phoneNumber ?? '';
+      _addrCtl.text = user.address ?? '';
+      if (mounted) {
+        setState(() {
+          _loadingUser = false;
+          _loadError = null;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _loadingUser = false;
+          _loadError = e.toString();
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameCtl.dispose();
+    _emailCtl.dispose();
+    _phoneCtl.dispose();
+    _addrCtl.dispose();
+    super.dispose();
+  }
+
+  // ===== Validators =====
+  bool _isValidVietnamPhone(String phone) {
+    // Hợp lệ: +84xxxxxxxxx (9 số sau +84) hoặc 0xxxxxxxxx (9 số sau 0) => tổng 10 số nội địa
+    final pattern = r'^(?:\+84|0)\d{9}$';
+    return RegExp(pattern).hasMatch(phone);
+  }
+
+  bool _isValidEmail(String email) {
+    final re = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
+    return re.hasMatch(email);
+  }
+
+  /// Trả về (model, error). KHÔNG show SnackBar ở đây.
+  ({CreateBookingWorkshopModel? model, String? error}) _buildPayload() {
+    final participants = widget.participants ?? [];
+
+    if (participants.isEmpty) {
+      return (
+        model: null,
+        error:
+            'Thiếu danh sách hành khách. Quay lại bước trước để thêm hành khách.'
+      );
+    }
+
+    // validate form một lần nữa khi submit
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      return (model: null, error: 'Vui lòng nhập đúng và đầy đủ thông tin liên hệ.');
+    }
+
+    final model = CreateBookingWorkshopModel(
+      workshopId: widget.workshop.workshopId ?? '',
+      workshopScheduleId: widget.schedule.scheduleId ?? '',
+      promotionCode: null, // không dùng mã khuyến mãi ở màn này
+      contactName: _nameCtl.text.trim(),
+      contactEmail: _emailCtl.text.trim(),
+      contactPhone: _phoneCtl.text.trim(),
+      contactAddress: _addrCtl.text.trim(),
+      participants: participants,
+    );
+    return (model: model, error: null);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,9 +160,62 @@ class _WorkshopPaymentConfirmationScreenState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Divider(color: ColorPalette.dividerColor, thickness: 6.sp),
+
+                    // Tóm tắt thanh toán
                     _buildPaymentSummary(
                         formatter, totalPrice, adultTotal, childrenTotal),
                     SizedBox(height: 2.h),
+
+                    // Thông tin liên hệ (prefill user)
+                    Text(
+                      '👤 Thông tin liên hệ',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    SizedBox(height: 1.h),
+
+                    // 🔥 Bọc trong Form để autovalidate realtime
+                    Form(
+                      key: _formKey,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      child: _ContactCard(
+                        nameCtl: _nameCtl,
+                        emailCtl: _emailCtl,
+                        phoneCtl: _phoneCtl,
+                        addrCtl: _addrCtl,
+                        loading: _loadingUser,
+                        error: _loadError,
+                        // truyền validators
+                        validatorName: (v) =>
+                            (v == null || v.trim().isEmpty)
+                                ? 'Vui lòng nhập họ tên'
+                                : null,
+                        validatorEmail: (v) {
+                          final t = v?.trim() ?? '';
+                          if (t.isEmpty) return 'Vui lòng nhập email';
+                          if (!_isValidEmail(t)) return 'Email không hợp lệ';
+                          return null;
+                        },
+                        validatorPhone: (v) {
+                          final t = v?.trim() ?? '';
+                          if (t.isEmpty) return 'Vui lòng nhập số điện thoại';
+                          if (!_isValidVietnamPhone(t)) {
+                            return 'Số điện thoại không hợp lệ';
+                          }
+                          return null;
+                        },
+                        validatorAddress: (v) =>
+                            (v == null || v.trim().isEmpty)
+                                ? 'Vui lòng nhập địa chỉ'
+                                : null,
+                      ),
+                    ),
+
+                    SizedBox(height: 2.h),
+
+                    // Điều khoản
                     const Text(
                       '📘 Điều khoản & Trách nhiệm dịch vụ',
                       style: TextStyle(
@@ -69,11 +224,31 @@ class _WorkshopPaymentConfirmationScreenState
                       ),
                     ),
                     SizedBox(height: 1.h),
-                    _buildPolicyMarkdown(),
+                    const _PolicyMarkdownBox(),
                     SizedBox(height: 1.5.h),
-                    _buildAgreementCheckbox(),
-                    _buildSupportButton(),
+
+                    // Đồng ý điều khoản
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: _agreed,
+                          onChanged: (v) =>
+                              setState(() => _agreed = v ?? false),
+                        ),
+                        Expanded(
+                          child: Text(
+                            'Tôi đã đọc và đồng ý với các điều khoản cam kết dịch vụ ở trên.',
+                            style: TextStyle(fontSize: 13.sp),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // Hỗ trợ
+                    const _SupportButton(),
                     SizedBox(height: 2.h),
+
+                    // Xác nhận
                     _buildConfirmButton(totalPrice),
                     SizedBox(height: 2.h),
                   ],
@@ -196,8 +371,8 @@ class _WorkshopPaymentConfirmationScreenState
     );
   }
 
-  Widget _buildPaymentSummary(NumberFormat formatter, double totalPrice,
-      double adultTotal, double childrenTotal) {
+  Widget _buildPaymentSummary(
+      NumberFormat formatter, double totalPrice, double adultTotal, double childrenTotal) {
     return Container(
       padding: EdgeInsets.all(3.w),
       decoration: BoxDecoration(
@@ -210,7 +385,7 @@ class _WorkshopPaymentConfirmationScreenState
         children: [
           Row(
             children: [
-              Icon(Icons.receipt_long_rounded, color: Colors.deepOrange),
+              const Icon(Icons.receipt_long_rounded, color: Colors.deepOrange),
               SizedBox(width: 2.w),
               Text('Chi tiết thanh toán',
                   style: TextStyle(
@@ -262,118 +437,37 @@ class _WorkshopPaymentConfirmationScreenState
     );
   }
 
-  Widget _buildPolicyMarkdown() {
-    return Container(
-      padding: EdgeInsets.all(3.w),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: const MarkdownBody(
-        data: '''
-🚩 **Cam kết dịch vụ Workshop Travelogue**
-
-✅ **Không hoàn hủy đặt chỗ** sau khi thanh toán *(trừ khi có lý do đặc biệt được xác nhận)*.
-
-✅ Đến đúng giờ theo lịch đã chọn.
-
-✅ **Tuân thủ tuyệt đối** hướng dẫn của nghệ nhân & nhân viên hỗ trợ.
-
-✅ Mặc trang phục **thoải mái, lịch sự**, phù hợp với hoạt động thủ công.
-
-✅ Giữ gìn vệ sinh, không gây ồn ào, bảo vệ môi trường làng nghề.
-
-✨ *Travelogue hân hạnh đồng hành cùng bạn trong hành trình trải nghiệm văn hoá làng nghề.* ✨
-''',
-      ),
-    );
-  }
-
-  Widget _buildAgreementCheckbox() {
-    return Row(
-      children: [
-        Checkbox(
-          value: _agreed,
-          onChanged: (value) => setState(() => _agreed = value ?? false),
-        ),
-        Expanded(
-          child: Text(
-            'Tôi đã đọc và đồng ý với các điều khoản cam kết dịch vụ ở trên.',
-            style: TextStyle(fontSize: 13.sp),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSupportButton() {
-    return SizedBox(
-      width: double.infinity,
-      child: OutlinedButton.icon(
-        onPressed: () async {
-          final confirmed = await _showCallSupportDialog(context);
-          if (confirmed == true) {
-            final Uri callUri = Uri(scheme: 'tel', path: '0336626193');
-            if (await canLaunchUrl(callUri)) {
-              await launchUrl(callUri);
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Không thể thực hiện cuộc gọi.')),
-              );
-            }
-          }
-        },
-        icon: const Icon(Icons.headset_mic, color: Colors.blue),
-        label: Text(
-          'Liên hệ hỗ trợ',
-          style: TextStyle(
-            color: Colors.blue,
-            fontSize: 14.sp,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: Colors.blue),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          padding: EdgeInsets.symmetric(vertical: 1.5.h),
-        ),
-      ),
-    );
-  }
-
   Widget _buildConfirmButton(double totalPrice) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: _agreed
+        onPressed: (_agreed && !_loadingUser)
             ? () async {
-                String? bookingId;
+                final payload = _buildPayload();
+                if (payload.error != null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(payload.error!)),
+                  );
+                  return;
+                }
 
-                // Gọi API tạo booking workshop
-                final booking = await BookingRepository().createWorkshopBooking(
-                  workshopId: widget.workshop.workshopId ?? '',
-                  workshopScheduleId: widget.schedule.scheduleId ?? '',
-                  promotionCode: null,
-                  adultCount: widget.adults,
-                  childrenCount: widget.children,
-                );
+                final model = payload.model!;
+                final booking =
+                    await BookingRepository().createWorkshopBooking(model);
 
-                if (booking == null || booking.id == null) {
+                if (booking == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Tạo booking thất bại.')),
                   );
                   return;
                 }
 
-                bookingId = booking.id;
-
-                // Gọi API tạo payment link
+                final bookingId = booking.id;
                 final paymentUrl =
                     await BookingRepository().createPaymentLink(bookingId);
 
                 if (paymentUrl != null) {
+                  if (!mounted) return;
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -413,8 +507,84 @@ class _WorkshopPaymentConfirmationScreenState
       ),
     );
   }
+}
 
-  Future<bool?> _showCallSupportDialog(BuildContext context) async {
+/* =================== Small UI pieces =================== */
+
+class _PolicyMarkdownBox extends StatelessWidget {
+  const _PolicyMarkdownBox();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(3.w),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: const MarkdownBody(
+        data: '''
+🚩 **Cam kết dịch vụ Workshop Travelogue**
+
+✅ Đến đúng giờ theo lịch đã chọn.
+
+✅ **Tuân thủ tuyệt đối** hướng dẫn của nghệ nhân & nhân viên hỗ trợ.
+
+✅ Mặc trang phục **thoải mái, lịch sự**, phù hợp với hoạt động thủ công.
+
+✅ Giữ gìn vệ sinh, không gây ồn ào, bảo vệ môi trường làng nghề.
+
+✅ Bạn có thể **huỷ đặt chỗ trong vòng 24 giờ** kể từ khi đặt (nếu quá thời hạn, vui lòng liên hệ để được hỗ trợ tuỳ trường hợp).
+
+✨ *Travelogue hân hạnh đồng hành cùng bạn trong hành trình trải nghiệm văn hoá làng nghề.* ✨
+''',
+      ),
+    );
+  }
+}
+
+class _SupportButton extends StatelessWidget {
+  const _SupportButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: () async {
+          final confirmed = await _showCallSupportDialog(context);
+          if (confirmed == true) {
+            final Uri callUri = Uri(scheme: 'tel', path: '0336626193');
+            if (await canLaunchUrl(callUri)) {
+              await launchUrl(callUri);
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Không thể thực hiện cuộc gọi.')),
+              );
+            }
+          }
+        },
+        icon: const Icon(Icons.headset_mic, color: Colors.blue),
+        label: Text(
+          'Liên hệ hỗ trợ',
+          style: TextStyle(
+            color: Colors.blue,
+            fontSize: 14.sp,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: Colors.blue),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          padding: EdgeInsets.symmetric(vertical: 1.5.h),
+        ),
+      ),
+    );
+  }
+
+  static Future<bool?> _showCallSupportDialog(BuildContext context) async {
     return showDialog<bool>(
       context: context,
       builder: (context) => Dialog(
@@ -431,8 +601,7 @@ class _WorkshopPaymentConfirmationScreenState
                   color: Colors.blue.shade50,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.headset_mic,
-                    color: Colors.blueAccent, size: 28.sp),
+                child: const Icon(Icons.headset_mic, color: Colors.blueAccent),
               ),
               SizedBox(height: 2.h),
               Text(
@@ -492,6 +661,267 @@ class _WorkshopPaymentConfirmationScreenState
           ),
         ),
       ),
+    );
+  }
+}
+
+class _ContactCard extends StatelessWidget {
+  final TextEditingController nameCtl;
+  final TextEditingController emailCtl;
+  final TextEditingController phoneCtl;
+  final TextEditingController addrCtl;
+  final bool loading;
+  final String? error;
+
+  // nhận validators từ trên
+  final String? Function(String?)? validatorName;
+  final String? Function(String?)? validatorEmail;
+  final String? Function(String?)? validatorPhone;
+  final String? Function(String?)? validatorAddress;
+
+  const _ContactCard({
+    required this.nameCtl,
+    required this.emailCtl,
+    required this.phoneCtl,
+    required this.addrCtl,
+    required this.loading,
+    required this.error,
+    required this.validatorName,
+    required this.validatorEmail,
+    required this.validatorPhone,
+    required this.validatorAddress,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (loading) {
+      return _GlassCard(
+        child: Row(
+          children: [
+            const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            SizedBox(width: 3.w),
+            Text(
+              'Đang lấy thông tin tài khoản...',
+              style: TextStyle(fontSize: 11.5.sp, color: Colors.black87),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (error != null) {
+      return _GlassCard(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(Icons.error_outline, color: Colors.redAccent),
+            SizedBox(width: 2.5.w),
+            Expanded(
+              child: Text(
+                'Không lấy được thông tin tài khoản:\n$error',
+                style: TextStyle(fontSize: 11.5.sp, color: Colors.black87),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return _GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.contact_page_rounded, color: Colors.blueGrey),
+              SizedBox(width: 2.w),
+              Text(
+                'Thông tin liên hệ',
+                style: TextStyle(
+                  fontSize: 12.5.sp,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 1.6.h),
+
+          _LabeledField(
+            label: 'Họ và tên',
+            controller: nameCtl,
+            keyboardType: TextInputType.name,
+            textCapitalization: TextCapitalization.words,
+            prefixIcon: Icons.person_outline_rounded,
+            hintText: 'VD: Nguyễn Văn A',
+            validator: validatorName,
+          ),
+          SizedBox(height: 1.2.h),
+
+          LayoutBuilder(
+            builder: (context, c) {
+              final twoCols = c.maxWidth > 600;
+              if (twoCols) {
+                return Row(
+                  children: [
+                    Expanded(
+                      child: _LabeledField(
+                        label: 'Email',
+                        controller: emailCtl,
+                        keyboardType: TextInputType.emailAddress,
+                        prefixIcon: Icons.alternate_email_rounded,
+                        hintText: 'name@example.com',
+                        validator: validatorEmail,
+                      ),
+                    ),
+                    SizedBox(width: 2.5.w),
+                    Expanded(
+                      child: _LabeledField(
+                        label: 'Số điện thoại',
+                        controller: phoneCtl,
+                        keyboardType: TextInputType.phone,
+                        prefixIcon: Icons.phone_outlined,
+                        hintText: 'VD: 09xx xxx xxx',
+                        validator: validatorPhone,
+                      ),
+                    ),
+                  ],
+                );
+              }
+              return Column(
+                children: [
+                  _LabeledField(
+                    label: 'Email',
+                    controller: emailCtl,
+                    keyboardType: TextInputType.emailAddress,
+                    prefixIcon: Icons.alternate_email_rounded,
+                    hintText: 'name@example.com',
+                    validator: validatorEmail,
+                  ),
+                  SizedBox(height: 1.2.h),
+                  _LabeledField(
+                    label: 'Số điện thoại',
+                    controller: phoneCtl,
+                    keyboardType: TextInputType.phone,
+                    prefixIcon: Icons.phone_outlined,
+                    hintText: 'VD: 09xx xxx xxx',
+                    validator: validatorPhone,
+                  ),
+                ],
+              );
+            },
+          ),
+          SizedBox(height: 1.2.h),
+
+          _LabeledField(
+            label: 'Địa chỉ',
+            controller: addrCtl,
+            keyboardType: TextInputType.streetAddress,
+            prefixIcon: Icons.location_on_outlined,
+            hintText: 'Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành',
+            maxLines: 2,
+            validator: validatorAddress,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GlassCard extends StatelessWidget {
+  final Widget child;
+  const _GlassCard({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(3.5.w),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.black12.withOpacity(0.06)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
+class _LabeledField extends StatelessWidget {
+  final String label;
+  final String? hintText;
+  final IconData? prefixIcon;
+  final TextEditingController controller;
+  final TextInputType keyboardType;
+  final TextCapitalization textCapitalization;
+  final int maxLines;
+  final String? Function(String?)? validator;
+
+  const _LabeledField({
+    required this.label,
+    required this.controller,
+    required this.keyboardType,
+    this.hintText,
+    this.prefixIcon,
+    this.textCapitalization = TextCapitalization.none,
+    this.maxLines = 1,
+    this.validator,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final labelStyle = TextStyle(
+      fontWeight: FontWeight.w700,
+      color: Colors.black.withOpacity(0.78),
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: labelStyle),
+        SizedBox(height: 0.6.h),
+        TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          textCapitalization: textCapitalization,
+          maxLines: maxLines,
+          validator: validator,
+          decoration: InputDecoration(
+            hintText: hintText,
+            isDense: true,
+            filled: true,
+            fillColor: Colors.grey.shade50,
+            prefixIcon:
+                prefixIcon == null ? null : Icon(prefixIcon, color: Colors.blueGrey),
+            contentPadding: EdgeInsets.symmetric(
+              vertical: 1.6.h,
+              horizontal: 3.2.w,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.blue.shade300),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

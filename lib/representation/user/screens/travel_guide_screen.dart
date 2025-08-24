@@ -11,11 +11,15 @@ class TravelGuideScreen extends StatefulWidget {
 }
 
 class _TravelGuideScreenState extends State<TravelGuideScreen> {
+  // Accent
+  static const _blue = Color(0xFF1E88E5);
+  static const _blueSoft = Color(0xFFE3F2FD);
+
   final List<Map<String, dynamic>> _chatHistory = [];
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
-  final List<String> _suggestions = [
+  final List<String> _suggestions = const [
     'Chuẩn bị trước chuyến đi',
     'Văn hoá địa phương',
     'Tiết kiệm chi phí',
@@ -50,10 +54,7 @@ class _TravelGuideScreenState extends State<TravelGuideScreen> {
           },
         ]);
       });
-
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _scrollToBottom();
-      });
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
     });
   }
 
@@ -67,9 +68,9 @@ class _TravelGuideScreenState extends State<TravelGuideScreen> {
     'khám phá':
         '🧭 Hỏi người dân bản địa là cách tốt nhất để tìm điểm đến mới lạ đó bạn!',
     'chào':
-        '👋 Xin chào bạn! Go Young rất vui được đồng hành cùng bạn trong hành trình khám phá ✨',
+        '👋 Xin chào bạn! Travelogue rất vui được đồng hành cùng bạn trong hành trình khám phá ✨',
     'tư vấn':
-        '📞 Bạn có thể vào phần "Đóng góp ý kiến" để gửi yêu cầu hỗ trợ, hoặc chat với Go Young để được tư vấn nhanh nhé!',
+        '📞 Bạn có thể vào phần "Đóng góp ý kiến" để gửi yêu cầu hỗ trợ, hoặc chat với Travelogue để được tư vấn nhanh nhé!',
     'check in':
         '📸 Các điểm check-in đẹp tại Tây Ninh: đỉnh núi Bà, cầu kính, cổng trời, hồ Dầu Tiếng, cổng Tòa Thánh và khu du lịch Ma Thiên Lãnh.',
     'ngủ':
@@ -89,7 +90,7 @@ class _TravelGuideScreenState extends State<TravelGuideScreen> {
     'wifi miễn phí':
         '📡 Một số điểm như Tòa Thánh, cáp treo núi Bà có wifi miễn phí. Tuy nhiên, bạn nên chuẩn bị sẵn mạng 4G để phòng trường hợp mất sóng.',
     'hướng dẫn viên':
-        '🎙️ Go Young có thuyết minh tự động cho từng di tích. Bạn chỉ cần bật audio hoặc xem bản tóm tắt trong phần thông tin.',
+        '🎙️ Travelogue có thuyết minh tự động cho từng di tích. Bạn chỉ cần bật audio hoặc xem bản tóm tắt trong phần thông tin.',
     'lễ hội':
         '🎉 Lễ hội lớn nhất Tây Ninh là Hội Yến Diêu Trì Cung tổ chức vào rằm tháng 8 âm lịch tại Tòa Thánh, thu hút hàng chục nghìn người tham dự.',
     'an toàn':
@@ -101,27 +102,27 @@ class _TravelGuideScreenState extends State<TravelGuideScreen> {
     'giao thông':
         '🚦 Trong nội tỉnh có xe buýt, taxi truyền thống, xe ôm công nghệ, và các tour xe điện tại các khu du lịch lớn.',
     'góp ý':
-        '💬 Cảm ơn bạn đã quan tâm! Bạn có thể vào mục "Góp ý" trong app để chia sẻ nhận xét và giúp Go Young ngày càng hoàn thiện hơn.',
+        '💬 Cảm ơn bạn đã quan tâm! Bạn có thể vào mục "Góp ý" trong app để chia sẻ nhận xét và giúp Travelogue ngày càng hoàn thiện hơn.',
     'ý kiến':
-        '💬 Cảm ơn bạn đã quan tâm! Bạn có thể vào mục "Góp ý" trong app để chia sẻ nhận xét và giúp Go Young ngày càng hoàn thiện hơn.',
+        '💬 Cảm ơn bạn đã quan tâm! Bạn có thể vào mục "Góp ý" trong app để chia sẻ nhận xét và giúp Travelogue ngày càng hoàn thiện hơn.',
     'app lỗi':
         '⚠️ Nếu app bị lỗi, bạn hãy thử cập nhật phiên bản mới nhất hoặc gỡ cài đặt và cài lại. Nếu vẫn lỗi, hãy gửi phản hồi cho đội kỹ thuật nhé.',
     'không mở được':
         '⚠️ Nếu app bị lỗi, bạn hãy thử cập nhật phiên bản mới nhất hoặc gỡ cài đặt và cài lại. Nếu vẫn lỗi, hãy gửi phản hồi cho đội kỹ thuật nhé.',
     'nạp tiền':
-        '💳 App Go Young hiện miễn phí tất cả tính năng. Nếu có dịch vụ tính phí trong tương lai, sẽ có thông báo rõ ràng trước khi bạn sử dụng.',
+        '💳 Ứng dụng Travelogue hiện miễn phí tất cả tính năng. Nếu có dịch vụ tính phí trong tương lai, sẽ có thông báo rõ ràng trước khi bạn sử dụng.',
     'thanh toán':
-        '💳 App Go Young hiện miễn phí tất cả tính năng. Nếu có dịch vụ tính phí trong tương lai, sẽ có thông báo rõ ràng trước khi bạn sử dụng.',
+        '💳 Ứng dụng Travelogue hiện miễn phí tất cả tính năng. Nếu có dịch vụ tính phí trong tương lai, sẽ có thông báo rõ ràng trước khi bạn sử dụng.',
     'quên mật khẩu':
         '🔐 Bạn có thể nhấn vào "Quên mật khẩu" tại màn hình đăng nhập để đặt lại bằng email hoặc số điện thoại đã đăng ký.',
     'không đăng nhập được':
-        '🚫 Vui lòng kiểm tra lại kết nối mạng và tài khoản. Nếu vẫn không đăng nhập được, hãy gỡ cài đặt và cài lại app Go Young.',
+        '🚫 Vui lòng kiểm tra lại kết nối mạng và tài khoản. Nếu vẫn không đăng nhập được, hãy gỡ cài đặt và cài lại app Travelogue.',
     'gửi phản hồi':
-        '✉️ Bạn vào mục "Góp ý" trong menu chính của app để gửi phản hồi. Đội ngũ Go Young sẽ đọc và cải thiện liên tục.',
+        '✉️ Bạn vào mục "Góp ý" trong menu chính của app để gửi phản hồi. Đội ngũ Travelogue sẽ đọc và cải thiện liên tục.',
     'sai vị trí':
         '📍 Nếu app hiển thị sai vị trí, bạn hãy kiểm tra lại GPS hoặc thử bật tắt lại định vị. Một số vùng núi có thể mất tín hiệu GPS.',
     'bảo mật':
-        '🔒 App Go Young không thu thập dữ liệu cá nhân không cần thiết và luôn tuân thủ chính sách bảo mật theo quy định.',
+        '🔒 Ứng dụng Travelogue không thu thập dữ liệu cá nhân không cần thiết và luôn tuân thủ chính sách bảo mật theo quy định.',
     'bị lạc':
         '🧭 Nếu bạn bị lạc đường, hãy dùng bản đồ trong app hoặc nhờ người dân địa phương chỉ đường – người Tây Ninh rất thân thiện và sẵn sàng giúp đỡ.',
     'hành lý':
@@ -129,24 +130,22 @@ class _TravelGuideScreenState extends State<TravelGuideScreen> {
     'y tế':
         '🏥 Gần các điểm du lịch lớn đều có trạm y tế hoặc bệnh viện huyện. Bạn nên mang theo một ít thuốc cơ bản như đau đầu, đau bụng, chống say xe.',
     'lịch sử app':
-        '📲 App Go Young được phát triển với mục tiêu kết nối giới trẻ với di tích lịch sử Tây Ninh, giúp việc khám phá trở nên sinh động, tiện lợi và hấp dẫn hơn.',
+        '📲 Ứng dụng Travelogue được phát triển với mục tiêu kết nối giới trẻ với di tích lịch sử Tây Ninh, giúp việc khám phá trở nên sinh động, tiện lợi và hấp dẫn hơn.',
     'thông tin liên hệ':
-        '📞 Liên hệ Go Young qua email traveloguetayninh@gmail.com. Luôn sẵn sàng hỗ trợ bạn!',
+        '📞 Liên hệ Travelogue qua email traveloguetayninh@gmail.com. Luôn sẵn sàng hỗ trợ bạn!',
     'hỗ trợ khẩn cấp':
         '🚨 Nếu gặp sự cố khẩn cấp, hãy gọi 113 (công an), 114 (cứu hỏa), 115 (cấp cứu). Đồng thời báo với nhân viên gần nhất hoặc quản lý khu du lịch.',
     'tài khoản':
         '👤 Bạn có thể cập nhật thông tin tài khoản, đổi mật khẩu hoặc đăng xuất tại mục "Cài đặt cá nhân" trong app.',
     'cám ơn':
-        '🎉Cảm ơn bạn đã đồng hành cùng Go Young – chúc bạn luôn có những hành trình trọn vẹn và đáng nhớ!',
+        '🎉 Cảm ơn bạn đã đồng hành cùng Travelogue – chúc bạn luôn có những hành trình trọn vẹn và đáng nhớ!',
     'cảm ơn':
-        '🎉Cảm ơn bạn đã đồng hành cùng Go Young – chúc bạn luôn có những hành trình trọn vẹn và đáng nhớ!',
+        '🎉 Cảm ơn bạn đã đồng hành cùng Travelogue – chúc bạn luôn có những hành trình trọn vẹn và đáng nhớ!',
   };
 
   void _handleSendMessage(String inputText) {
     final input = inputText.trim();
-    if (input.isEmpty) {
-      return;
-    }
+    if (input.isEmpty) return;
 
     setState(() {
       _chatHistory.add({'from': 'user', 'text': input});
@@ -157,25 +156,21 @@ class _TravelGuideScreenState extends State<TravelGuideScreen> {
 
     Future.delayed(const Duration(milliseconds: 1200), () {
       setState(() {
-        _chatHistory.removeWhere((msg) => msg['from'] == 'typing');
+        _chatHistory.removeWhere((m) => m['from'] == 'typing');
 
-        String lower = input.toLowerCase();
+        final lower = input.toLowerCase();
         String reply =
             'Xin lỗi, tạm thời mình chưa thể trả lời câu hỏi này. Vui lòng liên hệ admin 😅';
 
-        for (final entry in _keywordResponses.entries) {
-          if (lower.contains(entry.key)) {
-            reply = entry.value;
+        for (final e in _keywordResponses.entries) {
+          if (lower.contains(e.key)) {
+            reply = e.value;
             break;
           }
         }
-
         _chatHistory.add({'from': 'bot', 'text': reply});
       });
-
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _scrollToBottom();
-      });
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
     });
   }
 
@@ -193,7 +188,8 @@ class _TravelGuideScreenState extends State<TravelGuideScreen> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
       decoration: BoxDecoration(
-        color: isQuote ? Colors.blue.shade50 : Colors.white,
+        color: isQuote ? _blueSoft : Colors.white,
+        border: Border.all(color: _blueSoft),
         borderRadius: BorderRadius.circular(18),
       ),
       child: Text(
@@ -253,11 +249,11 @@ class _TravelGuideScreenState extends State<TravelGuideScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFE0F7FA),
+      backgroundColor: Colors.white, // nền trắng
       appBar: AppBar(
-        elevation: 0,
+        elevation: 0.6,
         centerTitle: true,
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.white,
         foregroundColor: Colors.black87,
         title: Text(
           'Cẩm nang du lịch',
@@ -287,7 +283,7 @@ class _TravelGuideScreenState extends State<TravelGuideScreen> {
                           padding: EdgeInsets.all(3.w),
                           constraints: BoxConstraints(maxWidth: 70.w),
                           decoration: BoxDecoration(
-                            color: Colors.blueAccent,
+                            color: _blue,
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Text(
@@ -304,7 +300,7 @@ class _TravelGuideScreenState extends State<TravelGuideScreen> {
                       return _chatBubble(
                         isBot: true,
                         child: Text(
-                          'Go Young đang nhập...',
+                          'Travelogue đang nhập...',
                           style: TextStyle(
                             fontStyle: FontStyle.italic,
                             color: Colors.black54,
@@ -337,11 +333,9 @@ class _TravelGuideScreenState extends State<TravelGuideScreen> {
                 runSpacing: 1.h,
                 children: _suggestions.map((text) {
                   return ActionChip(
-                    label: Text(
-                      text,
-                      style: TextStyle(fontSize: 12.5.sp),
-                    ),
-                    backgroundColor: Colors.blue.shade50,
+                    label: Text(text, style: TextStyle(fontSize: 12.5.sp)),
+                    backgroundColor: _blueSoft,
+                    side: const BorderSide(color: _blueSoft),
                     onPressed: () => _handleSendMessage(text),
                   );
                 }).toList(),
@@ -361,10 +355,17 @@ class _TravelGuideScreenState extends State<TravelGuideScreen> {
                       decoration: InputDecoration(
                         hintText: 'Nhập tin nhắn...',
                         hintStyle: TextStyle(fontSize: 13.sp),
-                        contentPadding: EdgeInsets.symmetric(
-                            horizontal: 4.w, vertical: 1.5.h),
-                        border: OutlineInputBorder(
+                        contentPadding:
+                            EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
+                        filled: true,
+                        fillColor: Colors.white,
+                        enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(30),
+                          borderSide: const BorderSide(color: _blueSoft),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: const BorderSide(color: _blue),
                         ),
                       ),
                       style: TextStyle(fontSize: 13.5.sp),
@@ -372,10 +373,8 @@ class _TravelGuideScreenState extends State<TravelGuideScreen> {
                   ),
                   SizedBox(width: 2.w),
                   IconButton(
-                    icon: const Icon(Icons.send_rounded,
-                        color: Colors.blueAccent),
-                    onPressed: () =>
-                        _handleSendMessage(_controller.text.trim()),
+                    icon: const Icon(Icons.send_rounded, color: _blue),
+                    onPressed: () => _handleSendMessage(_controller.text.trim()),
                   ),
                 ],
               ),

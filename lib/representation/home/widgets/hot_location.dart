@@ -25,8 +25,8 @@ class _HotLocationsState extends State<HotLocations> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const TitleWithCustoneUnderline(
-            text: 'Địa điểm',
-            text2: ' nổi bật',
+            text: 'Điểm đến',
+            text2: ' Tây Ninh 🗺️',
           ),
           // SizedBox(height: 15.sp),
           Container(

@@ -4,16 +4,19 @@ import 'package:travelogue_mobile/model/faq_data.dart';
 
 class FaqScreen extends StatelessWidget {
   static const routeName = '/faq_screen';
-
   const FaqScreen({super.key});
+
+  // Accent nhẹ nhàng
+  static const _blue = Color(0xFF42A5F5);       // xanh dương nhạt
+  static const _blueBorder = Color(0xFFE3F2FD); // viền rất nhạt
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFE0F7FA),
+      backgroundColor: Colors.white, // nền trắng
       appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.transparent,
+        elevation: 0.6,
+        backgroundColor: Colors.white,
         foregroundColor: Colors.black87,
         centerTitle: true,
         title: Text(
@@ -21,6 +24,7 @@ class FaqScreen extends StatelessWidget {
           style: TextStyle(
             fontSize: 20.sp,
             fontFamily: "Pattaya",
+            color: Colors.black87,
           ),
         ),
       ),
@@ -43,13 +47,13 @@ class FaqScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withOpacity(0.6)),
-        boxShadow: [
+        border: Border.all(color: _blueBorder), // viền xanh nhạt
+        boxShadow: const [
           BoxShadow(
-            color: Colors.black12.withOpacity(0.05),
+            color: Color(0x14000000), // rất nhẹ
             blurRadius: 8,
-            offset: const Offset(0, 4),
-          )
+            offset: Offset(0, 4),
+          ),
         ],
       ),
       child: Theme(
@@ -59,7 +63,7 @@ class FaqScreen extends StatelessWidget {
           childrenPadding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
           title: Row(
             children: [
-              Icon(Icons.question_answer_rounded, color: Colors.teal, size: 16.sp),
+              Icon(Icons.question_answer_rounded, color: _blue, size: 16.sp), // icon xanh dương nhạt
               SizedBox(width: 2.w),
               Expanded(
                 child: Text(
@@ -73,7 +77,7 @@ class FaqScreen extends StatelessWidget {
               ),
             ],
           ),
-          trailing: Icon(Icons.expand_more, color: Colors.teal, size: 18.sp),
+          trailing: Icon(Icons.expand_more, color: _blue, size: 18.sp), // mũi tên xanh nhạt
           children: [
             Align(
               alignment: Alignment.centerLeft,

@@ -1,23 +1,21 @@
+// lib/features/tour/presentation/screens/tour_schedule_calendar_screen.dart
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sizer/sizer.dart';
-import 'package:table_calendar/table_calendar.dart';
 
-import 'package:travelogue_mobile/core/constants/color_constants.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
-
 import 'package:travelogue_mobile/model/args/tour_calendar_args.dart';
 import 'package:travelogue_mobile/model/tour/tour_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_schedule_model.dart';
-
-import 'package:travelogue_mobile/representation/tour/screens/tour_team_selector_screen.dart';
+import 'package:travelogue_mobile/representation/tour/widgets/schedule_confirm_dialog.dart';
+import 'package:travelogue_mobile/representation/tour/widgets/tour_calendar_background.dart';
 import 'package:travelogue_mobile/representation/tour/widgets/tour_schedule_header.dart';
 import 'package:travelogue_mobile/representation/tour/widgets/tour_calendar_selector.dart';
 
+
 class TourScheduleCalendarScreen extends StatefulWidget {
   static const String routeName = '/tour-schedule-calendar';
-
   const TourScheduleCalendarScreen({super.key});
 
   @override
@@ -35,6 +33,8 @@ class _TourScheduleCalendarScreenState
   DateTime? selectedDay;
 
   final formatter = NumberFormat('#,###');
+  DateTime _d(DateTime dt) => DateTime(dt.year, dt.month, dt.day);
+  bool _isPastOrToday(DateTime day) => !_d(day).isAfter(_d(DateTime.now()));
 
   @override
   void didChangeDependencies() {
@@ -46,9 +46,10 @@ class _TourScheduleCalendarScreenState
   }
 
   TourScheduleModel? getScheduleForDay(DateTime day) {
+    if (_isPastOrToday(day)) return null;
     return schedules.firstWhereOrNull((s) {
-      final dep = s.departureDate;
-      return dep != null && isSameDay(dep, day);
+      final dep = s.startTime;
+      return dep != null && dep.year == day.year && dep.month == day.month && dep.day == day.day;
     });
   }
 
@@ -57,17 +58,7 @@ class _TourScheduleCalendarScreenState
     return Scaffold(
       body: Stack(
         children: [
-          Container(
-            height: 100.h,
-            width: double.infinity,
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage(AssetHelper.img_tour_type_selector),
-                fit: BoxFit.cover,
-              ),
-            ),
-            child: Container(color: Colors.black.withOpacity(0.6)),
-          ),
+          const TourCalendarBackground(image: AssetHelper.img_tour_type_selector, overlayOpacity: 0.6),
           SafeArea(
             child: Padding(
               padding: EdgeInsets.all(4.w),
@@ -80,121 +71,22 @@ class _TourScheduleCalendarScreenState
                     selectedDay: selectedDay,
                     getScheduleForDay: getScheduleForDay,
                     onDaySelected: (selected, focused) {
+                      if (_isPastOrToday(selected)) return;
+
                       final matched = getScheduleForDay(selected);
                       if (matched != null) {
-                        final departure = matched.departureDate!;
-                        final availableSlot = (matched.maxParticipant ?? 0) -
-                            (matched.currentBooked ?? 0);
-
-                        final media = (tour.mediaList.isNotEmpty &&
-                                tour.mediaList.first.mediaUrl?.isNotEmpty == true)
-                            ? tour.mediaList.first.mediaUrl!
+                        final media = (tour.medias.isNotEmpty &&
+                                tour.medias.first.mediaUrl?.isNotEmpty == true)
+                            ? tour.medias.first.mediaUrl!
                             : AssetHelper.img_tay_ninh_login;
 
-                        showDialog(
-                          context: context,
-                          barrierColor: Colors.black.withOpacity(0.4),
-                          builder: (context) {
-                            return Dialog(
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20)),
-                              insetPadding:
-                                  EdgeInsets.symmetric(horizontal: 6.w, vertical: 24),
-                              backgroundColor: Colors.white,
-                              child: Padding(
-                                padding: EdgeInsets.all(5.w),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.event_available,
-                                        size: 28.sp,
-                                        color: ColorPalette.primaryColor),
-                                    SizedBox(height: 2.h),
-                                    Text("Xác nhận ngày khởi hành",
-                                        style: TextStyle(
-                                            fontSize: 17.sp,
-                                            fontWeight: FontWeight.bold,
-                                            color: ColorPalette.primaryColor)),
-                                    SizedBox(height: 2.h),
-                                    _buildDialogRow(
-                                        Icons.calendar_today,
-                                        'Ngày đi:',
-                                        DateFormat('dd/MM/yyyy').format(departure)),
-                                    SizedBox(height: 1.h),
-                                    _buildDialogRow(
-                                        Icons.monetization_on,
-                                        'Giá:',
-                                        '${formatter.format(matched.adultPrice?.round() ?? 0)}đ'),
-                                    SizedBox(height: 1.h),
-                                    _buildDialogRow(Icons.people_outline,
-                                        'Còn lại:', '$availableSlot chỗ'),
-                                    SizedBox(height: 3.h),
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: OutlinedButton(
-                                            onPressed: () => Navigator.pop(context),
-                                            child: const Text("Huỷ"),
-                                          ),
-                                        ),
-                                        SizedBox(width: 4.w),
-                                        Expanded(
-                                          child: InkWell(
-                                            onTap: () {
-                                              Navigator.pop(context);
-                                              if (isGroupTour) {
-                                                Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                    builder: (_) =>
-                                                        TourTeamSelectorScreen(
-                                                      tour: tour,
-                                                      schedule: matched,
-                                                      media: media,
-                                                    ),
-                                                  ),
-                                                );
-                                              } else {
-                                                Navigator.pushNamed(
-                                                  context,
-                                                  '/tour-payment-confirmation',
-                                                  arguments: {
-                                                    'tour': tour,
-                                                    'schedule': matched,
-                                                    'media': media,
-                                                    'departureDate':
-                                                        matched.departureDate!,
-                                                    'adults': 1,
-                                                    'children': 0,
-                                                  },
-                                                );
-                                              }
-                                            },
-                                            child: Container(
-                                              padding: EdgeInsets.symmetric(
-                                                  vertical: 1.5.h),
-                                              alignment: Alignment.center,
-                                              decoration: BoxDecoration(
-                                                gradient: Gradients
-                                                    .defaultGradientBackground,
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
-                                              ),
-                                              child: const Text("Chọn ngày này",
-                                                  style: TextStyle(
-                                                      color: Colors.white,
-                                                      fontWeight:
-                                                          FontWeight.bold)),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
+                        ScheduleConfirmDialog.show(
+                          context,
+                          tour: tour,
+                          schedule: matched,
+                          isGroupTour: isGroupTour,
+                          media: media,
+                          formatter: formatter,
                         );
                       }
 
@@ -208,10 +100,7 @@ class _TourScheduleCalendarScreenState
                   Text(
                     '🗓️ Chọn đúng thời điểm – mở ra chuyến đi đáng nhớ!',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                        fontSize: 14.sp,
-                        color: Colors.white70,
-                        fontStyle: FontStyle.italic),
+                    style: TextStyle(fontSize: 14.sp, color: Colors.white70, fontStyle: FontStyle.italic),
                   ),
                   SizedBox(height: 2.h),
                 ],
@@ -220,36 +109,6 @@ class _TourScheduleCalendarScreenState
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildDialogRow(IconData icon, String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, color: ColorPalette.primaryColor, size: 20.sp),
-        SizedBox(width: 2.w),
-        Expanded(
-          child: Text.rich(
-            TextSpan(
-              children: [
-                TextSpan(
-                    text: '$label ',
-                    style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                        fontSize: 15.sp)),
-                TextSpan(
-                    text: value,
-                    style: TextStyle(
-                        fontWeight: FontWeight.normal,
-                        color: Colors.black87,
-                        fontSize: 15.sp)),
-              ],
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

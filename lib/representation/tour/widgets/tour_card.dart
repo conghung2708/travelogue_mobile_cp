@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
-import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
 import 'package:travelogue_mobile/model/tour/tour_model.dart';
 import 'package:travelogue_mobile/model/tour_guide/tour_guide_model.dart';
 import 'package:travelogue_mobile/representation/tour/widgets/discount_tag.dart';
@@ -31,14 +30,11 @@ class TourCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(4.w),
         child: Stack(
           children: [
-          
             Positioned.fill(
               child: isAsset
                   ? Image.asset(image, fit: BoxFit.cover)
                   : Image.network(image, fit: BoxFit.cover),
             ),
-
-       
             Positioned.fill(
               child: Container(
                 decoration: const BoxDecoration(
@@ -50,16 +46,12 @@ class TourCard extends StatelessWidget {
                 ),
               ),
             ),
-
-     
             if (isDiscount)
               Positioned(
                 top: 2.w,
                 left: 2.w,
                 child: const DiscountTag(),
               ),
-
-     
             Positioned(
               left: 3.w,
               bottom: 3.h,
@@ -67,7 +59,6 @@ class TourCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                 
                   Text(
                     tour.name ?? 'Tour không tên',
                     style: TextStyle(
@@ -85,7 +76,6 @@ class TourCard extends StatelessWidget {
                   ),
                   SizedBox(height: 0.5.h),
 
-          
                   if (guide?.userName != null)
                     Text(
                       'Hướng dẫn: ${guide!.userName}',

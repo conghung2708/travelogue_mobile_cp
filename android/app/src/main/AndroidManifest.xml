@@ -14,9 +14,13 @@
 
     <application
 
-        android:label="Go Young"
+        android:label="Travelogue"
         android:name="${applicationName}"
-        android:icon="@mipmap/launcher_icon">
+        android:icon="@mipmap/launcher_icon"
+        android:usesCleartextTraffic="true">
+
+        <uses-library android:name="org.apache.http.legacy" android:required="false" />
+        
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="840f8a8247cb32578fc81fec50af42b8ede321173a31804b"/>
@@ -50,6 +54,10 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <service
+            android:name="vn.vietmap.services.android.navigation.v5.navigation.NavigationService"
+            android:foregroundServiceType="location"
+            android:exported="false"/>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
@@ -67,4 +75,5 @@
         <data android:scheme="tel" />
     </intent>
 </queries>
+
 </manifest>

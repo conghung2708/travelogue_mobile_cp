@@ -1,4 +1,8 @@
+// lib/model/tour/tour_model.dart
+import 'package:travelogue_mobile/model/media_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_day_model.dart';
+import 'package:travelogue_mobile/model/tour/tour_plan_location_model.dart';
+import 'package:travelogue_mobile/model/tour/tour_review_model.dart';
 import 'package:travelogue_mobile/model/tour_guide/tour_guide_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_media_test_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_schedule_model.dart';
@@ -8,6 +12,7 @@ class TourModel {
   final String? name;
   final String? description;
   final String? content;
+  final String? transportType;
   final int? totalDays;
   final int? tourType;
   final String? tourTypeText;
@@ -18,16 +23,25 @@ class TourModel {
   final bool? isDiscount;
   final int? status;
   final String? statusText;
-  final List<TourScheduleModel>? schedules;
-  final List<TourDayModel>? days;
-  final TourGuideModel? tourGuide;
-  final List<TourMediaTestModel> mediaList;
 
-  TourModel({
+  final List<TourScheduleModel> schedules;
+  final List<TourDayModel> days;
+  final TourGuideModel? tourGuide;
+  final List<MediaModel> medias;
+
+  final List<dynamic> promotions;
+  final double? averageRating;
+  final int? totalReviews;
+  final TourPlanLocationModel? startLocation;
+  final TourPlanLocationModel? endLocation;
+  final List<TourReviewModel> reviews;
+
+  const TourModel({
     this.tourId,
     this.name,
     this.description,
     this.content,
+    this.transportType,
     this.totalDays,
     this.tourType,
     this.tourTypeText,
@@ -38,10 +52,16 @@ class TourModel {
     this.isDiscount,
     this.status,
     this.statusText,
-    this.schedules,
-    this.days,
     this.tourGuide,
-    this.mediaList = const [],
+    this.averageRating,
+    this.totalReviews,
+    this.startLocation,
+    this.endLocation,
+    this.schedules = const [],
+    this.days = const [],
+    this.medias = const [],
+    this.promotions = const [],
+    this.reviews = const [],
   });
 
   factory TourModel.fromLiteJson(Map<String, dynamic> json) {
@@ -50,6 +70,7 @@ class TourModel {
       name: json['name'] as String?,
       description: json['description'] as String?,
       content: json['content'] as String?,
+      transportType: json['transportType'] as String?, // 👈 đổi sang string
       totalDays: json['totalDays'] as int?,
       tourType: json['tourType'] as int?,
       tourTypeText: json['tourTypeText'] as String?,
@@ -60,38 +81,32 @@ class TourModel {
       isDiscount: json['isDiscount'] as bool?,
       status: json['status'] as int?,
       statusText: json['statusText'] as String?,
+      averageRating: (json['averageRating'] as num?)?.toDouble(),
+      totalReviews: json['totalReviews'] as int?,
     );
   }
 
-  factory TourModel.fromDetailJson(Map<String, dynamic> json, {bool logSchedules = false}) {
-    final tourId = json['tourId'];
-    final name = json['name'];
-
-    print('🟩 Parsing TourModel: tourId=$tourId, name=$name');
-
+  factory TourModel.fromDetailJson(Map<String, dynamic> json,
+      {bool logSchedules = false}) {
     final rawSchedules = json['schedules'];
-    if (rawSchedules != null && rawSchedules is List) {
-      print('📆 Found ${rawSchedules.length} schedules for tourId $tourId');
-    } else {
-      print('📆 No schedules found for tourId $tourId');
-    }
-
     final guideRaw = json['tourGuide'];
-    print('🧑‍✈️ tourGuide type = ${guideRaw.runtimeType}');
-    print('🧑‍✈️ tourGuide raw = $guideRaw');
-
     final rawDays = json['days'];
-    if (rawDays != null && rawDays is List) {
-      print('📜 Found ${rawDays.length} days');
-    }
 
-    final rawMedia = json['mediaList'];
+    final rawMedias = (json['medias'] is List)
+        ? json['medias']
+        : (json['mediaList'] is List ? json['mediaList'] : const []);
+
+    final rawPromotions = json['promotions'];
+    final rawReviews = json['reviews'];
+    final rawStartLocation = json['startLocation'];
+    final rawEndLocation = json['endLocation'];
 
     return TourModel(
-      tourId: tourId as String?,
-      name: name as String?,
+      tourId: json['tourId'] as String?,
+      name: json['name'] as String?,
       description: json['description'] as String?,
       content: json['content'] as String?,
+      transportType: json['transportType'] as String?, // 👈 đổi sang string
       totalDays: json['totalDays'] as int?,
       tourType: json['tourType'] as int?,
       tourTypeText: json['tourTypeText'] as String?,
@@ -102,17 +117,16 @@ class TourModel {
       isDiscount: json['isDiscount'] as bool?,
       status: json['status'] as int?,
       statusText: json['statusText'] as String?,
-      schedules: (rawSchedules != null && rawSchedules is List)
-          ? rawSchedules.map((e) {
-              if (logSchedules) {
-                print('➡️ schedule: $e');
-              }
-              return TourScheduleModel.fromJson(e);
-            }).toList()
-          : [],
-      days: (rawDays != null && rawDays is List)
+      averageRating: (json['averageRating'] as num?)?.toDouble(),
+      totalReviews: json['totalReviews'] as int?,
+      schedules: (rawSchedules is List)
+          ? rawSchedules
+              .map((e) => TourScheduleModel.fromMap(e as Map<String, dynamic>))
+              .toList()
+          : const [],
+      days: (rawDays is List)
           ? rawDays.map((e) => TourDayModel.fromJson(e)).toList()
-          : [],
+          : const [],
       tourGuide: (() {
         if (guideRaw is List && guideRaw.isNotEmpty) {
           return TourGuideModel.fromJson(guideRaw.first);
@@ -121,9 +135,22 @@ class TourModel {
         }
         return null;
       })(),
-      mediaList: (rawMedia != null && rawMedia is List)
-          ? rawMedia.map((e) => TourMediaTestModel.fromJson(e)).toList()
-          : [],
+      medias: (rawMedias as List)
+          .map((e) => MediaModel.fromJson(e))
+          .toList()
+          .cast<MediaModel>(),
+      promotions: (rawPromotions is List) ? rawPromotions : const [],
+      startLocation: (rawStartLocation is Map<String, dynamic>)
+          ? TourPlanLocationModel.fromJson(rawStartLocation)
+          : null,
+      endLocation: (rawEndLocation is Map<String, dynamic>)
+          ? TourPlanLocationModel.fromJson(rawEndLocation)
+          : null,
+      reviews: (rawReviews is List)
+          ? rawReviews
+              .map((e) => TourReviewModel.fromJson(e as Map<String, dynamic>))
+              .toList()
+          : const [],
     );
   }
 
@@ -136,6 +163,7 @@ class TourModel {
       'name': name,
       'description': description,
       'content': content,
+      'transportType': transportType,
       'totalDays': totalDays,
       'tourType': tourType,
       'tourTypeText': tourTypeText,
@@ -146,10 +174,16 @@ class TourModel {
       'isDiscount': isDiscount,
       'status': status,
       'statusText': statusText,
-      'schedules': schedules?.map((e) => e.toJson()).toList(),
-      'days': days?.map((e) => e.toJson()).toList(),
+      'averageRating': averageRating,
+      'totalReviews': totalReviews,
+      'schedules': schedules.map((e) => e.toJson()).toList(),
+      'days': days.map((e) => e.toJson()).toList(),
       'tourGuide': tourGuide?.toJson(),
-      'mediaList': mediaList.map((e) => e.toJson()).toList(),
+      'medias': medias.map((e) => e.toJson()).toList(),
+      'promotions': promotions,
+      'startLocation': startLocation?.toJson(),
+      'endLocation': endLocation?.toJson(),
+      'reviews': reviews.map((e) => e.toJson()).toList(),
     };
   }
 }

@@ -34,7 +34,7 @@ class TourGuideCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Ảnh đại diện
+         
           ClipRRect(
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(4.w),
@@ -60,7 +60,7 @@ class TourGuideCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Tên
+             
                 Text(
                   guide.userName ?? "Không rõ tên",
                   style: TextStyle(
@@ -72,7 +72,6 @@ class TourGuideCard extends StatelessWidget {
 
                 SizedBox(height: 0.5.h),
 
-                // Giới tính
                 if (guide.sexText != null || guide.sex != null)
                   Row(
                     children: [
@@ -92,15 +91,15 @@ class TourGuideCard extends StatelessWidget {
                     ],
                   ),
 
-                // Rating
+              
                 SizedBox(height: 0.5.h),
-                if (guide.rating != null)
+                if (guide.averageRating != null)
                   Row(
                     children: [
                       Icon(Icons.star, size: 11.sp, color: Colors.amber),
                       SizedBox(width: 1.w),
                       Text(
-                        "${guide.rating!.toStringAsFixed(1)} điểm đánh giá",
+                        "${guide.averageRating!.toStringAsFixed(1)} điểm đánh giá",
                         style: TextStyle(
                           color: Colors.black54,
                           fontSize: 12.sp,
@@ -109,7 +108,7 @@ class TourGuideCard extends StatelessWidget {
                     ],
                   ),
 
-                // Giá
+            
                 SizedBox(height: 0.5.h),
                 if (guide.price != null)
                   Text(
@@ -121,7 +120,7 @@ class TourGuideCard extends StatelessWidget {
                     ),
                   ),
 
-                // Divider nhẹ để tách mô tả
+ 
                 if (guide.introduction != null &&
                     guide.introduction!.isNotEmpty) ...[
                   SizedBox(height: 1.5.h),

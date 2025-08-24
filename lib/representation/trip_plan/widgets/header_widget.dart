@@ -2,38 +2,85 @@ import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 
 class HeaderWidget extends StatelessWidget {
-  const HeaderWidget({super.key});
+  final VoidCallback onBack;
+  final VoidCallback? onMenuTap;
+
+  const HeaderWidget({
+    super.key,
+    required this.onBack,
+    this.onMenuTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 4.w),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(3.w),
-            child: Image.network(
-              'https://i.pravatar.cc/300',
-              width: 15.w,
-              height: 15.w,
-              fit: BoxFit.cover,
+          InkWell(
+            onTap: onBack,
+            borderRadius: BorderRadius.circular(24),
+            child: Container(
+              padding: EdgeInsets.all(1.2.h),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 6,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(Icons.arrow_back_ios_new, size: 18),
             ),
           ),
-          SizedBox(width: 4.w),
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text('Hi Traveler,',
-                    style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold, fontFamily: "Pattaya")),
-                Text('Đây là những hành trình gần đây của bạn',
-                    style: TextStyle(fontSize: 14.sp, color: Colors.grey)),
+                Text(
+                  'Hành trình của tôi',
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: "Pattaya",
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 0.5.h),
+                Text(
+                  'Quản lý và khám phá các chuyến đi',
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: Colors.grey.shade600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
               ],
             ),
           ),
-          Icon(Icons.search, size: 7.w),
-          SizedBox(width: 2.w),
-          Icon(Icons.more_vert, size: 7.w),
+          InkWell(
+            onTap: onMenuTap,
+            borderRadius: BorderRadius.circular(24),
+            child: Container(
+              padding: EdgeInsets.all(1.2.h),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 6,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(Icons.more_vert, size: 22),
+            ),
+          ),
         ],
       ),
     );

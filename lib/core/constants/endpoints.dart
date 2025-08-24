@@ -64,6 +64,64 @@ class Endpoints {
   //Tour Guide Request
   static const String tourGuideRequest = 'api/user/tour-guide-request';
 
+  //Nearest Cuisine
   static const String nearestCuisine = '/api/location/nearest-cuisine';
+
+  //Nearest Historical
   static const String nearestHistorical = '/api/location/nearest-historical';
+
+  //Get Trip Plans
+  static const String tripPlans = 'api/trip-plans';
+
+  //Update Trip Plan
+  static const String tripPlan = 'api/trip-plans/trip-plan';
+
+  //Update Trip Plan Location
+  static const String tripPlanLocation = 'api/trip-plans/trip-plan-location';
+
+  //Cancel Booking
+  static const String cancelBooking = '/api/booking';
+
+  //Upload multiple certifications
+  static const String uploadMultipleCertifications =
+      '/api/media/upload-multiple-certifications';
+
+  //Get User
+  static const String getUserByIdBase = '/api/user';
+
+  //Refund Request
+  static const String createRefundRequest = '/api/refund-request';
+
+  static const String getUserRefundRequests = '/api/refund-request/user';
+
+  static const String getBookingById = '/api/booking';
+
+  static const String withdrawalRequest = '/api/wallet/withdrawal-request';
+
+  static const String bankAccount = 'api/bank-account';
+
+  static const String getCurrentUser = '/api/auth/get-current-user';
+
+  static const String reviewBooking = '/api/booking/review-booking';
+
+  static const String updateUserBase = '/api/user';
+
+  static const String updateUserAvatar = '/api/user/update-avatar';
+
+  static const String getMyReviews = '/api/booking/my-reviews';
+
+  static const String reportReview = '/api/report';
+
+  static const String getMyReports = '/api/report/my-reports';
+
+  static String updateReport(String id) => '/api/report/$id';
+
+  static String deleteReport(String id) => '/api/report/$id';
+
+  static const String uploadMultipleImages =
+      '/api/media/upload-multiple-images';
+
+  static const String refundRequest = '/api/refund-request';
+
+  static const String myWithdrawalRequestsFilter = '/api/wallet/my-withdrawal-requests/filter'; 
 }

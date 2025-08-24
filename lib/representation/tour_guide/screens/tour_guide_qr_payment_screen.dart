@@ -4,17 +4,20 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:sizer/sizer.dart';
 import 'package:intl/intl.dart';
-import 'package:marquee/marquee.dart';
+import 'package:travelogue_mobile/core/repository/booking_repository.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
+
 import 'package:travelogue_mobile/core/blocs/app_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/main/main_event.dart';
 import 'package:travelogue_mobile/representation/main_screen.dart';
-import 'package:travelogue_mobile/representation/tour/screens/tour_screen.dart';
-import 'package:travelogue_mobile/representation/tour_guide/screens/tour_guide_screen.dart';
-import 'package:webview_flutter/webview_flutter.dart';
-import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
-import 'package:travelogue_mobile/core/constants/color_constants.dart';
 import 'package:travelogue_mobile/model/tour_guide/tour_guide_model.dart';
-import 'package:travelogue_mobile/representation/tour/screens/payment_success_sreen.dart';
+
+import 'package:travelogue_mobile/representation/tour_guide/widgets/payment_countdown_header.dart';
+import 'package:travelogue_mobile/representation/tour_guide/widgets/payment_expired_dialog.dart';
+import 'package:travelogue_mobile/representation/tour_guide/widgets/payment_leave_confirm_dialog.dart';
+import 'package:travelogue_mobile/representation/tour_guide/widgets/payment_marquee_bar.dart';
+import 'package:travelogue_mobile/representation/tour_guide/widgets/payment_webview_section.dart';
 
 class TourGuideQrPaymentScreen extends StatefulWidget {
   static const String routeName = '/guide-qr-payment';
@@ -26,6 +29,8 @@ class TourGuideQrPaymentScreen extends StatefulWidget {
   final int children;
   final DateTime startTime;
   final String? paymentUrl;
+  final String? tripPlanId;
+  final String? bookingId;
 
   const TourGuideQrPaymentScreen({
     super.key,
@@ -36,6 +41,8 @@ class TourGuideQrPaymentScreen extends StatefulWidget {
     required this.children,
     required this.startTime,
     this.paymentUrl,
+    this.tripPlanId,
+    this.bookingId,
   });
 
   @override
@@ -44,27 +51,29 @@ class TourGuideQrPaymentScreen extends StatefulWidget {
 }
 
 class _TourGuideQrPaymentScreenState extends State<TourGuideQrPaymentScreen> {
-  late final WebViewController _webViewController;
-  final _gestureRecognizers = {
-    Factory(() => EagerGestureRecognizer()),
-  };
+  WebViewController? _webViewController;
+  final _gestureRecognizers = {Factory(() => EagerGestureRecognizer())};
 
   Duration _remaining = const Duration(minutes: 5);
   late Timer _timer;
   bool _isLoading = true;
-
+  final _bookingRepository = BookingRepository();
   @override
   void initState() {
     super.initState();
 
     final elapsed = DateTime.now().difference(widget.startTime);
-    _remaining = Duration(minutes: 5) - elapsed;
-    if (_remaining.isNegative) _remaining = Duration.zero;
+    _remaining = const Duration(minutes: 5) - elapsed;
+    if (_remaining.isNegative) {
+      _remaining = Duration.zero;
+    }
 
     _startCountdown();
 
-    if (widget.paymentUrl != null) {
+    if (widget.paymentUrl != null && widget.paymentUrl!.isNotEmpty) {
       _loadWebViewFromUrl(widget.paymentUrl!);
+    } else {
+      setState(() => _isLoading = false);
     }
   }
 
@@ -74,120 +83,89 @@ class _TourGuideQrPaymentScreenState extends State<TourGuideQrPaymentScreen> {
         setState(() => _remaining -= const Duration(seconds: 1));
       } else {
         timer.cancel();
-        _onCountdownFinished();
+        showPaymentExpiredDialog(context);
       }
     });
   }
 
   void _loadWebViewFromUrl(String url) {
     final uri = Uri.parse(url);
-    _webViewController = WebViewController()
+    final controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..loadRequest(uri)
-      ..setNavigationDelegate(NavigationDelegate(
-        onPageFinished: (_) => setState(() => _isLoading = false),
-        onPageStarted: (_) => setState(() => _isLoading = true),
-        onNavigationRequest: (request) {
-          final url = request.url;
-          if (url.contains("status=PAID")) {
-            _completePayment();
-            return NavigationDecision.prevent;
-          } else if (url.contains("status=CANCELLED")) {
-            Future.delayed(const Duration(seconds: 2), () {
-              Navigator.of(context).pushNamedAndRemoveUntil(
-                MainScreen.routeName,
-                (route) => false,
-              );
-              AppBloc.mainBloc.add(OnChangeIndexEvent(indexChange: 1));
-            });
-            return NavigationDecision.prevent;
-          }
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onPageFinished: (_) => setState(() => _isLoading = false),
+          onPageStarted: (_) => setState(() => _isLoading = true),
+          onNavigationRequest: (request) {
+            final u = request.url;
+            if (u.contains("status=PAID")) {
+              _completePayment();
+              return NavigationDecision.prevent;
+            } else if (u.contains('status=CANCELLED') ||
+                u.contains('status=CANCELED')) {
+              _handleCancel();
+              return NavigationDecision.prevent;
+            }
+            return NavigationDecision.navigate;
+          },
+        ),
+      );
 
-          return NavigationDecision.navigate;
-        },
-      ));
-
-    if (_webViewController.platform is WebKitWebViewController) {
-      (_webViewController.platform as WebKitWebViewController)
+    if (controller.platform is WebKitWebViewController) {
+      (controller.platform as WebKitWebViewController)
           .setAllowsBackForwardNavigationGestures(true);
     }
 
-    setState(() => _isLoading = true);
+    setState(() {
+      _webViewController = controller;
+      _isLoading = true;
+    });
   }
 
-//  void _completePayment() {
-//   Navigator.of(context).pushAndRemoveUntil(
-//     MaterialPageRoute(
-//       builder: (_) => const PaymentSuccessScreen(fromGuide: true),
-//     ),
-//     (route) => false,
-//   );
-// }
+void _handleCancel() async {
+  final id = widget.bookingId;
+  if (id == null || id.isEmpty) {
+    print('[⚠️] tripPlanId is null or empty, skip cancel API');
+    _finishFlow();
+    return;
+  }
 
-  void _completePayment() {
+  try {
+   
+    final result = await _bookingRepository.cancelBooking(id);
+    if (result.ok) {
+      print('[✅] Booking cancelled successfully');
+    } else {
+      print('[⚠️] Booking cancel failed: ${result.message ?? 'Unknown error'}');
+    }
+  } catch (e) {
+    print('[❌] Cancel Booking Error: $e');
+  } finally {
+    Future.delayed(const Duration(seconds: 5), _finishFlow);
+  }
+}
+
+  void _finishFlow() {
+    if (!mounted) {
+      return;
+    }
+
+    final goToIndex = (widget.tripPlanId?.isNotEmpty == true) ? 2 : 1;
+
     Navigator.of(context).pushNamedAndRemoveUntil(
       MainScreen.routeName,
       (route) => false,
     );
-    AppBloc.mainBloc.add(OnChangeIndexEvent(indexChange: 1));
+    AppBloc.mainBloc.add(OnChangeIndexEvent(indexChange: goToIndex));
   }
 
-  void _onCountdownFinished() {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("Hết thời gian"),
-        content: const Text("Thời gian thanh toán đã hết. Vui lòng quay lại."),
-        actions: [
-          TextButton(
-            onPressed: () =>
-                Navigator.of(context).popUntil((route) => route.isFirst),
-            child: const Text("Quay lại"),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<bool> _onWillPop() async {
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Xác nhận'),
-        content: const Text('Bạn có chắc chắn muốn rời khỏi trang thanh toán?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Ở lại'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Rời khỏi'),
-          ),
-        ],
-      ),
-    );
-
-    if (result == true) {
-      Navigator.of(context).pushNamedAndRemoveUntil(
-        MainScreen.routeName,
-        (route) => false,
-      );
-      AppBloc.mainBloc.add(OnChangeIndexEvent(indexChange: 1));
-    }
-
-    return false;
-  }
+  void _completePayment() => _finishFlow();
 
   @override
   void dispose() {
     _timer.cancel();
     super.dispose();
-  }
-
-  String _formatDuration(Duration d) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    return '${twoDigits(d.inMinutes)}:${twoDigits(d.inSeconds % 60)}';
   }
 
   @override
@@ -198,104 +176,33 @@ class _TourGuideQrPaymentScreenState extends State<TourGuideQrPaymentScreen> {
         : "Không rõ";
     final name = widget.guide.userName ?? "Hướng dẫn viên";
 
+    // ignore: deprecated_member_use
     return WillPopScope(
-      onWillPop: _onWillPop,
+      onWillPop: () => showLeaveConfirmDialog(context, onConfirm: _finishFlow),
       child: Scaffold(
         backgroundColor: Colors.white,
         body: SafeArea(
           child: Column(
             children: [
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
-                decoration: const BoxDecoration(
-                  gradient: Gradients.defaultGradientBackground,
-                  borderRadius:
-                      BorderRadius.vertical(bottom: Radius.circular(24)),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.arrow_back_ios,
-                              color: Colors.white),
-                          onPressed: () async {
-                            final confirm = await _onWillPop();
-                            if (confirm) Navigator.pop(context);
-                          },
-                        ),
-                        const Spacer(),
-                      ],
-                    ),
-                    Icon(Icons.web_rounded, size: 32.sp, color: Colors.white),
-                    SizedBox(height: 1.h),
-                    Text('Thanh toán hướng dẫn viên',
-                        style: TextStyle(
-                            fontSize: 17.sp,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white)),
-                    SizedBox(height: 0.6.h),
-                    Text('$name – $price/ngày',
-                        style:
-                            TextStyle(fontSize: 15.sp, color: Colors.white70)),
-                    SizedBox(height: 1.h),
-                    _buildCountdownClock(),
-                  ],
-                ),
+              PaymentCountdownHeader(
+                title: 'Thanh toán hướng dẫn viên',
+                subtitle: '$name – $price/ngày',
+                remaining: _remaining,
               ),
               Expanded(
-                child: Stack(
-                  children: [
-                    WebViewWidget(
-                      controller: _webViewController,
-                      gestureRecognizers: _gestureRecognizers,
-                    ),
-                    if (_isLoading)
-                      const Center(child: CircularProgressIndicator()),
-                  ],
+                child: PaymentWebViewSection(
+                  controller: _webViewController,
+                  gestureRecognizers: _gestureRecognizers,
+                  isLoading: _isLoading,
                 ),
               ),
-              Container(
-                height: 4.h,
-                padding: EdgeInsets.symmetric(horizontal: 5.w),
-                child: Marquee(
-                  text: '💳 Travelogue – Thanh toán bảo mật với PayOS',
-                  style: TextStyle(
-                      fontSize: 13.sp,
-                      color: Colors.blueAccent,
-                      fontWeight: FontWeight.w500),
-                  velocity: 30,
-                ),
+              const PaymentMarqueeBar(
+                text: '💳 Travelogue – Thanh toán bảo mật với PayOS',
               ),
               SizedBox(height: 1.h),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildCountdownClock() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 0.6.h),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.timer, color: Colors.white, size: 20),
-          SizedBox(width: 2.w),
-          Text(
-            _formatDuration(_remaining),
-            style: TextStyle(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-        ],
       ),
     );
   }

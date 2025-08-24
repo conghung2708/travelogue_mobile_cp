@@ -1,10 +1,16 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:sizer/sizer.dart';
+
 import 'package:travelogue_mobile/core/blocs/app_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/authenicate/authenicate_bloc.dart';
 import 'package:travelogue_mobile/data/data_local/user_local.dart';
 import 'package:travelogue_mobile/representation/user/screens/otp_vertification_screen.dart';
+
+import 'package:travelogue_mobile/core/repository/user_repository.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -14,155 +20,501 @@ class EditProfileScreen extends StatefulWidget {
   State<EditProfileScreen> createState() => _EditProfileScreenState();
 }
 
-class _EditProfileScreenState extends State<EditProfileScreen> {
+class _EditProfileScreenState extends State<EditProfileScreen>
+    with SingleTickerProviderStateMixin {
   final _nameController = TextEditingController();
+  final _addressController = TextEditingController();
+  final _phoneController = TextEditingController();
+
   String _email = "";
+  late final TextEditingController _emailReadonlyController;
+
+  AnimationController? _animController;
+  Animation<double>? _fadeAnim;
+
+  File? _avatarFile;
+  String? _avatarUrl;
+
+  bool _saving = false;
+
+  int? _sex;
+
+  final _userRepo = UserRepository();
 
   @override
   void initState() {
     super.initState();
-    _nameController.text = UserLocal().getUser().fullName ?? '';
-    _email = UserLocal().getUser().email ?? '';
-  }
+    final user = UserLocal().getUser();
+    _nameController.text = user.fullName ?? '';
+    _email = user.email ?? '';
+    _emailReadonlyController = TextEditingController(text: _email);
 
-  void _saveChanges() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Thông tin đã được cập nhật!")),
+    _addressController.text = user.address ?? '';
+    _phoneController.text = user.phoneNumber ?? '';
+
+    _avatarUrl = user.avatarUrl;
+
+    try {
+      // nếu UserLocal có field sex (int?), sẽ gán; nếu không có cũng không sao
+      // ignore: invalid_use_of_protected_member
+      final dynamic possibleSex = (user as dynamic).sex;
+      if (possibleSex is int && (possibleSex == 1 || possibleSex == 2)) {
+        _sex = possibleSex;
+      }
+    } catch (_) {
+      _sex = null;
+    }
+
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
     );
-    Navigator.pop(context);
+    _fadeAnim =
+        CurvedAnimation(parent: _animController!, curve: Curves.easeInOut);
+    _animController!.forward();
   }
 
-  void _confirmChangePassword() async {
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Xác nhận"),
-        content: const Text("Bạn có chắc muốn thay đổi mật khẩu không?"),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text("Không")),
-          TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text("Có")),
-        ],
+  @override
+  void dispose() {
+    _animController?.dispose();
+    _nameController.dispose();
+    _emailReadonlyController.dispose();
+    _addressController.dispose();
+    _phoneController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickAvatar() async {
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
+      if (picked == null) return;
+      setState(() => _avatarFile = File(picked.path));
+    } on PlatformException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Không thể chọn ảnh: ${e.message}')),
+      );
+    }
+  }
+
+  Future<void> _saveChanges() async {
+    final user = UserLocal().getUser();
+    final userId = user.id;
+    if (userId == null || userId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Không xác định được tài khoản.")),
+      );
+      return;
+    }
+
+    if (_saving) return;
+    setState(() => _saving = true);
+
+    try {
+      if (_avatarFile != null) {
+        final newUrl = await _userRepo.updateAvatar(_avatarFile!);
+        if (newUrl != null && newUrl.isNotEmpty) {
+          _avatarUrl = newUrl;
+          UserLocal().saveUser(user.copyWith(avatarUrl: newUrl));
+          if (mounted) setState(() {});
+        }
+      }
+
+      final name = _nameController.text.trim();
+      final phone = _phoneController.text.trim().isEmpty
+          ? null
+          : _phoneController.text.trim();
+      final addr = _addressController.text.trim().isEmpty
+          ? null
+          : _addressController.text.trim();
+
+      final updated = await _userRepo.updateUserProfile(
+        id: userId,
+        fullName: name.isEmpty ? null : name,
+        phoneNumber: phone,
+        address: addr,
+        sex: _sex,
+      );
+
+      if (updated != null) {
+        final merged = user.copyWith(
+          fullName: updated.fullName ?? name,
+          phoneNumber: updated.phoneNumber ?? phone,
+          address: updated.address ?? addr,
+          avatarUrl: _avatarUrl ?? user.avatarUrl,
+          sex: updated.sex ?? _sex,
+        );
+        UserLocal().saveUser(merged);
+      } else {
+        final merged = user.copyWith(
+          fullName: name.isEmpty ? user.fullName : name,
+          phoneNumber: phone ?? user.phoneNumber,
+          address: addr ?? user.address,
+          avatarUrl: _avatarUrl ?? user.avatarUrl,
+          sex: updated?.sex ?? _sex,
+        );
+        UserLocal().saveUser(merged);
+      }
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Thông tin đã được cập nhật!")),
+      );
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi cập nhật: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  Future<void> _confirmChangePassword() async {
+    final ok = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            title: const Text("Xác nhận"),
+            content: const Text("Bạn có chắc muốn thay đổi mật khẩu không?"),
+            actions: [
+              TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text("Không")),
+              TextButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text("Có")),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (!ok) return;
+
+    AppBloc.authenicateBloc.add(
+      SendOTPEmailEvent(
+        context: context,
+        email: _email,
       ),
     );
-
-    if (result == true) {
-      AppBloc.authenicateBloc.add(
-        SendOTPEmailEvent(
-          context: context,
-          email: UserLocal().getUser().email ?? '',
-        ),
-      );
-      Navigator.pushNamed(context, OtpVerificationScreen.routeName);
-    }
+    if (!mounted) return;
+    Navigator.pushNamed(context, OtpVerificationScreen.routeName);
   }
 
   @override
   Widget build(BuildContext context) {
+    final opacityAnim = _fadeAnim ?? const AlwaysStoppedAnimation<double>(1);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFE0F7FA),
-      appBar: AppBar(
-        elevation: 0,
-        systemOverlayStyle: const SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
-          statusBarBrightness: Brightness.light,
-          statusBarIconBrightness: Brightness.light,
-        ),
-        title: Text(
-          'Chỉnh sửa thông tin',
-          style: TextStyle(fontSize: 20.sp, fontFamily: "Pattaya"),
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.transparent,
-        foregroundColor: Colors.black87,
-      ),
-      body: Padding(
-        padding: EdgeInsets.all(5.w),
+      backgroundColor: Colors.grey[50],
+      body: FadeTransition(
+        opacity: opacityAnim,
         child: Column(
           children: [
-            // Profile Card
-            Card(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)),
-              elevation: 4,
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 3.h),
+            _buildHeader(context),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(5.w),
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildLabel("Tên của bạn"),
-                    _buildTextField(_nameController, icon: Icons.person),
-                    SizedBox(height: 2.5.h),
-                    _buildLabel("Email đăng ký"),
-                    _buildTextField(
-                      TextEditingController(text: _email),
-                      icon: Icons.email,
-                      readOnly: true,
-                    ),
-                    SizedBox(height: 1.5.h),
+                    _buildProfileCard(),
+                    SizedBox(height: 3.h),
+                    _buildChangePasswordSection(),
+                    SizedBox(height: 4.h),
+                    _buildSaveButton(),
                   ],
                 ),
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
 
-            SizedBox(height: 3.h),
+  Widget _buildHeader(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.only(
+          top: MediaQuery.of(context).padding.top + 2.h, bottom: 3.h),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF4FC3F7), Color(0xFF0288D1)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => Navigator.pop(context),
+          ),
+          Expanded(
+            child: Text(
+              'Chỉnh sửa thông tin',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 20.sp,
+                fontFamily: "Pattaya",
+                color: Colors.white,
+              ),
+            ),
+          ),
+          const SizedBox(width: 48),
+        ],
+      ),
+    );
+  }
 
-            // Change password
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildLabel("Bạn muốn đổi mật khẩu?"),
-                SizedBox(height: 1.h),
-                Center(
-                  child: OutlinedButton.icon(
-                    onPressed: _confirmChangePassword,
-                    icon:
-                        Icon(Icons.lock_reset, size: 18.sp, color: Colors.teal),
-                    label: Text(
-                      "Thay đổi mật khẩu",
-                      style: TextStyle(
-                          fontSize: 13.5.sp,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.teal),
+  Widget _buildProfileCard() {
+    return Card(
+      elevation: 10,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      shadowColor: const Color(0xFF0288D1).withOpacity(0.18),
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(5.w, 2.6.h, 5.w, 2.6.h),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Avatar
+            Center(
+              child: Stack(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFE3F2FD), Color(0xFFBBDEFB)],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(.06),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                    style: OutlinedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 6.w, vertical: 1.6.h),
-                      side: const BorderSide(color: Colors.teal, width: 1.4),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30)),
+                    child: CircleAvatar(
+                      radius: 42,
                       backgroundColor: Colors.white,
-                      elevation: 1,
+                      backgroundImage: _avatarFile != null
+                          ? FileImage(_avatarFile!) as ImageProvider
+                          : (_avatarUrl != null && _avatarUrl!.isNotEmpty)
+                              ? NetworkImage(_avatarUrl!)
+                              : null,
+                      child: (_avatarFile == null &&
+                              (_avatarUrl == null || _avatarUrl!.isEmpty))
+                          ? Icon(Icons.person_rounded,
+                              size: 42, color: Colors.blueGrey[300])
+                          : null,
                     ),
                   ),
-                ),
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: InkWell(
+                      onTap: _saving ? null : _pickAvatar,
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: const EdgeInsets.all(7),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(
+                              color: const Color(0xFF1E88E5), width: 1.2),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(.08),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            )
+                          ],
+                        ),
+                        child: const Icon(Icons.camera_alt_rounded,
+                            size: 18, color: Color(0xFF1E88E5)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 2.2.h),
+
+            _buildLabel("Tên của bạn"),
+            _buildTextField(_nameController,
+                icon: Icons.person_outline, hint: 'Nhập tên hiển thị'),
+
+            SizedBox(height: 2.0.h),
+            _buildLabel("Email đăng ký"),
+            _buildTextField(
+              _emailReadonlyController,
+              icon: Icons.email_outlined,
+              readOnly: true,
+              hint: 'Email đã xác thực',
+              suffix: const Icon(Icons.verified, color: Colors.green),
+            ),
+
+            SizedBox(height: 2.0.h),
+            _buildLabel("Số điện thoại"),
+            _buildTextField(
+              _phoneController,
+              icon: Icons.phone_rounded,
+              hint: 'Số điện thoại (tuỳ chọn)',
+              keyboardType: TextInputType.phone, // NEW
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(11),
               ],
             ),
 
-            const Spacer(),
+            SizedBox(height: 2.0.h),
+            _buildLabel("Giới tính"), // NEW
+            _buildGenderChips(),
 
-            // Save button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _saveChanges,
-                icon: const Icon(Icons.save),
-                label: Text("Lưu thay đổi", style: TextStyle(fontSize: 14.sp)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.teal,
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(vertical: 1.8.h),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30)),
-                  elevation: 3,
+            SizedBox(height: 2.0.h),
+            _buildLabel("Địa chỉ"),
+            _buildTextField(_addressController,
+                icon: Icons.home_outlined, hint: 'Địa chỉ (tuỳ chọn)'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // NEW: ChoiceChip Nam/Nữ
+  Widget _buildGenderChips() {
+    Widget chip({
+      required String label,
+      required IconData icon,
+      required int value,
+    }) {
+      final bool selected = _sex == value;
+      return ChoiceChip(
+        label: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 18, color: selected ? Colors.white : Colors.blue),
+            const SizedBox(width: 6),
+            Text(label),
+          ],
+        ),
+        selected: selected,
+        onSelected: (ok) => setState(() => _sex = ok ? value : null),
+        backgroundColor: const Color(0xFFE3F2FD),
+        selectedColor: Colors.blueAccent,
+        labelStyle: TextStyle(
+          color: selected ? Colors.white : Colors.blue[800],
+          fontWeight: FontWeight.w600,
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        shape: StadiumBorder(
+          side: BorderSide(
+            color: selected ? Colors.transparent : Colors.blueAccent,
+            width: 1.1,
+          ),
+        ),
+      );
+    }
+
+    return Wrap(
+      spacing: 10,
+      runSpacing: 8,
+      children: [
+        chip(label: 'Nam', icon: Icons.male, value: 1),
+        chip(label: 'Nữ', icon: Icons.female, value: 2),
+      ],
+    );
+  }
+
+  Widget _buildChangePasswordSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLabel("Bạn muốn đổi mật khẩu?"),
+        SizedBox(height: 1.h),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: _confirmChangePassword,
+            icon: Icon(Icons.lock_reset, size: 18.sp, color: Colors.teal),
+            label: Padding(
+              padding: EdgeInsets.symmetric(vertical: 0.6.h),
+              child: Text(
+                "Thay đổi mật khẩu",
+                style: TextStyle(
+                  fontSize: 13.5.sp,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.teal,
                 ),
               ),
             ),
-            SizedBox(height: 2.h),
+            style: OutlinedButton.styleFrom(
+              padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 1.2.h),
+              side: const BorderSide(color: Colors.teal, width: 1.4),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30)),
+              backgroundColor: Colors.white,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSaveButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+              colors: [Color(0xFF26C6DA), Color(0xFF0288D1)]),
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF0288D1).withOpacity(0.25),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
           ],
+        ),
+        child: ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+            padding: EdgeInsets.symmetric(vertical: 1.8.h),
+          ),
+          onPressed: _saving ? null : _saveChanges,
+          icon: _saving
+              ? const SizedBox(
+                  height: 18,
+                  width: 18,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: Colors.white),
+                )
+              : const Icon(Icons.save, color: Colors.white),
+          label: _saving
+              ? const Text('Đang lưu...',
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.w600))
+              : Text(
+                  "Lưu thay đổi",
+                  style: TextStyle(
+                      fontSize: 14.5.sp,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600),
+                ),
         ),
       ),
     );
@@ -175,8 +527,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         text,
         style: TextStyle(
             fontSize: 15.sp,
-            fontWeight: FontWeight.w600,
-            color: Colors.blueGrey),
+            fontWeight: FontWeight.w700,
+            color: Colors.blueGrey[800]),
       ),
     );
   }
@@ -184,20 +536,43 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Widget _buildTextField(
     TextEditingController controller, {
     IconData? icon,
-    bool isPassword = false,
+    String? hint,
     bool readOnly = false,
+    Widget? suffix,
+    TextInputType? keyboardType, // NEW
+    List<TextInputFormatter>? inputFormatters, // NEW
   }) {
     return TextField(
       controller: controller,
-      obscureText: isPassword,
       readOnly: readOnly,
-      style: TextStyle(fontSize: 14.sp),
+      keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
+      style: TextStyle(fontSize: 14.sp, color: Colors.black87),
       decoration: InputDecoration(
-        prefixIcon: icon != null ? Icon(icon, color: Colors.teal) : null,
+        prefixIcon: icon != null
+            ? Container(
+                margin: EdgeInsets.all(1.5.w),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFE3F2FD),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: Colors.blueAccent),
+              )
+            : null,
+        suffixIcon: suffix,
+        hintText: hint,
+        hintStyle: TextStyle(color: Colors.black45, fontSize: 12.5.sp),
         filled: true,
         fillColor: Colors.grey[50],
         contentPadding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.8.h),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(18)),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: const BorderSide(color: Color(0xFFE3F2FD)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: const BorderSide(color: Color(0xFF1E88E5)),
+        ),
       ),
     );
   }

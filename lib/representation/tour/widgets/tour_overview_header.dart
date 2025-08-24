@@ -1,26 +1,47 @@
+// lib/representation/tour/widgets/tour_overview_header.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sizer/sizer.dart';
 
 import 'package:travelogue_mobile/model/tour/tour_model.dart';
-import 'package:travelogue_mobile/representation/tour/screens/tour_type_selector.dart';
+import 'package:travelogue_mobile/model/args/tour_calendar_args.dart';
 import 'package:travelogue_mobile/representation/trip_plan/widgets/trip_marquee_info.dart';
 import 'package:travelogue_mobile/representation/trip_plan/widgets/trip_info_icon_row.dart';
+import 'package:travelogue_mobile/representation/tour/screens/tour_schedule_calender_screen.dart';
 import 'package:travelogue_mobile/representation/tour/widgets/tour_confirmed_action_card.dart';
 
 class TourOverviewHeader extends StatelessWidget {
   final TourModel tour;
   final bool? readOnly;
-  final DateTime? departureDate;
+  final DateTime? startTime;
   final bool? isBooked;
 
   const TourOverviewHeader({
     super.key,
     required this.tour,
     this.readOnly,
-    this.departureDate,
+    this.startTime,
     this.isBooked,
   });
+
+  String _transportLabel(String? raw) {
+    final s = (raw ?? '').trim();
+    return s.isEmpty ? 'Xe máy' : s; 
+  }
+
+  IconData _transportIcon(String? raw) {
+  final s = (raw ?? '').toLowerCase().trim();
+  if (s.isEmpty) return Icons.two_wheeler_rounded; 
+  if (s.contains('bus')) return Icons.directions_bus_filled_rounded;
+  if (s.contains('tàu') || s.contains('thuyền')) {
+    return Icons.directions_boat_filled_rounded;
+  }
+  if (s.contains('hơi') || s.contains('ô tô') || s.contains('oto')) {
+    return Icons.directions_car_rounded;
+  }
+  if (s.contains('máy')) return Icons.two_wheeler_rounded; 
+  return Icons.route_rounded;
+}
 
   @override
   Widget build(BuildContext context) {
@@ -28,13 +49,16 @@ class TourOverviewHeader extends StatelessWidget {
     final String tourDuration =
         '${totalDays}N${(totalDays - 1).clamp(1, totalDays)}D';
 
-    final String tourDate = departureDate != null
-        ? DateFormat('dd/MM/yyyy').format(departureDate!)
+    final String tourDate = startTime != null
+        ? DateFormat('dd/MM/yyyy').format(startTime!)
         : 'Chưa chọn ngày';
 
     final double tourPrice = tour.finalPrice ?? 0;
     final currencyFormatter =
         NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
+
+    final String transportText = _transportLabel(tour.transportType);
+    final IconData transportIcon = _transportIcon(tour.transportType);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -48,6 +72,7 @@ class TourOverviewHeader extends StatelessWidget {
           ),
         ),
         SizedBox(height: 1.h),
+
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
@@ -68,7 +93,35 @@ class TourOverviewHeader extends StatelessWidget {
             ),
           ],
         ),
+
+        SizedBox(height: 1.5.h),
+
+        // Chip phương tiện (string từ BE)
+        Container(
+          width: double.infinity,
+          padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.2.h),
+          decoration: BoxDecoration(
+            color: Colors.blueGrey.withOpacity(0.06),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Icon(transportIcon, size: 18.sp, color: Colors.blueGrey),
+              SizedBox(width: 2.w),
+              Text(
+                'Phương tiện: $transportText',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.blueGrey[700],
+                ),
+              ),
+            ],
+          ),
+        ),
+
         SizedBox(height: 2.h),
+
         Container(
           height: 5.h,
           width: double.infinity,
@@ -79,27 +132,31 @@ class TourOverviewHeader extends StatelessWidget {
           child: const TripMarqueeInfo(),
         ),
         SizedBox(height: 2.h),
+
         TourConfirmedActionCard(
-          departureDate: departureDate,
+          startTime: startTime,
           isBooked: isBooked,
           tour: tour,
           currencyFormat: currencyFormatter,
           price: tourPrice,
           readOnly: readOnly,
           onConfirmed: () async {
-            final parsedTour = TourModel.fromJson(tour.toJson());
-
-            print('[TourOverviewHeader] parsedTour id: ${parsedTour.tourId}');
-            print(
-                '[TourOverviewHeader] schedules == null? ${parsedTour.schedules == null}');
-            print(
-                '[TourOverviewHeader] schedules.length: ${parsedTour.schedules?.length}');
+            // schedules giờ là non-null (default [])
+            final schedules = tour.schedules;
+            if (schedules.isEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Tour này chưa có lịch trình.')),
+              );
+              return;
+            }
             await Navigator.pushNamed(
               context,
-              TourTypeSelector.routeName,
-              arguments: {
-                'tour': tour.toJson(),
-              },
+              TourScheduleCalendarScreen.routeName,
+              arguments: TourCalendarArgs(
+                tour: tour,
+                schedules: schedules,
+                isGroupTour: true,
+              ),
             );
           },
         ),

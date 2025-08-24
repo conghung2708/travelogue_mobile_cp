@@ -153,7 +153,7 @@ class LocationPreview extends StatelessWidget {
   final LocationModel location;
   final VoidCallback onViewDetail;
 
-  const LocationPreview({
+  const LocationPreview({super.key, 
     required this.location,
     required this.onViewDetail,
   });
@@ -187,10 +187,9 @@ class LocationPreview extends StatelessWidget {
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(22),
                 ),
-                child: location.imgUrlFirst != null &&
-                        location.imgUrlFirst!.isNotEmpty
+                child: location.imgUrlFirst.isNotEmpty
                     ? Image.network(
-                        location.imgUrlFirst!,
+                        location.imgUrlFirst,
                         height: 18.h,
                         width: double.infinity,
                         fit: BoxFit.cover,
@@ -220,14 +219,14 @@ class LocationPreview extends StatelessWidget {
               ),
 
               Padding(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.format_quote,
+                        const Icon(Icons.format_quote,
                             size: 20, color: ColorPalette.subTitleColor),
-                        SizedBox(width: 6),
+                        const SizedBox(width: 6),
                         Expanded(
                           child: Text(
                             quote,
@@ -262,7 +261,7 @@ class LocationPreview extends StatelessWidget {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.transparent,
                           shadowColor: Colors.transparent,
-                          padding: EdgeInsets.symmetric(vertical: 12),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),

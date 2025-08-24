@@ -65,6 +65,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   void _resetPassword() {
+    print('🧪 Resetting password with email: ${_emailController.text}');
+    print('🧪 OTP entered: ${_codeControllers.map((c) => c.text).join()}');
     if (_newPasswordController.text.length < 6) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Mật khẩu phải từ 6 ký tự trở lên")),

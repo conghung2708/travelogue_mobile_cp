@@ -40,7 +40,7 @@ class HotelCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Ảnh đại diện
+           
               ClipRRect(
                 borderRadius:
                     const BorderRadius.vertical(top: Radius.circular(12)),
@@ -54,7 +54,7 @@ class HotelCard extends StatelessWidget {
                 ),
               ),
 
-              // Nội dung
+           
               Expanded(
                 child: Padding(
                   padding:
@@ -62,7 +62,7 @@ class HotelCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Tên
+                     
                       Text(
                         locationModel.name ?? 'Không rõ tên',
                         style: const TextStyle(
@@ -74,7 +74,7 @@ class HotelCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
 
-                      // Địa chỉ
+                      
                       if (locationModel.address != null)
                         Row(
                           children: [
@@ -97,7 +97,7 @@ class HotelCard extends StatelessWidget {
 
                       const Spacer(),
 
-                      // Đánh giá + Quận/Huyện
+            
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
