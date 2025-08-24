@@ -1,13 +1,10 @@
-// lib/core/repository/bank_lookup_repository.dart
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:travelogue_mobile/core/config/app_env.dart';
 import 'package:travelogue_mobile/model/bank_account/bank_lookup_models.dart';
 
 class BankLookupRepository {
   final Dio _dio;
-
-  static const String _apiKey    = '243d0133-27ee-413b-a006-1363e6c4629ekey';
-  static const String _apiSecret = '9214afd9-f1bb-4b49-ba0c-f2e84c03d548secret';
 
   BankLookupRepository()
       : _dio = Dio(
@@ -27,16 +24,18 @@ class BankLookupRepository {
           );
 
   Map<String, String> _headers() => {
-        'x-api-key': _apiKey.trim(),
-        'x-api-secret': _apiSecret.trim(),
+        'x-api-key': AppEnv.bankKey.trim(),    
+        'x-api-secret': AppEnv.bankSecret.trim(), 
         'Content-Type': 'application/json',
       };
 
-
   Future<List<BankLookupItem>> listBanks() async {
     try {
-      final res = await _dio.get('/api/bank/list', options: Options(headers: _headers()));
-      if (res.statusCode == 200 && res.data is Map && res.data['data'] is List) {
+      final res = await _dio.get('/api/bank/list',
+          options: Options(headers: _headers()));
+      if (res.statusCode == 200 &&
+          res.data is Map &&
+          res.data['data'] is List) {
         return (res.data['data'] as List)
             .whereType<Map<String, dynamic>>()
             .map(BankLookupItem.fromJson)
@@ -44,14 +43,15 @@ class BankLookupRepository {
       }
       throw Exception('Không lấy được danh sách ngân hàng');
     } on DioException catch (e) {
-      final msg = (e.response?.data is Map) ? e.response?.data['msg']?.toString() : null;
+      final msg = (e.response?.data is Map)
+          ? e.response?.data['msg']?.toString()
+          : null;
       if (e.response?.statusCode == 422 && msg == 'API_INFO_NOT_FOUND') {
         throw Exception('API key/secret không hợp lệ hoặc đã bị reset');
       }
       throw Exception(msg ?? e.message ?? 'Lỗi mạng');
     }
   }
-
 
   Future<String> verifyAccount({
     required String bankCode,
@@ -68,13 +68,15 @@ class BankLookupRepository {
 
       if (res.statusCode == 200 && res.data?['success'] == true) {
         final name = res.data['data']?['ownerName']?.toString();
-        if (name == null || name.isEmpty) throw Exception('Không nhận được tên chủ tài khoản');
+        if (name == null || name.isEmpty) {
+          throw Exception('Không nhận được tên chủ tài khoản');
+        }
         return name;
       }
 
       throw Exception(res.data?['msg']?.toString() ?? 'Xác thực thất bại');
     } on DioException catch (e) {
-      final sc  = e.response?.statusCode;
+      final sc = e.response?.statusCode;
       final map = e.response?.data is Map ? (e.response!.data as Map) : null;
       final msg = map?['msg']?.toString();
 
