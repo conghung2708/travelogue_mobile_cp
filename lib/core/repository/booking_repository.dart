@@ -5,6 +5,7 @@ import 'package:travelogue_mobile/model/booking/booking_model.dart';
 import 'package:travelogue_mobile/model/booking/create_booking_tour_model.dart';
 import 'package:travelogue_mobile/model/booking/review_booking_request.dart';
 import 'package:travelogue_mobile/model/tour_guide/create_booking_tour_guide_model.dart';
+import 'package:travelogue_mobile/model/workshop/create_booking_workshop_model.dart';
 
 class BookingRepository {
   Future<BookingModel?> createBooking(CreateBookingTourModel model) async {
@@ -143,26 +144,15 @@ class BookingRepository {
     }
   }
 
-  Future<BookingModel?> createWorkshopBooking({
-    required String workshopId,
-    required String workshopScheduleId,
-    String? promotionCode,
-    required int adultCount,
-    required int childrenCount,
-  }) async {
-    final data = {
-      "workshopId": workshopId,
-      "workshopScheduleId": workshopScheduleId,
-      "promotionCode": promotionCode,
-      "adultCount": adultCount,
-      "childrenCount": childrenCount,
-    };
-
-    print('[📤 CREATE WORKSHOP BOOKING] Sending data: $data');
+  Future<BookingModel?> createWorkshopBooking(
+    CreateBookingWorkshopModel model,
+  ) async {
+    final body = model.toJson();
+    print('[📤 CREATE WORKSHOP BOOKING] Sending body: $body');
 
     final response = await BaseRepository().postRoute(
       gateway: Endpoints.createBookingWorkshop,
-      data: data,
+      data: body,
     );
 
     print('[📥 CREATE WORKSHOP BOOKING] Status: ${response.statusCode}');
@@ -264,5 +254,27 @@ class BookingRepository {
         ? ((res.data['message'] ?? res.data['Message'])?.toString())
         : null;
     return (ok: false, message: msg ?? 'Đánh giá thất bại.');
+  }
+
+   Future<Set<String>> getMyReviewedBookingIds({int? rating}) async {
+    final String url = (rating == null)
+        ? Endpoints.getMyReviews              
+        : '${Endpoints.getMyReviews}?rating=$rating';
+
+    final res = await BaseRepository().getRoute(url);
+
+    if (res.statusCode == StatusCode.ok &&
+        res.data is Map &&
+        (res.data['data'] is List)) {
+      final List<dynamic> list = res.data['data'];
+      final ids = <String>{};
+      for (final item in list) {
+        if (item is Map && item['bookingId'] is String) {
+          ids.add(item['bookingId'] as String);
+        }
+      }
+      return ids;
+    }
+    return <String>{};
   }
 }

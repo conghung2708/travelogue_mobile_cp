@@ -188,8 +188,6 @@ void _handleCancel() async {
                 title: 'Thanh toán hướng dẫn viên',
                 subtitle: '$name – $price/ngày',
                 remaining: _remaining,
-                onBackPressed: () =>
-                    showLeaveConfirmDialog(context, onConfirm: _finishFlow),
               ),
               Expanded(
                 child: PaymentWebViewSection(

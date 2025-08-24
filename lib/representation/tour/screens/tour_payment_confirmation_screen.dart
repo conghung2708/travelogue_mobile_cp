@@ -56,6 +56,8 @@ class _TourPaymentConfirmationScreenState
   final _phoneCtl = TextEditingController();
   final _addrCtl = TextEditingController();
 
+  final _formKey = GlobalKey<FormState>();
+
   bool _loadingUser = true;
   String? _loadError;
 
@@ -93,17 +95,23 @@ class _TourPaymentConfirmationScreenState
     super.dispose();
   }
 
+  bool isValidVietnamPhone(String phone) {
+    final pattern = r'^(?:\+84|0)(?:\d{9})$';
+    return RegExp(pattern).hasMatch(phone);
+  }
+
   /// Trả về (model, error). KHÔNG show SnackBar ở đây.
   ({CreateBookingTourModel? model, String? error}) _buildPayload() {
     final participants = widget.participants ?? [];
 
     if (participants.isEmpty) {
-      return (model: null, error: 'Thiếu danh sách hành khách. Quay lại bước trước để thêm.');
+      return (
+        model: null,
+        error: 'Thiếu danh sách hành khách. Quay lại bước trước để thêm.'
+      );
     }
-    if (_nameCtl.text.trim().isEmpty ||
-        _emailCtl.text.trim().isEmpty ||
-        _phoneCtl.text.trim().isEmpty ||
-        _addrCtl.text.trim().isEmpty) {
+
+    if (!(_formKey.currentState?.validate() ?? false)) {
       return (model: null, error: 'Vui lòng nhập đầy đủ thông tin liên hệ.');
     }
 
@@ -153,22 +161,32 @@ class _TourPaymentConfirmationScreenState
                       formatter: formatter,
                     ),
                     SizedBox(height: 2.h),
-
                     const TitleWithCustoneUnderline(
                       text: '👤 Thông tin ',
                       text2: 'liên hệ',
                     ),
                     SizedBox(height: 1.h),
-                    _ContactCard(
-                      nameCtl: _nameCtl,
-                      emailCtl: _emailCtl,
-                      phoneCtl: _phoneCtl,
-                      addrCtl: _addrCtl,
-                      loading: _loadingUser,
-                      error: _loadError,
+                    Form(
+                      key: _formKey,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      child: _ContactCard(
+                        nameCtl: _nameCtl,
+                        emailCtl: _emailCtl,
+                        phoneCtl: _phoneCtl,
+                        addrCtl: _addrCtl,
+                        loading: _loadingUser,
+                        error: _loadError,
+                        validatorPhone: (v) {
+                          final text = v?.trim() ?? '';
+                          if (text.isEmpty) return 'Vui lòng nhập số điện thoại';
+                          if (!isValidVietnamPhone(text)) {
+                            return 'Số điện thoại không hợp lệ';
+                          }
+                          return null;
+                        },
+                      ),
                     ),
                     SizedBox(height: 2.h),
-
                     const TitleWithCustoneUnderline(
                       text: '📘 Điều khoản & ',
                       text2: 'Trách nhiệm dịch vụ',
@@ -212,6 +230,7 @@ class _ContactCard extends StatelessWidget {
   final TextEditingController addrCtl;
   final bool loading;
   final String? error;
+  final String? Function(String?)? validatorPhone;
 
   const _ContactCard({
     required this.nameCtl,
@@ -220,6 +239,7 @@ class _ContactCard extends StatelessWidget {
     required this.addrCtl,
     required this.loading,
     required this.error,
+    required this.validatorPhone,
   });
 
   @override
@@ -290,6 +310,8 @@ class _ContactCard extends StatelessWidget {
             textCapitalization: TextCapitalization.words,
             prefixIcon: Icons.person_outline_rounded,
             hintText: 'VD: Nguyễn Văn A',
+            validator: (v) =>
+                (v == null || v.trim().isEmpty) ? 'Vui lòng nhập họ tên' : null,
           ),
           SizedBox(height: 1.2.h),
 
@@ -307,6 +329,9 @@ class _ContactCard extends StatelessWidget {
                         keyboardType: TextInputType.emailAddress,
                         prefixIcon: Icons.alternate_email_rounded,
                         hintText: 'name@example.com',
+                        validator: (v) => (v == null || v.trim().isEmpty)
+                            ? 'Vui lòng nhập email'
+                            : null,
                       ),
                     ),
                     SizedBox(width: 2.5.w),
@@ -317,6 +342,7 @@ class _ContactCard extends StatelessWidget {
                         keyboardType: TextInputType.phone,
                         prefixIcon: Icons.phone_outlined,
                         hintText: 'VD: 09xx xxx xxx',
+                        validator: validatorPhone,
                       ),
                     ),
                   ],
@@ -330,6 +356,9 @@ class _ContactCard extends StatelessWidget {
                     keyboardType: TextInputType.emailAddress,
                     prefixIcon: Icons.alternate_email_rounded,
                     hintText: 'name@example.com',
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'Vui lòng nhập email'
+                        : null,
                   ),
                   SizedBox(height: 1.2.h),
                   _LabeledField(
@@ -338,6 +367,7 @@ class _ContactCard extends StatelessWidget {
                     keyboardType: TextInputType.phone,
                     prefixIcon: Icons.phone_outlined,
                     hintText: 'VD: 09xx xxx xxx',
+                    validator: validatorPhone,
                   ),
                 ],
               );
@@ -353,6 +383,9 @@ class _ContactCard extends StatelessWidget {
             prefixIcon: Icons.location_on_outlined,
             hintText: 'Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành',
             maxLines: 2,
+            validator: (v) => (v == null || v.trim().isEmpty)
+                ? 'Vui lòng nhập địa chỉ'
+                : null,
           ),
         ],
       ),
@@ -395,6 +428,7 @@ class _LabeledField extends StatelessWidget {
   final TextInputType keyboardType;
   final TextCapitalization textCapitalization;
   final int maxLines;
+  final String? Function(String?)? validator;
 
   const _LabeledField({
     required this.label,
@@ -404,6 +438,7 @@ class _LabeledField extends StatelessWidget {
     this.prefixIcon,
     this.textCapitalization = TextCapitalization.none,
     this.maxLines = 1,
+    this.validator,
   });
 
   @override
@@ -423,6 +458,7 @@ class _LabeledField extends StatelessWidget {
           keyboardType: keyboardType,
           textCapitalization: textCapitalization,
           maxLines: maxLines,
+          validator: validator,
           decoration: InputDecoration(
             hintText: hintText,
             isDense: true,
@@ -453,4 +489,3 @@ class _LabeledField extends StatelessWidget {
     );
   }
 }
-

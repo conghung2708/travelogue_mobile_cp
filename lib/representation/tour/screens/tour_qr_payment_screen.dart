@@ -72,7 +72,6 @@ class _TourQrPaymentScreenState extends State<TourQrPaymentScreen> {
     _tick();
     _startCountdown();
 
-    // ✅ Chỉ load URL đã có sẵn
     _loadWebViewFromUrl(widget.checkoutUrl);
   }
 
@@ -202,7 +201,6 @@ Future<void> _handleCancelAndBack() async {
                 title: 'Thanh toán trực tuyến',
                 subtitle: '$tourName – ${_formatPrice(widget.totalPrice)}',
                 remaining: _remaining,
-                onBackPressed: () async => _onWillPop(),
               ),
               Expanded(
                 child: PaymentWebView(

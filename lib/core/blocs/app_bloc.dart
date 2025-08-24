@@ -9,6 +9,7 @@ import 'package:travelogue_mobile/core/blocs/main/main_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/media/media_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/nearest_data/nearest_data_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/news/news_bloc.dart';
+import 'package:travelogue_mobile/core/blocs/report/report_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/request_refund/request_refund_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/search/search_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/tour/tour_bloc.dart';
@@ -22,6 +23,7 @@ import 'package:travelogue_mobile/core/repository/bank_lookup_repository.dart';
 import 'package:travelogue_mobile/core/repository/booking_repository.dart';
 import 'package:travelogue_mobile/core/repository/nearest_data_repository.dart';
 import 'package:travelogue_mobile/core/repository/refund_request_repository.dart';
+import 'package:travelogue_mobile/core/repository/report_repository.dart';
 import 'package:travelogue_mobile/core/repository/tour_guide_repository.dart';
 import 'package:travelogue_mobile/core/repository/user_repository.dart';
 import 'package:travelogue_mobile/core/repository/wallet_repository.dart';
@@ -52,6 +54,8 @@ class AppBloc {
       BankLookupCubit(BankLookupRepository());
   static final WalletBloc walletBloc =
       WalletBloc(walletRepository: WalletRepository());
+
+  static final ReportBloc reportBloc = ReportBloc(ReportRepository());
 
   List<BlocProvider> providers = [
     BlocProvider<MainBloc>(
@@ -98,6 +102,9 @@ class AppBloc {
     BlocProvider<BankAccountBloc>.value(value: bankAccountBloc),
     BlocProvider<BankLookupCubit>.value(value: bankLookupCubit),
     BlocProvider<WalletBloc>.value(value: walletBloc),
+    BlocProvider<ReportBloc>(
+      create: (context) => reportBloc,
+    ),
   ];
 
   void initial() {
@@ -147,6 +154,7 @@ class AppBloc {
     bankAccountBloc.close();
     bankLookupCubit.close();
     walletBloc.close();
+    reportBloc.close();
   }
 
   ///Singleton factory

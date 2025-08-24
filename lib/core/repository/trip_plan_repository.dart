@@ -32,17 +32,34 @@ Future<List<TripPlanModel>> getTripPlans({
 }
 
 
-  Future<TripPlanDetailModel> getTripPlanDetail(String id) async {
-    final Response response =
-        await BaseRepository().getRoute("${Endpoints.tripPlans}/$id");
+Future<TripPlanDetailModel> getTripPlanDetail(String id) async {
+  final Response response =
+      await BaseRepository().getRoute("${Endpoints.tripPlans}/$id");
 
-    if (response.statusCode == StatusCode.ok) {
-      return TripPlanDetailModel.fromJson(response.data['data']);
-    } else {
-      throw Exception(
-          response.data['message'] ?? "Lỗi khi tải chi tiết Trip Plan");
+  // 📝 log status, headers và raw data
+  print("📡 [API] GET TripPlanDetail($id)");
+  print("  ↳ Status: ${response.statusCode}");
+  print("  ↳ Headers: ${response.headers.map}");
+  print("  ↳ Raw data: ${response.data}");
+
+  if (response.statusCode == StatusCode.ok) {
+    try {
+      final detail = TripPlanDetailModel.fromJson(response.data['data']);
+      // 📝 log model đã parse
+      print("✅ Parsed TripPlanDetail = ${detail.toJson()}");
+      return detail;
+    } catch (e, s) {
+      print("❌ Parse error: $e");
+      print(s);
+      rethrow;
     }
+  } else {
+    print("❌ Error response: ${response.data}");
+    throw Exception(
+        response.data['message'] ?? "Lỗi khi tải chi tiết Trip Plan");
   }
+}
+
 
 Future<TripPlanDetailModel> createTripPlan({
   required String name,

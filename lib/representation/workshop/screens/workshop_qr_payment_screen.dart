@@ -43,7 +43,6 @@ class WorkshopQrPaymentScreen extends StatefulWidget {
   State<WorkshopQrPaymentScreen> createState() =>
       _WorkshopQrPaymentScreenState();
 }
-
 class _WorkshopQrPaymentScreenState extends State<WorkshopQrPaymentScreen> {
   late final WebViewController _webViewController;
   final _gestureRecognizers = {Factory(() => EagerGestureRecognizer())};
@@ -61,13 +60,12 @@ class _WorkshopQrPaymentScreenState extends State<WorkshopQrPaymentScreen> {
     if (_remaining.isNegative) {
       _remaining = Duration.zero;
     }
-
     _startCountdown();
 
     if (widget.checkoutUrl != null) {
       _loadWebViewFromUrl(widget.checkoutUrl!);
     } else {
-      _createBookingAndPayment();
+      _showErrorDialog('Không tìm thấy liên kết thanh toán. Vui lòng quay lại.');
     }
   }
 
@@ -80,34 +78,6 @@ class _WorkshopQrPaymentScreenState extends State<WorkshopQrPaymentScreen> {
         _onCountdownFinished();
       }
     });
-  }
-
-  Future<void> _createBookingAndPayment() async {
-    try {
-      final booking = await BookingRepository().createWorkshopBooking(
-        workshopId: widget.workshop.workshopId ?? '',
-        workshopScheduleId: widget.schedule.scheduleId ?? '',
-        promotionCode: null,
-        adultCount: widget.adults,
-        childrenCount: widget.children,
-      );
-
-      if (booking == null) {
-        _showErrorDialog('Tạo booking thất bại. Vui lòng thử lại.');
-        return;
-      }
-
-      final paymentUrl =
-          await BookingRepository().createPaymentLink(booking.id);
-      if (paymentUrl == null) {
-        _showErrorDialog('Không tạo được liên kết thanh toán.');
-        return;
-      }
-
-      _loadWebViewFromUrl(paymentUrl);
-    } catch (e) {
-      _showErrorDialog('Lỗi khi xử lý thanh toán: $e');
-    }
   }
 
   void _loadWebViewFromUrl(String url) {
@@ -132,7 +102,6 @@ class _WorkshopQrPaymentScreenState extends State<WorkshopQrPaymentScreen> {
             });
             return NavigationDecision.prevent;
           }
-
           return NavigationDecision.navigate;
         },
       ));
@@ -257,21 +226,21 @@ class _WorkshopQrPaymentScreenState extends State<WorkshopQrPaymentScreen> {
                 ),
                 child: Column(
                   children: [
-                    Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.arrow_back_ios,
-                              color: Colors.white),
-                          onPressed: () async {
-                            final confirm = await _onWillPop();
-                            if (confirm) {
-                              Navigator.pop(context);
-                            }
-                          },
-                        ),
-                        const Spacer(),
-                      ],
-                    ),
+                    // Row(
+                    //   children: [
+                    //     IconButton(
+                    //       icon: const Icon(Icons.arrow_back_ios,
+                    //           color: Colors.white),
+                    //       onPressed: () async {
+                    //         final confirm = await _onWillPop();
+                    //         if (confirm) {
+                    //           Navigator.pop(context);
+                    //         }
+                    //       },
+                    //     ),
+                    //     const Spacer(),
+                    //   ],
+                    // ),
                     Icon(Icons.web_rounded, size: 32.sp, color: Colors.white),
                     SizedBox(height: 1.h),
                     Text('Thanh toán Workshop',

@@ -39,12 +39,11 @@ class _TourTeamSelectorScreenState extends State<TourTeamSelectorScreen> {
   @override
   void initState() {
     super.initState();
-    // Mặc định có 1 người lớn để không bị trống
     _rows.add(
       BookingParticipantModel(
-        type: 1, // 1 = người lớn
+        type: 1,      
         fullName: '',
-        gender: 1, // 1 = nam, 0 = nữ
+        gender: 1,    
         dateOfBirth: DateTime(1990, 1, 1),
       ),
     );
@@ -88,19 +87,17 @@ class _TourTeamSelectorScreenState extends State<TourTeamSelectorScreen> {
     if (p.type == 2) {
       // Trẻ em: 5–11
       firstDate = DateTime(now.year - 11, now.month, now.day);
-      lastDate = DateTime(now.year - 5, now.month, now.day);
-      init =
-          p.dateOfBirth.isBefore(firstDate) || p.dateOfBirth.isAfter(lastDate)
-              ? DateTime(now.year - 8, now.month, now.day)
-              : p.dateOfBirth;
+      lastDate  = DateTime(now.year - 5,  now.month, now.day);
+      init = (p.dateOfBirth.isBefore(firstDate) || p.dateOfBirth.isAfter(lastDate))
+          ? DateTime(now.year - 8, now.month, now.day)
+          : p.dateOfBirth;
     } else {
       // Người lớn: ≥12
       firstDate = DateTime(now.year - 100, 1, 1);
-      lastDate = DateTime(now.year - 12, now.month, now.day);
-      init =
-          p.dateOfBirth.isAfter(lastDate) || p.dateOfBirth.isBefore(firstDate)
-              ? DateTime(now.year - 30, now.month, now.day)
-              : p.dateOfBirth;
+      lastDate  = DateTime(now.year - 12, now.month, now.day);
+      init = (p.dateOfBirth.isAfter(lastDate) || p.dateOfBirth.isBefore(firstDate))
+          ? DateTime(now.year - 30, now.month, now.day)
+          : p.dateOfBirth;
     }
 
     final picked = await showDatePicker(
@@ -130,50 +127,45 @@ class _TourTeamSelectorScreenState extends State<TourTeamSelectorScreen> {
       return;
     }
     setState(() {
-      _rows.add(BookingParticipantModel(
-        type: 1,
-        fullName: '',
-        gender: 1,
-        dateOfBirth: DateTime(1990, 1, 1),
-      ));
+      _rows.add(
+        BookingParticipantModel(
+          type: 1,
+          fullName: '',
+          gender: 1,
+          dateOfBirth: DateTime(1990, 1, 1),
+        ),
+      );
     });
   }
 
-  void _removeRow(int i) {
-    setState(() => _rows.removeAt(i));
-  }
+  void _removeRow(int i) => setState(() => _rows.removeAt(i));
 
   void _goNext() {
     if (_rows.isEmpty || _rows.any((p) => p.fullName.trim().isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Vui lòng nhập đầy đủ họ tên hành khách.')),
+        const SnackBar(content: Text('Vui lòng nhập đầy đủ họ tên hành khách.')),
       );
       return;
     }
 
-    // Validate tuổi theo đối tượng
     for (int i = 0; i < _rows.length; i++) {
       final p = _rows[i];
       final age = _ageFromDob(p.dateOfBirth);
 
       if (p.type == 2 && (age < 5 || age > 11)) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(
-                  'Hành khách ${i + 1} phải trong độ tuổi Trẻ em (5–11).')),
+          SnackBar(content: Text('Hành khách ${i + 1} phải trong độ tuổi Trẻ em (5–11).')),
         );
         return;
       }
       if (p.type == 1 && age < 12) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(
-                  'Hành khách ${i + 1} (Người lớn) phải từ 12 tuổi trở lên.')),
+          SnackBar(content: Text('Hành khách ${i + 1} (Người lớn) phải từ 12 tuổi trở lên.')),
         );
         return;
       }
     }
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -192,81 +184,99 @@ class _TourTeamSelectorScreenState extends State<TourTeamSelectorScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom; // keyboard
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final safeBottom  = MediaQuery.of(context).padding.bottom;
 
-    return Scaffold(
-      resizeToAvoidBottomInset: true,
-      body: Stack(
-        children: [
-          const TourTeamBackground(),
-          SafeArea(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 3.h),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const TourBackButton(),
-                  SizedBox(height: 3.h),
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(), // tap ra ngoài để đóng bàn phím
+      child: Scaffold(
+        resizeToAvoidBottomInset: true,
 
-                  const TourTeamTitle(),
-                  TourTeamSummaryCard(
-                    tour: widget.tour,
-                    schedule: widget.schedule,
-                    mediaUrl: widget.media,
-                    formatter: formatter,
+        // Footer nổi, có nền tối mờ, tự né bàn phím
+        bottomNavigationBar: AnimatedPadding(
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeOut,
+          padding: EdgeInsets.only(bottom: bottomInset > 0 ? bottomInset : safeBottom),
+          child: SafeArea(
+            top: false,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.25),
+                    blurRadius: 8,
+                    offset: const Offset(0, -2),
                   ),
-                  SizedBox(height: 2.h),
-
-                  // ⬇️ Toàn bộ phần có thể dài: cho phép scroll
-                  Expanded(
-                    child: SingleChildScrollView(
-                      keyboardDismissBehavior:
-                          ScrollViewKeyboardDismissBehavior.onDrag,
-                      padding: EdgeInsets.only(bottom: 2.h),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          ParticipantsEditor(
-                            rows: _rows,
-                            onChanged: () => setState(() {}),
-                            onRemove: _removeRow,
-                            onAdd: _addRow,
-                            onPickDob: _pickDob,
-                          ),
-                          SizedBox(height: 1.2.h),
-                          Text(
-                            canAdd
-                                ? '👥 Bạn có thể thêm tối đa $remainingSlot người.'
-                                : '⚠️ Đã đạt giới hạn số người ($availableSlot)',
-                            style: TextStyle(
-                              fontSize: 13.sp,
-                              color: canAdd ? Colors.white70 : Colors.yellow,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // ⬇️ Footer cố định
-                  SizedBox(height: 1.h),
-                  TotalPriceBar(
-                    totalPriceText: "Tổng: ${formatter.format(totalPrice)}đ",
-                    buttonText: "Tiếp tục",
-                    onPressed: _goNext,
-                    color: ColorPalette.primaryColor,
-                  ),
-
-                  // chừa khoảng cho safe area & keyboard
-                  SizedBox(
-                      height: (bottomInset > 0
-                          ? bottomInset
-                          : MediaQuery.of(context).padding.bottom)),
                 ],
+              ),
+              padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 1.h),
+              child: TotalPriceBar(
+                totalPriceText: "Tổng: ${formatter.format(totalPrice)}đ",
+                buttonText: "Tiếp tục",
+                onPressed: _goNext,
+                color: ColorPalette.primaryColor,
               ),
             ),
           ),
-        ],
+        ),
+
+        body: Stack(
+          children: [
+            const TourTeamBackground(),
+            SafeArea(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 3.h),
+
+                // Toàn bộ nội dung cuộn 1 lần
+                child: SingleChildScrollView(
+                  keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                  padding: EdgeInsets.only(bottom: 2.h + 72), // chừa chỗ cho footer
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const TourBackButton(),
+                      SizedBox(height: 3.h),
+
+                      const TourTeamTitle(),
+                      SizedBox(height: 2.h),
+
+                      TourTeamSummaryCard(
+                        tour: widget.tour,
+                        schedule: widget.schedule,
+                        mediaUrl: widget.media,
+                        formatter: formatter,
+                      ),
+                      SizedBox(height: 2.h),
+
+                      // (tuỳ bạn có dùng PersonCounterRow hay không)
+                      // PersonCounterRow(...),
+
+                      ParticipantsEditor(
+                        rows: _rows,
+                        onChanged: () => setState(() {}),
+                        onRemove: _removeRow,
+                        onAdd: _addRow,
+                        onPickDob: _pickDob,
+                      ),
+                      SizedBox(height: 1.2.h),
+
+                      Text(
+                        canAdd
+                            ? '👥 Bạn có thể thêm tối đa $remainingSlot người.'
+                            : '⚠️ Đã đạt giới hạn số người ($availableSlot)',
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          color: canAdd ? Colors.white70 : Colors.yellow,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

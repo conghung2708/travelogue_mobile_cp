@@ -42,6 +42,7 @@ class TourMasonryGrid extends StatelessWidget {
                   builder: (_) => TourDetailScreen(
                     tour: tour,
                     image: image,
+                     showGuideTab: false, 
                   ),
                 ),
               );

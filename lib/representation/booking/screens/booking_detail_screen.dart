@@ -1,3 +1,4 @@
+// lib/representation/booking/screens/booking_detail_screen.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sizer/sizer.dart';
@@ -9,27 +10,84 @@ import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
 import 'package:travelogue_mobile/model/booking/booking_model.dart';
 import 'package:travelogue_mobile/model/booking/booking_participant_model.dart';
 
-class BookingDetailScreen extends StatelessWidget {
+// HDV
+import 'package:travelogue_mobile/core/repository/tour_guide_repository.dart';
+import 'package:travelogue_mobile/model/tour_guide/tour_guide_model.dart';
+
+// Nhận DisplayBookingArgs để lấy displayTitle (được push từ MyBookingScreen)
+import 'package:travelogue_mobile/representation/booking/screens/my_booking_screen.dart'
+    show DisplayBookingArgs;
+
+class BookingDetailScreen extends StatefulWidget {
   static const routeName = '/booking_detail';
 
   final BookingModel? booking;
   const BookingDetailScreen({super.key, this.booking});
 
+  @override
+  State<BookingDetailScreen> createState() => _BookingDetailScreenState();
+}
+
+class _BookingDetailScreenState extends State<BookingDetailScreen> {
   static const _supportPhone = '0336626193';
 
+  final _guideRepo = TourGuideRepository();
+  Future<TourGuideModel?>? _guideFuture;
+
+  // 🆕 Lưu lại HDV & avatar để update header image khi fetch xong
+  TourGuideModel? _guide;
+  String? _guideAvatarUrl;
+
+  // ---------- Helpers đọc args ----------
+  BookingModel get _booking {
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (widget.booking != null) return widget.booking!;
+    if (args is DisplayBookingArgs) return args.booking;
+    if (args is BookingModel) return args;
+    throw Exception("BookingDetailScreen requires BookingModel or DisplayBookingArgs");
+  }
+
+  String? get _displayTitle {
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is DisplayBookingArgs) return args.displayTitle;
+    return null;
+  }
+
+  // ---------- Lifecycle ----------
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final b = _booking;
+    // Chỉ fetch avatar HDV nếu là booking type = 3 và có tourGuideId
+    if (_bookingTypeOf(b) == 3 && (b.tourGuideId?.isNotEmpty ?? false) && _guideFuture == null) {
+      _guideFuture = _guideRepo.getTourGuideById(b.tourGuideId!).then((g) {
+        // Lưu lại để header có thể setState đổi ảnh
+        _guide = g;
+        if ((g?.avatarUrl?.startsWith('http') ?? false)) {
+          setState(() => _guideAvatarUrl = g!.avatarUrl);
+        }
+        return g;
+      });
+    }
+  }
+
+  // ---------- Formatters ----------
   NumberFormat get _currency =>
       NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
 
   String _fmtDate(DateTime? d, {String pattern = 'dd/MM/yyyy'}) {
     if (d == null) return '-';
+    if (d.year < 1900) return '-';
     return DateFormat(pattern).format(d);
   }
 
   String _fmtDateTime(DateTime? d) {
     if (d == null) return '-';
+    if (d.year < 1900) return '-';
     return DateFormat('dd/MM/yyyy • HH:mm').format(d);
   }
 
+  // ---------- Business ----------
   int _bookingTypeOf(BookingModel b) {
     final t = b.bookingType.trim();
     final parsed = int.tryParse(t);
@@ -52,11 +110,18 @@ class BookingDetailScreen extends StatelessWidget {
     return b.bookingTypeText ?? 'Khác';
   }
 
+  // ---------- Header image logic ----------
   ImageProvider _headerImage(BookingModel b) {
+    // 1) Tour: lấy ảnh tour
     if (b.tour?.medias.isNotEmpty == true) {
       final url = b.tour!.medias.first.mediaUrl;
       if (url != null && url.startsWith('http')) return NetworkImage(url);
     }
+    // 2) Hướng dẫn viên: nếu đã fetch avatar -> dùng avatar
+    if ((_bookingTypeOf(b) == 3) && (_guideAvatarUrl?.startsWith('http') ?? false)) {
+      return NetworkImage(_guideAvatarUrl!);
+    }
+    // 3) Fallback
     return const AssetImage(AssetHelper.img_tay_ninh_login);
   }
 
@@ -350,7 +415,7 @@ class BookingDetailScreen extends StatelessWidget {
     }
   }
 
-  // ---------- Participants (đồng nhất) ----------
+  // ---------- Participants ----------
   Widget _participantsCard(List<BookingParticipantModel> list) {
     if (list.isEmpty) return const SizedBox.shrink();
 
@@ -364,8 +429,6 @@ class BookingDetailScreen extends StatelessWidget {
         children: [
           _sectionTitle('Hành khách', icon: Icons.groups_2_rounded),
           SizedBox(height: 1.2.h),
-
-          // Mỗi ô dùng 1 widget chuẩn để đảm bảo giống nhau
           ...List.generate(list.length, (i) {
             final p = list[i];
             return Padding(
@@ -381,7 +444,6 @@ class BookingDetailScreen extends StatelessWidget {
               ),
             );
           }),
-
           Divider(height: 2.2.h),
           Row(
             children: [
@@ -421,23 +483,104 @@ class BookingDetailScreen extends StatelessWidget {
     );
   }
 
+  // ---------- Guide card ----------
+  Widget _guideCardBasic({required String name}) {
+    return _card(
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionTitle('Hướng dẫn viên', icon: Icons.person_pin_circle_rounded),
+          SizedBox(height: 1.6.h),
+          Row(
+            children: [
+              const CircleAvatar(radius: 26, child: Icon(Icons.person)),
+              SizedBox(width: 3.w),
+              Expanded(
+                child: Text(
+                  name,
+                  style: TextStyle(fontSize: 14.5.sp, fontWeight: FontWeight.w800),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _guideCardFull(TourGuideModel g) {
+    return _card(
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionTitle('Hướng dẫn viên', icon: Icons.person_pin_circle_rounded),
+          SizedBox(height: 1.6.h),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              CircleAvatar(
+                radius: 26,
+                backgroundImage: (g.avatarUrl?.startsWith('http') ?? false)
+                    ? NetworkImage(g.avatarUrl!)
+                    : null,
+                child: (g.avatarUrl?.isEmpty ?? true)
+                    ? const Icon(Icons.person, size: 26)
+                    : null,
+              ),
+              SizedBox(width: 3.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(g.userName ?? 'Hướng dẫn viên',
+                        style: TextStyle(fontSize: 14.5.sp, fontWeight: FontWeight.w900)),
+                    SizedBox(height: .3.h),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 8,
+                      children: [
+                        if (g.averageRating != null)
+                          _miniChip(Icons.star_rounded, '${g.averageRating!.toStringAsFixed(1)}★ (${g.totalReviews ?? 0})'),
+                        // if (g.price != null)
+                        //   _miniChip(Icons.sell_rounded, _currency.format(g.price)),
+                        if ((g.address ?? '').isNotEmpty)
+                          _miniChip(Icons.place_rounded, g.address!),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if ((g.introduction ?? '').isNotEmpty) ...[
+            SizedBox(height: 1.2.h),
+            Text(
+              g.introduction!,
+              style: TextStyle(fontSize: 12.5.sp, color: Colors.black87, height: 1.35),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final BookingModel b =
-        booking ?? (ModalRoute.of(context)?.settings.arguments as BookingModel);
+    final b = _booking;
+    final headerImg = _headerImage(b); // ảnh header đã tính theo logic trên
 
-    final headerImg = _headerImage(b);
-
-    // days count (nếu có)
     int? totalDays;
     if (b.startDate != null && b.endDate != null) {
       totalDays = b.endDate!.difference(b.startDate!).inDays + 1;
       if (totalDays < 1) totalDays = null;
     }
 
-    // khoảng trống động để FAB không đè
-    final double fabGap =
-        MediaQuery.of(context).padding.bottom + 100; // ~56(FAB) + margin
+    final double fabGap = MediaQuery.of(context).padding.bottom + 100;
+
+    final showGuide = _bookingTypeOf(b) == 3;
+
+    // Tiêu đề ưu tiên tên truyền vào, fallback loại đơn
+    final headerTitle = _displayTitle ?? _typeLabelVi(b);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF3F5F9),
@@ -494,21 +637,12 @@ class BookingDetailScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _typeLabelVi(b),
+                            headerTitle,
                             style: TextStyle(
                               fontSize: 20.sp,
                               fontWeight: FontWeight.w900,
                               color: Colors.white,
                               letterSpacing: .3,
-                            ),
-                          ),
-                          SizedBox(height: 0.6.h),
-                          Text(
-                            'Mã đơn • ${b.id}',
-                            style: TextStyle(
-                              fontSize: 12.5.sp,
-                              color: Colors.white70,
-                              fontWeight: FontWeight.w600,
                             ),
                           ),
                           SizedBox(height: 1.2.h),
@@ -533,6 +667,7 @@ class BookingDetailScreen extends StatelessWidget {
                         children: [
                           _sectionTitle('Thông tin đơn', icon: Icons.receipt_long_outlined),
                           SizedBox(height: 1.8.h),
+                          // Nếu muốn ẩn luôn mã đơn, xoá dòng dưới
                           _kv('Mã đơn', b.id, icon: Icons.qr_code_2_rounded),
                           SizedBox(height: 1.4.h),
                           _kv('Loại đơn', _typeLabelVi(b), icon: Icons.category_outlined),
@@ -551,6 +686,40 @@ class BookingDetailScreen extends StatelessWidget {
                       ),
                     ),
                     SizedBox(height: 2.h),
+
+                    // Hướng dẫn viên (nếu là type 3)
+                    if (showGuide)
+                      FutureBuilder<TourGuideModel?>(
+                        future: _guideFuture,
+                        builder: (context, snap) {
+                          if (snap.connectionState == ConnectionState.waiting) {
+                            return _card(
+                              Row(
+                                children: [
+                                  const SizedBox(
+                                    width: 26,
+                                    height: 26,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  const Text('Đang tải thông tin hướng dẫn viên...'),
+                                ],
+                              ),
+                            );
+                          }
+                          if (snap.hasError) {
+                            final showName = b.tourGuideName ?? 'Hướng dẫn viên';
+                            return _guideCardBasic(name: showName);
+                          }
+                          final g = snap.data ?? _guide;
+                          if (g == null) {
+                            final showName = b.tourGuideName ?? 'Hướng dẫn viên';
+                            return _guideCardBasic(name: showName);
+                          }
+                          return _guideCardFull(g);
+                        },
+                      ),
+                    if (showGuide) SizedBox(height: 2.h),
 
                     // Lịch & thời gian
                     _card(
@@ -598,7 +767,7 @@ class BookingDetailScreen extends StatelessWidget {
                     if ((b.contactName ?? b.contactEmail ?? b.contactPhone ?? b.contactAddress) != null)
                       SizedBox(height: 2.h),
 
-                    // Hành khách (đồng nhất)
+                    // Hành khách
                     _participantsCard(b.participants),
                     if (b.participants.isNotEmpty) SizedBox(height: 2.h),
 
@@ -623,7 +792,6 @@ class BookingDetailScreen extends StatelessWidget {
                       ),
                     ),
 
-                    // chừa khoảng trống cho FAB (động)
                     SizedBox(height: fabGap),
                   ],
                 ),
@@ -632,40 +800,6 @@ class BookingDetailScreen extends StatelessWidget {
           ],
         ),
       ),
-      // floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      // floatingActionButton: SafeArea(
-      //   minimum: const EdgeInsets.only(bottom: 8),
-      //   child: InkWell(
-      //     onTap: () => _confirmAndCall(context),
-      //     borderRadius: BorderRadius.circular(30),
-      //     child: Ink(
-      //       decoration: BoxDecoration(
-      //         gradient: Gradients.defaultGradientBackground,
-      //         borderRadius: BorderRadius.circular(30),
-      //         boxShadow: const [
-      //           BoxShadow(
-      //             color: Color(0x33000000),
-      //             blurRadius: 10,
-      //             offset: Offset(0, 4),
-      //           ),
-      //         ],
-      //       ),
-      //       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      //       child: const Row(
-      //         mainAxisSize: MainAxisSize.min,
-      //         children: [
-      //           Icon(Icons.support_agent_rounded, color: Colors.white),
-      //           SizedBox(width: 8),
-      //           Text('Hỗ trợ',
-      //               style: TextStyle(
-      //                   color: Colors.white,
-      //                   fontWeight: FontWeight.w700,
-      //                   fontSize: 16)),
-      //         ],
-      //       ),
-      //     ),
-      //   ),
-      // ),
     );
   }
 
@@ -693,7 +827,7 @@ class BookingDetailScreen extends StatelessWidget {
   }
 }
 
-// ====== Ô hành khách đồng nhất ======
+// ====== Ô hành khách ======
 class _ParticipantTile extends StatelessWidget {
   final int index;
   final String fullName;
@@ -726,7 +860,6 @@ class _ParticipantTile extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header: Hành khách X — Tên
           Row(
             children: [
               Text('Hành khách $index',

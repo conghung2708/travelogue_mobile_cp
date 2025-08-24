@@ -101,48 +101,48 @@ class TripHeader extends StatelessWidget {
             ],
           ),
         ),
-        Positioned(
-          top: 5.h,
-          left: 4.w,
-          right: 4.w,
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 16.sp,
-                backgroundImage: const AssetImage(AssetHelper.avatar),
-              ),
-              const Spacer(),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
-                decoration: BoxDecoration(
-                  color: Colors.blueAccent,
-                  borderRadius: BorderRadius.circular(3.w),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 4,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.group_add, size: 13.sp, color: Colors.white),
-                    SizedBox(width: 1.w),
-                    Text(
-                      "Mời bạn đồng hành",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12.5.sp,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
+        // Positioned(
+        //   top: 5.h,
+        //   left: 4.w,
+        //   right: 4.w,
+        //   child: Row(
+        //     children: [
+        //       CircleAvatar(
+        //         radius: 16.sp,
+        //         backgroundImage: const AssetImage(AssetHelper.avatar),
+        //       ),
+        //       const Spacer(),
+        //       Container(
+        //         padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
+        //         decoration: BoxDecoration(
+        //           color: Colors.blueAccent,
+        //           borderRadius: BorderRadius.circular(3.w),
+        //           boxShadow: const [
+        //             BoxShadow(
+        //               color: Colors.black26,
+        //               blurRadius: 4,
+        //               offset: Offset(0, 2),
+        //             ),
+        //           ],
+        //         ),
+        //         child: Row(
+        //           children: [
+        //             Icon(Icons.group_add, size: 13.sp, color: Colors.white),
+        //             SizedBox(width: 1.w),
+        //             Text(
+        //               "Mời bạn đồng hành",
+        //               style: TextStyle(
+        //                 color: Colors.white,
+        //                 fontSize: 12.5.sp,
+        //                 fontWeight: FontWeight.w500,
+        //               ),
+        //             ),
+        //           ],
+        //         ),
+        //       ),
+        //     ],
+        //   ),
+        // ),
       ],
     );
   }

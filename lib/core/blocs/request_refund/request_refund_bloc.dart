@@ -9,6 +9,7 @@ class RefundBloc extends Bloc<RefundEvent, RefundState> {
   RefundBloc(this.refundRepository) : super(RefundInitial()) {
     on<SendRefundRequestEvent>(_onSendRefundRequest);
     on<LoadUserRefundRequestsEvent>(_onLoadUserRefundRequests);
+    on<LoadRefundRequestDetailEvent>(_onLoadRefundRequestDetail); 
   }
 
   Future<void> _onSendRefundRequest(
@@ -35,10 +36,23 @@ class RefundBloc extends Bloc<RefundEvent, RefundState> {
         toDate: event.toDate,
         status: event.status,
       );
-      // refunds lúc này là List<RefundRequestModel>
       emit(RefundListLoaded(refunds));
     } catch (e) {
       emit(RefundListLoadFailure(e.toString()));
+    }
+  }
+
+  // 🔎 Handler detail
+  Future<void> _onLoadRefundRequestDetail(
+    LoadRefundRequestDetailEvent event,
+    Emitter<RefundState> emit,
+  ) async {
+    emit(RefundLoading());
+    try {
+      final refund = await refundRepository.getRefundRequestDetail(event.refundRequestId);
+      emit(RefundDetailLoaded(refund));
+    } catch (e) {
+      emit(RefundDetailLoadFailure(e.toString()));
     }
   }
 }

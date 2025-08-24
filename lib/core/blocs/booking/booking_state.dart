@@ -89,3 +89,11 @@ class ReviewBookingSuccess extends BookingState {
   @override
   List<Object?> get props => [message];
 }
+
+class MyReviewsLoaded extends BookingState {
+  final Set<String> bookingIds;
+  const MyReviewsLoaded(this.bookingIds);
+
+  @override
+  List<Object?> get props => [bookingIds];
+}

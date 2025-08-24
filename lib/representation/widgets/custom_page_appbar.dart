@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:sizer/sizer.dart';
+
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
-import 'package:travelogue_mobile/core/helpers/image_helper.dart';
+import 'package:travelogue_mobile/data/data_local/storage_key.dart';
+import 'package:travelogue_mobile/data/data_local/user_local.dart';
 import 'package:travelogue_mobile/representation/event/widgets/arrow_back_button.dart';
 
 class CustomPageAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -36,13 +40,28 @@ class CustomPageAppBar extends StatelessWidget implements PreferredSizeWidget {
               color: Colors.black87,
             ),
           ),
-          ClipOval(
-            child: ImageHelper.loadFromAsset(
-              AssetHelper.img_avatar,
-              width: 40,
-              height: 40,
-              fit: BoxFit.cover,
-            ),
+          ValueListenableBuilder(
+            valueListenable: Hive.box(StorageKey.boxUser)
+                .listenable(keys: [StorageKey.account]),
+            builder: (context, box, _) {
+              final url = (UserLocal().getUser().avatarUrl ?? '').trim();
+
+              return ClipOval(
+                child: url.isNotEmpty
+                    ? Image.network(
+                        url,
+                        width: 40, height: 40, fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Image.asset(
+                          AssetHelper.img_avatar,
+                          width: 40, height: 40, fit: BoxFit.cover,
+                        ),
+                      )
+                    : Image.asset(
+                        AssetHelper.img_avatar,
+                        width: 40, height: 40, fit: BoxFit.cover,
+                      ),
+              );
+            },
           ),
         ],
       ),

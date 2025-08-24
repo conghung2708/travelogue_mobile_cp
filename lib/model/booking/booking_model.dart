@@ -333,7 +333,7 @@ class BookingModel {
   String get statusTextUi {
     switch (rawStatus) {
       case kPending:
-        return 'Đang chờ thanh toán';
+        return 'Hết hạn thanh toán';
       case kConfirmed:
         return 'Đã thanh toán';
       case kCancelledUnpaid:

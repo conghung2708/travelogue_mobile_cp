@@ -7,6 +7,7 @@ import 'package:travelogue_mobile/core/blocs/request_refund/request_refund_bloc.
 import 'package:travelogue_mobile/core/blocs/request_refund/request_refund_event.dart';
 import 'package:travelogue_mobile/core/blocs/request_refund/request_refund_state.dart';
 import 'package:travelogue_mobile/model/refund_request/refund_request_model.dart';
+import 'package:travelogue_mobile/representation/booking/screens/refund_detail_screen.dart';
 
 class _AppColors {
   static const Color scaffold = Colors.white;
@@ -19,7 +20,18 @@ class _AppColors {
 }
 
 class RefundListScreen extends StatefulWidget {
-  const RefundListScreen({super.key});
+  /// Map bookingId -> displayTitle (được truyền từ MyBookingScreen)
+  final Map<String, String> bookingTitleLookup;
+
+  /// Nếu muốn focus/lọc sẵn một booking cụ thể khi mở màn
+  final String? focusBookingId;
+
+  const RefundListScreen({
+    super.key,
+    this.bookingTitleLookup = const {},
+    this.focusBookingId,
+  });
+
   @override
   State<RefundListScreen> createState() => _RefundListScreenState();
 }
@@ -32,16 +44,18 @@ class _RefundListScreenState extends State<RefundListScreen> {
   final _searchCtrl = TextEditingController();
 
   RefundStatusFilter _statusFilter = RefundStatusFilter.all;
-  String? _bookingIdFromArgs;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _bookingIdFromArgs =
-          ModalRoute.of(context)?.settings.arguments as String?;
-      if (_bookingIdFromArgs != null && _bookingIdFromArgs!.isNotEmpty) {
-        _searchCtrl.text = _bookingIdFromArgs!;
+      // Nếu có yêu cầu focus 1 booking khi mở, thì điền sẵn search = displayTitle
+      final focusId = widget.focusBookingId;
+      if (focusId != null && focusId.isNotEmpty) {
+        final focusTitle = widget.bookingTitleLookup[focusId];
+        if (focusTitle != null && focusTitle.isNotEmpty) {
+          _searchCtrl.text = focusTitle;
+        }
       }
       _reload();
     });
@@ -84,6 +98,7 @@ class _RefundListScreenState extends State<RefundListScreen> {
       body: SafeArea(
         child: Column(
           children: [
+            // Tìm theo TÊN (displayTitle), không theo mã
             Padding(
               padding: EdgeInsets.fromLTRB(4.w, 2.h, 4.w, 1.2.h),
               child: TextField(
@@ -95,7 +110,7 @@ class _RefundListScreenState extends State<RefundListScreen> {
                     fontWeight: FontWeight.w600),
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.search, color: _AppColors.text),
-                  hintText: 'Tìm theo mã booking…',
+                  hintText: 'Tìm theo tên đơn/tiêu đề…',
                   hintStyle:
                       TextStyle(fontSize: 12.sp, color: _AppColors.textMute),
                   contentPadding:
@@ -147,11 +162,15 @@ class _RefundListScreenState extends State<RefundListScreen> {
                     List<RefundRequestModel> refunds = state.refunds;
 
                     final q = _searchCtrl.text.trim().toLowerCase();
+                    // --- Lọc theo TITLE (displayTitle), không theo mã ---
                     if (q.isNotEmpty) {
-                      refunds = refunds
-                          .where((r) => r.bookingId.toLowerCase().contains(q))
-                          .toList();
+                      refunds = refunds.where((r) {
+                        final title = widget.bookingTitleLookup[r.bookingId] ??
+                            'Đơn #${r.bookingId}';
+                        return title.toLowerCase().contains(q);
+                      }).toList();
                     }
+
                     refunds = refunds.where((r) {
                       switch (_statusFilter) {
                         case RefundStatusFilter.pending:
@@ -183,56 +202,72 @@ class _RefundListScreenState extends State<RefundListScreen> {
                             totalAmountText: _currency.format(total),
                           ),
                           SizedBox(height: 1.6.h),
-                          ...refunds.map((r) => _RefundCard(
-                                data: r,
-                                currency: _currency,
-                                onCancel: r.status == 1
-                                    ? () => ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          const SnackBar(
+                          ...refunds.map((r) {
+                            final displayTitle =
+                                widget.bookingTitleLookup[r.bookingId] ??
+                                    'Đơn #${r.bookingId}';
+                            return _RefundCard(
+                              data: r,
+                              currency: _currency,
+                              displayTitle: displayTitle, // 👈 truyền title vào card
+                              onCancel: r.status == 1
+                                  ? () => ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                            content: Text(
+                                                'Tính năng hủy sẽ được cập nhật.')),
+                                      )
+                                  : null,
+                              onWithdraw: r.status == 2
+                                  ? () async {
+                                      final ok = await showDialog<bool>(
+                                            context: context,
+                                            builder: (_) => AlertDialog(
+                                              title:
+                                                  const Text('Rút tiền về ví'),
                                               content: Text(
-                                                  'Tính năng hủy sẽ được cập nhật.')),
-                                        )
-                                    : null,
-                                onWithdraw: r.status == 2
-                                    ? () async {
-                                        final ok = await showDialog<bool>(
-                                              context: context,
-                                              builder: (_) => AlertDialog(
-                                                title: const Text(
-                                                    'Rút tiền về ví'),
-                                                content: Text(
-                                                    'Bạn muốn rút ${_currency.format(r.refundAmount)} về ví chứ?'),
-                                                actions: [
-                                                  TextButton(
-                                                      onPressed: () =>
-                                                          Navigator.pop(
-                                                              context, false),
-                                                      child: const Text('Hủy')),
-                                                  ElevatedButton(
-                                                      onPressed: () =>
-                                                          Navigator.pop(
-                                                              context, true),
-                                                      child: const Text('Rút')),
-                                                ],
-                                              ),
-                                            ) ??
-                                            false;
-                                        if (!ok) {
-                                          return;
-                                        }
-
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          const SnackBar(
-                                              content: Text(
-                                                  'Đã gửi yêu cầu rút tiền (FE-only).')),
-                                        );
-
-                                        // _reload();
+                                                  'Bạn muốn rút ${_currency.format(r.refundAmount)} về ví chứ?'),
+                                              actions: [
+                                                TextButton(
+                                                    onPressed: () =>
+                                                        Navigator.pop(
+                                                            context, false),
+                                                    child: const Text('Hủy')),
+                                                ElevatedButton(
+                                                    onPressed: () =>
+                                                        Navigator.pop(
+                                                            context, true),
+                                                    child: const Text('Rút')),
+                                              ],
+                                            ),
+                                          ) ??
+                                          false;
+                                      if (!ok) {
+                                        return;
                                       }
-                                    : null,
-                              )),
+
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                            content: Text(
+                                                'Đã gửi yêu cầu rút tiền (FE-only).')),
+                                      );
+
+                                      // _reload();
+                                    }
+                                  : null,
+                              onViewDetail: () {
+                                // 👉 GỬI CẢ refundId + bookingTitle sang Detail
+                                Navigator.of(context).pushNamed(
+                                  RefundDetailScreen.routeName,
+                                  arguments: {
+                                    'refundId': r.id,
+                                    'bookingTitle': displayTitle,
+                                  },
+                                );
+                              },
+                            );
+                          }),
                           SizedBox(height: 2.4.h),
                         ],
                       ),
@@ -338,14 +373,23 @@ class _Pill extends StatelessWidget {
 class _RefundCard extends StatelessWidget {
   final RefundRequestModel data;
   final NumberFormat currency;
+
+  /// Title hiển thị (đã map từ bookingId)
+  final String displayTitle;
+
   final VoidCallback? onCancel;
   final VoidCallback? onWithdraw;
+
+  /// Mở detail (để truyền kèm cả title)
+  final VoidCallback? onViewDetail;
 
   const _RefundCard({
     required this.data,
     required this.currency,
+    required this.displayTitle,
     this.onCancel,
     this.onWithdraw,
+    this.onViewDetail,
   });
 
   Color _statusColor(int status) {
@@ -384,7 +428,7 @@ class _RefundCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Row 1: Booking + Status
+          // Row 1: Title (thay vì mã) + Status
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -395,18 +439,22 @@ class _RefundCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Booking',
+                    // Label
+                    Text('Tên Đơn',
                         style: TextStyle(
                             fontSize: 10.5.sp,
                             color: _AppColors.textMute,
                             fontWeight: FontWeight.w600)),
                     SizedBox(height: .4.h),
-                    SelectableText(
-                      data.bookingId,
+                    // HIỂN THỊ TITLE - ẩn hoàn toàn mã
+                    Text(
+                      displayTitle,
                       style: TextStyle(
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.w800,
+                          fontSize: 13.2.sp,
+                          fontWeight: FontWeight.w900,
                           color: _AppColors.textStrong),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
@@ -466,7 +514,7 @@ class _RefundCard extends StatelessWidget {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () {},
+                  onPressed: onViewDetail,
                   icon: const Icon(Icons.visibility_outlined),
                   label: Text('Xem chi tiết',
                       style: TextStyle(
@@ -476,31 +524,11 @@ class _RefundCard extends StatelessWidget {
                     side: const BorderSide(color: _AppColors.primary),
                     padding: EdgeInsets.symmetric(vertical: 1.4.h),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(1.6.h)),
-                  ),
-                ),
-              ),
-              SizedBox(width: 3.2.w),
-              if (onCancel != null)
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: onCancel,
-                    icon:
-                        const Icon(Icons.cancel_outlined, color: Colors.white),
-                    label: Text('Hủy yêu cầu',
-                        style: TextStyle(
-                            fontSize: 11.5.sp,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _AppColors.primary,
-                      padding: EdgeInsets.symmetric(vertical: 1.4.h),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(1.6.h)),
-                      elevation: 0,
+                      borderRadius: BorderRadius.circular(1.6.h),
                     ),
                   ),
                 ),
+              ),
             ],
           ),
         ],

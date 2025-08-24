@@ -13,6 +13,7 @@ import 'package:travelogue_mobile/representation/auth/screens/forgot_password_sc
 import 'package:travelogue_mobile/representation/auth/screens/login_screen.dart';
 import 'package:travelogue_mobile/representation/booking/screens/booking_detail_screen.dart';
 import 'package:travelogue_mobile/representation/booking/screens/my_booking_screen.dart';
+import 'package:travelogue_mobile/representation/booking/screens/refund_detail_screen.dart';
 import 'package:travelogue_mobile/representation/craft_village/screens/craft_village_detail_screen.dart';
 import 'package:travelogue_mobile/representation/event/screens/event_detail.dart';
 import 'package:travelogue_mobile/representation/event/screens/event_screen.dart';
@@ -49,6 +50,7 @@ import 'package:travelogue_mobile/representation/user/screens/contact_support_sc
 import 'package:travelogue_mobile/representation/user/screens/edit_profile_screen.dart';
 import 'package:travelogue_mobile/representation/user/screens/faq_screen.dart';
 import 'package:travelogue_mobile/representation/user/screens/location_favorite_screen.dart';
+import 'package:travelogue_mobile/representation/user/screens/my_reports_screen.dart';
 import 'package:travelogue_mobile/representation/user/screens/new_password_screen.dart';
 import 'package:travelogue_mobile/representation/user/screens/otp_vertification_screen.dart';
 import 'package:travelogue_mobile/representation/user/screens/privacy_screen.dart';
@@ -328,10 +330,15 @@ final Map<String, WidgetBuilder> routes = {
     return TourGuideDetailScreen(guide: args);
   },
 
-  BookingDetailScreen.routeName: (context) {
-    final booking = ModalRoute.of(context)!.settings.arguments as BookingModel;
-    return BookingDetailScreen(booking: booking);
-  },
+  // BookingDetailScreen.routeName: (context) {
+  //   final booking = ModalRoute.of(context)!.settings.arguments as BookingModel;
+  //   return BookingDetailScreen(booking: booking);
+  // },
 
+  BookingDetailScreen.routeName: (_) => const BookingDetailScreen(),
   WithdrawRequestScreen.routeName: (_) => const WithdrawRequestScreen(),
+
+  MyReportsScreen.routeName: (_) => const MyReportsScreen(),
+
+  RefundDetailScreen.routeName: (_) => const RefundDetailScreen(),
 };

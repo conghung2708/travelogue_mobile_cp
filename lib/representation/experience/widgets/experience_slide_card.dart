@@ -10,7 +10,7 @@ class ExperienceSlideCard extends StatelessWidget {
   const ExperienceSlideCard({
     super.key,
     required this.news,
-    required this.categoryName,
+     this.categoryName = "Trải nghiệm",
   });
 
   @override

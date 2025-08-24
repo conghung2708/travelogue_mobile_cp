@@ -9,7 +9,7 @@ class TourTeamTitle extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Chọn số lượng người tham gia",
+        Text("Nhập thông tin người tham gia",
             style: TextStyle(
                 fontSize: 18.sp,
                 fontWeight: FontWeight.bold,

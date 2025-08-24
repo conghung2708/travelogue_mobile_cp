@@ -6,14 +6,12 @@ class PaymentCountdownHeader extends StatelessWidget {
   final String title;
   final String subtitle;
   final Duration remaining;
-  final VoidCallback onBackPressed;
 
   const PaymentCountdownHeader({
     super.key,
     required this.title,
     required this.subtitle,
     required this.remaining,
-    required this.onBackPressed,
   });
 
   String _formatDuration(Duration d) {
@@ -31,15 +29,6 @@ class PaymentCountdownHeader extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-                onPressed: onBackPressed,
-              ),
-              const Spacer(),
-            ],
-          ),
           Icon(Icons.web_rounded, size: 32.sp, color: Colors.white),
           SizedBox(height: 1.h),
           Text(
@@ -51,8 +40,7 @@ class PaymentCountdownHeader extends StatelessWidget {
             ),
           ),
           SizedBox(height: 0.6.h),
-          Text(subtitle,
-              style: TextStyle(fontSize: 15.sp, color: Colors.white70)),
+          Text(subtitle, style: TextStyle(fontSize: 15.sp, color: Colors.white70)),
           SizedBox(height: 1.h),
           Container(
             padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 0.6.h),
@@ -75,7 +63,7 @@ class PaymentCountdownHeader extends StatelessWidget {
                 ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );

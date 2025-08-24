@@ -40,7 +40,7 @@ class SupportScreen extends StatelessWidget {
           HelpCard(
             icon: Icons.mail_outline,
             title: 'Đóng góp ý kiến',
-            subtitle: 'Gửi email đến đội ngũ hỗ trợ Go Young',
+            subtitle: 'Gửi email đến đội ngũ hỗ trợ Travelogue',
             onTap: () {
               Navigator.of(context).pushNamed('/contact_support_screen');
             },
@@ -49,7 +49,7 @@ class SupportScreen extends StatelessWidget {
           HelpCard(
             icon: Icons.explore_outlined,
             title: 'Cẩm nang du lịch',
-            subtitle: 'Go Young gửi đến bạn các mẹo & trải nghiệm tuyệt vời',
+            subtitle: 'Travelogue gửi đến bạn các mẹo & trải nghiệm tuyệt vời',
             onTap: () {
               Navigator.of(context).pushNamed('/travel_guide_screen');
             },
@@ -67,7 +67,7 @@ class SupportScreen extends StatelessWidget {
                 builder: (ctx) => const GoYoungChat(),
               ),
               icon: const Icon(Icons.chat_bubble_outline_rounded),
-              label: const Text("Chat với Go Young"),
+              label: const Text("Chat với Travelogue"),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blueAccent,
                 foregroundColor: Colors.white,

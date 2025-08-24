@@ -77,13 +77,12 @@ Future<bool> updateLikedLocation({required String locationId}) async {
 }
 
 
-  Future<bool> deletedLikedLocation({required String locationId}) async {
-    final Response response = await BaseRepository().deleteRoute(
-      '${Endpoints.location}/$locationId/favorite',
-    );
+Future<bool> deletedLikedLocation({required String locationId}) async {
+  final response = await BaseRepository().deleteRoute(
+    gateway: '${Endpoints.location}/$locationId/favorite',
+  );
 
-    return response.statusCode == StatusCode.ok;
-  }
-
+  return response.statusCode == StatusCode.ok;
+}
   
 }

@@ -9,6 +9,7 @@ import 'package:travelogue_mobile/core/blocs/home/home_bloc.dart';
 import 'package:travelogue_mobile/core/utils/time_utils.dart';
 
 import 'package:travelogue_mobile/model/location_model.dart';
+import 'package:travelogue_mobile/model/media_model.dart';
 import 'package:travelogue_mobile/model/trip_plan/trip_plan_detail_model.dart';
 import 'package:travelogue_mobile/model/trip_plan/trip_activity_model.dart';
 import 'package:travelogue_mobile/model/trip_plan/trip_plan_location_model.dart';
@@ -752,16 +753,17 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
       builder: (_) {
         return StatefulBuilder(
           builder: (context, setModalState) {
-            final places = _selectedActivities
-                .map((a) => LocationModel(
-                      id: a.locationId,
-                      name: a.name,
-                      description: a.description,
-                      address: a.address,
-                      medias: null,
-                    ))
-                .toList();
-
+           final places = _selectedActivities
+    .map((a) => LocationModel(
+          id: a.locationId,
+          name: a.name,
+          description: a.description,
+          address: a.address,
+          medias: (a.imageUrl != null && a.imageUrl!.trim().isNotEmpty)
+              ? [MediaModel(mediaUrl: a.imageUrl!.trim())]
+              : const <MediaModel>[],
+        ))
+    .toList();
             final itin = List<ItineraryStop>.from(_itinerary);
 
             return SelectedListSheet(
@@ -832,25 +834,48 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
     );
   }
 
-  Widget _placePills(String a, String b) {
-    Widget chip(String text, IconData icon) => Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: _kBlueLight,
-            borderRadius: BorderRadius.circular(999),
-          ),
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
+Widget _placePills(String a, String b) {
+  Widget chip(String text, IconData icon) {
+    final maxW = MediaQuery.of(context).size.width * 0.55;
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: maxW),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: _kBlueLight,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
             Icon(icon, size: 16, color: _kBlue),
             const SizedBox(width: 6),
-            Text(text, style: const TextStyle(color: _kBlue, fontWeight: FontWeight.w600)),
-          ]),
-        );
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [chip(a, Icons.place), const Icon(Icons.arrow_forward, color: _kBlue, size: 18), chip(b, Icons.flag)],
+            Flexible( 
+              child: Text(
+                text,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                softWrap: false,
+                style: const TextStyle(color: _kBlue, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
+
+  return Wrap(
+    spacing: 8,
+    runSpacing: 8,
+    crossAxisAlignment: WrapCrossAlignment.center,
+    children: [
+      chip(a, Icons.place),
+      const Icon(Icons.arrow_forward, color: _kBlue, size: 18),
+      chip(b, Icons.flag),
+    ],
+  );
+}
 
 
   Widget _buildCompleteButton({bool alwaysEnabled = false}) {

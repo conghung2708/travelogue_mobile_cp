@@ -11,7 +11,7 @@ class TripPlanDetailModel {
   final int status;
   final String statusText;
   final List<TripDayModel> days;
-  final String imageUrl; 
+  final String? imageUrl; // <-- nullable
 
   TripPlanDetailModel({
     required this.id,
@@ -23,7 +23,7 @@ class TripPlanDetailModel {
     required this.status,
     required this.statusText,
     required this.days,
-    required this.imageUrl,
+    this.imageUrl, // <-- nullable
   });
 
   static int _asInt(dynamic v, {int fallback = 0}) {
@@ -43,14 +43,10 @@ class TripPlanDetailModel {
 
   static String _statusToText(int status) {
     switch (status) {
-      case 0:
-        return 'Draft';
-      case 1:
-        return 'Sketch';
-      case 2:
-        return 'Booked';
-      default:
-        return 'Draft';
+      case 0: return 'Draft';
+      case 1: return 'Sketch';
+      case 2: return 'Booked';
+      default: return 'Draft';
     }
   }
 
@@ -66,10 +62,9 @@ class TripPlanDetailModel {
     final safeStatusText =
         (statusTextRaw == null || statusTextRaw.isEmpty) ? _statusToText(stt) : statusTextRaw;
 
-    final imageUrlRaw = json['imageUrl']?.toString().trim();
-    final safeImageUrl = (imageUrlRaw == null || imageUrlRaw.isEmpty)
-        ? 'https://example.com/default-image.jpg' 
-        : imageUrlRaw;
+    // ❗Không đặt placeholder ở model
+    final rawImage = (json['imageUrl'] as String?)?.trim();
+    final safeImage = (rawImage == null || rawImage.isEmpty) ? null : rawImage;
 
     return TripPlanDetailModel(
       id: (json['id'] ?? '').toString(),
@@ -83,20 +78,16 @@ class TripPlanDetailModel {
       days: daysJson
           .map((e) => TripDayModel.fromJson(e as Map<String, dynamic>))
           .toList(),
-      imageUrl: safeImageUrl,
+      imageUrl: safeImage, // <-- có thể null
     );
   }
 
   TripStatus get statusEnum {
     switch (status) {
-      case 0:
-        return TripStatus.draft;
-      case 1:
-        return TripStatus.sketch;
-      case 2:
-        return TripStatus.booked;
-      default:
-        return TripStatus.draft;
+      case 0: return TripStatus.draft;
+      case 1: return TripStatus.sketch;
+      case 2: return TripStatus.booked;
+      default: return TripStatus.draft;
     }
   }
 
@@ -106,4 +97,25 @@ class TripPlanDetailModel {
       (i) => DateTime(startDate.year, startDate.month, startDate.day).add(Duration(days: i)),
     );
   }
+
+  /// Tuỳ chọn: getter chỉ dành cho UI hiển thị ảnh fallback
+  String get displayImageUrl =>
+      imageUrl ?? 'https://your.cdn.com/placeholder.png'; // dùng riêng cho UI
+
+      Map<String, dynamic> toJson() {
+  return {
+    'id': id,
+    'name': name,
+    'description': description,
+    'startDate': startDate.toIso8601String(),
+    'endDate': endDate.toIso8601String(),
+    'totalDays': totalDays,
+    'status': status,
+    'statusText': statusText,
+    'imageUrl': imageUrl,
+  };
 }
+
+}
+
+

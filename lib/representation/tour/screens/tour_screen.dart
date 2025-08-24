@@ -52,7 +52,7 @@ class _TourScreenState extends State<TourScreen> {
               const TripPlanBanner(),
               SizedBox(height: 3.h),
 
-              const TitleWithCustoneUnderline(text: "Các tour ", text2: "gợi ý"),
+              const TitleWithCustoneUnderline(text: "Tour tại ", text2: "Tây Ninh"),
               SizedBox(height: 2.h),
 
               Expanded(

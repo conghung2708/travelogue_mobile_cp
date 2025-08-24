@@ -1,12 +1,19 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sizer/sizer.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 
 import 'package:travelogue_mobile/core/blocs/trip_plan/trip_plan_bloc.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
 import 'package:travelogue_mobile/representation/trip_plan/screens/select_trip_day_screen.dart';
+
+import 'package:travelogue_mobile/core/blocs/media/media_bloc.dart';
+import 'package:travelogue_mobile/core/blocs/media/media_event.dart';
+import 'package:travelogue_mobile/core/blocs/media/media_state.dart';
 
 class CreateTripScreen extends StatefulWidget {
   static const routeName = '/create-trip';
@@ -24,8 +31,22 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
   DateTime? _startDate;
   DateTime? _endDate;
 
+  // Ảnh: chỉ 1 ảnh, tự upload
+  final ImagePicker _picker = ImagePicker();
+  File? _selectedFile; // ảnh local vừa chọn (hiển thị tạm)
+  String? _coverUrl; // URL ảnh sau khi upload (dùng làm imageUrl)
+  bool _isUploadingImage = false;
+
   bool _loadingShown = false;
 
+  ImageProvider<Object> _buildHeaderImage() {
+    if (_selectedFile != null) {
+      return FileImage(_selectedFile!); // preview local
+    }
+    return const AssetImage(AssetHelper.img_ex_ba_den_5);
+  }
+
+  // ===== Loading overlay cho TripPlanBloc =====
   void _showLoading() {
     if (_loadingShown) return;
     _loadingShown = true;
@@ -45,6 +66,24 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
 
   DateTime _atStartOfDay(DateTime d) => DateTime(d.year, d.month, d.day);
 
+  // ====== PICK ONE & AUTO UPLOAD ======
+  Future<void> _pickImageAndUpload() async {
+    final x = await _picker.pickImage(
+      imageQuality: 90,
+      source: ImageSource.gallery,
+    );
+    if (x == null) return;
+
+    setState(() {
+      _selectedFile = File(x.path);
+      _isUploadingImage = true;
+    });
+
+    // Tự upload ngay khi chọn
+    context.read<MediaBloc>().add(UploadMultipleImagesEvent([_selectedFile!]));
+  }
+
+  // ====== NEXT: chọn ngày + tạo trip ======
   Future<void> _handleNext() async {
     final name = _nameController.text.trim();
     final description = _descController.text.trim();
@@ -58,6 +97,21 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
     if (description.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Hãy nhập mô tả hành trình.')),
+      );
+      return;
+    }
+
+    // (Tùy chọn) bắt buộc có ảnh bìa:
+    // if (_coverUrl == null) {
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     const SnackBar(content: Text('Hãy chọn 1 ảnh bìa.')),
+    //   );
+    //   return;
+    // }
+
+    if (_isUploadingImage) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Đang tải ảnh lên, vui lòng đợi...')),
       );
       return;
     }
@@ -83,13 +137,14 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
       _endDate = normalizedEnd;
     });
 
-   
+    // Truyền imageUrl nếu có
     context.read<TripPlanBloc>().add(
           CreateTripPlanEvent(
             name: name,
             description: description,
             startDate: normalizedStart,
             endDate: normalizedEnd,
+            imageUrl: _coverUrl, // ✅
           ),
         );
   }
@@ -103,32 +158,58 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<TripPlanBloc, TripPlanState>(
-      listener: (context, state) async {
-        if (state is TripPlanLoading) {
-          _showLoading();
-        } else {
-          _hideLoading();
-        }
+    return MultiBlocListener(
+      listeners: [
+        // TripPlan Bloc
+        BlocListener<TripPlanBloc, TripPlanState>(
+          listener: (context, state) async {
+            if (state is TripPlanLoading) {
+              _showLoading();
+            } else {
+              _hideLoading();
+            }
 
-        if (state is CreateTripPlanSuccess) {
-          final detail = state.tripPlanDetail;
-          if (!mounted) return;
-     
-          Navigator.pushReplacementNamed(
-            context,
-            SelectTripDayScreen.routeName,
-            arguments: {
-              'detail': detail,
-            },
-          );
-        } else if (state is TripPlanError) {
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message)),
-          );
-        }
-      },
+            if (state is CreateTripPlanSuccess) {
+              final detail = state.tripPlanDetail;
+              if (!mounted) return;
+
+              Navigator.pushReplacementNamed(
+                context,
+                SelectTripDayScreen.routeName,
+                arguments: {'detail': detail},
+              );
+            } else if (state is TripPlanError) {
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(state.message)),
+              );
+            }
+          },
+        ),
+
+        // Media Bloc (upload ảnh)
+        BlocListener<MediaBloc, MediaState>(
+          listener: (context, state) {
+            if (state is MediaUploading) {
+              setState(() => _isUploadingImage = true);
+            } else if (state is MediaUploadSuccess) {
+              setState(() {
+                _isUploadingImage = false;
+                _coverUrl = state.urls.isNotEmpty ? state.urls.first : null;
+                // _selectedFile = null; // đã có URL -> không cần giữ file local
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Tải ảnh lên thành công.')),
+              );
+            } else if (state is MediaUploadFailure) {
+              setState(() => _isUploadingImage = false);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Lỗi upload: ${state.error}')),
+              );
+            }
+          },
+        ),
+      ],
       child: Scaffold(
         extendBodyBehindAppBar: true,
         backgroundColor: const Color(0xFFF6F9FC),
@@ -139,7 +220,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
         ),
         body: Column(
           children: [
-           
+            // ===== Header có ảnh bìa (ưu tiên URL, sau đó file local, cuối cùng asset) =====
             ClipRRect(
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(6.w),
@@ -150,9 +231,9 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                   Container(
                     height: 38.h,
                     width: double.infinity,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       image: DecorationImage(
-                        image: AssetImage(AssetHelper.img_ex_ba_den_5),
+                        image: _buildHeaderImage(),
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -169,18 +250,39 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                   Positioned(
                     bottom: 2.h,
                     left: 6.w,
+                    right: 6.w,
                     child: Row(
                       children: [
-                        Icon(Icons.location_on, color: Colors.white, size: 18.sp),
+                        Icon(Icons.location_on,
+                            color: Colors.white, size: 18.sp),
                         SizedBox(width: 1.w),
-                        Text(
-                          'Tây Ninh',
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
+                        Expanded(
+                          child: Text(
+                            'Tây Ninh',
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              shadows: const [
+                                Shadow(color: Colors.black45, blurRadius: 6)
+                              ],
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        )
+                        ),
+                        ElevatedButton.icon(
+                          onPressed:
+                              _isUploadingImage ? null : _pickImageAndUpload,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white.withOpacity(0.9),
+                            foregroundColor: Colors.blueAccent,
+                            elevation: 0,
+                          ),
+                          icon: const Icon(Icons.add_a_photo_outlined),
+                          label: Text(
+                              _coverUrl == null ? 'Chọn ảnh bìa' : 'Đổi ảnh'),
+                        ),
                       ],
                     ),
                   ),
@@ -188,14 +290,84 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
               ),
             ),
 
+            // ===== Form =====
             Expanded(
               child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
+                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 3.2.h),
                 color: Colors.white,
                 child: SingleChildScrollView(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // ---- Khu preview 1 ảnh + tiến trình upload ----
+                      Text(
+                        "🖼️ Ảnh bìa",
+                        style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black87),
+                      ),
+                      SizedBox(height: 1.2.h),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF7F8FC),
+                          borderRadius: BorderRadius.circular(3.w),
+                          border: Border.all(color: const Color(0xFFE6E8F0)),
+                        ),
+                        padding: EdgeInsets.all(3.w),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (_isUploadingImage)
+                              const LinearProgressIndicator(minHeight: 4),
+                            SizedBox(height: 1.2.h),
+                            AspectRatio(
+                              aspectRatio: 16 / 9,
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Stack(
+                                  fit: StackFit.expand,
+                                  children: [
+                                    if (_selectedFile != null)
+                                      Image.file(_selectedFile!,
+                                          fit: BoxFit.cover)
+                                    else
+                                      Image.asset(AssetHelper.img_ex_ba_den_5,
+                                          fit: BoxFit.cover),
+                                    if (_isUploadingImage)
+                                      Container(
+                                        color: Colors.black26,
+                                        child: const Center(
+                                            child: CircularProgressIndicator()),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            if (_coverUrl != null)
+                              Padding(
+                                padding: EdgeInsets.only(top: 1.h),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.check_circle,
+                                        color: Colors.green),
+                                    SizedBox(width: 2.w),
+                                    Expanded(
+                                      child: Text(
+                                        'Ảnh bìa đã được lưu thành công.',
+                                        style:
+                                            TextStyle(color: Colors.green[800]),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+
+                      SizedBox(height: 2.8.h),
+
                       Row(
                         children: [
                           const Icon(Icons.edit_location_alt_rounded,
@@ -204,10 +376,9 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                           Text(
                             "✍️ Đặt tên hành trình để dễ nhớ hơn",
                             style: TextStyle(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
-                            ),
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black87),
                           ),
                         ],
                       ),
@@ -247,10 +418,9 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                             ),
                             boxShadow: const [
                               BoxShadow(
-                                color: Colors.black12,
-                                blurRadius: 4,
-                                offset: Offset(0, 2),
-                              )
+                                  color: Colors.black12,
+                                  blurRadius: 4,
+                                  offset: Offset(0, 2)),
                             ],
                           ),
                           child: TextField(
@@ -270,7 +440,6 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
 
                       SizedBox(height: 2.h),
 
-                    
                       Row(
                         children: [
                           const Icon(Icons.notes_rounded,
@@ -279,10 +448,9 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                           Text(
                             "📝 Mô tả ngắn cho hành trình",
                             style: TextStyle(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
-                            ),
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black87),
                           ),
                         ],
                       ),
@@ -320,9 +488,8 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                         ),
                       ),
 
-                      SizedBox(height: 4.h),
+                      SizedBox(height: 3.h),
 
-                    
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
@@ -340,10 +507,9 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                           label: Text(
                             "Tiếp tục",
                             style: TextStyle(
-                              fontSize: 13.5.sp,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
+                                fontSize: 13.5.sp,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white),
                           ),
                         ),
                       ),
@@ -354,10 +520,9 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                           child: Text(
                             "📅 ${DateFormat('dd/MM/yyyy').format(_startDate!)} → ${DateFormat('dd/MM/yyyy').format(_endDate!)}",
                             style: TextStyle(
-                              fontSize: 12.5.sp,
-                              fontStyle: FontStyle.italic,
-                              color: Colors.grey[700],
-                            ),
+                                fontSize: 12.5.sp,
+                                fontStyle: FontStyle.italic,
+                                color: Colors.grey[700]),
                           ),
                         ),
                     ],

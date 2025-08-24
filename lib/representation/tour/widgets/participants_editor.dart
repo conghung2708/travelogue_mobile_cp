@@ -81,7 +81,9 @@ class ParticipantsEditor extends StatelessWidget {
                       SizedBox(width: 3.w),
                       Expanded(
                         child: Text(
-                          p.fullName.isEmpty ? 'Hành khách ${i + 1}' : p.fullName,
+                          p.fullName.isEmpty
+                              ? 'Hành khách ${i + 1}'
+                              : p.fullName,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
@@ -94,7 +96,10 @@ class ParticipantsEditor extends StatelessWidget {
                       IconButton(
                         tooltip: 'Xoá',
                         onPressed: () => onRemove(i),
-                        icon: const Icon(Icons.delete_outline_rounded, color: Colors.white70),
+                        icon: const Icon(
+                          Icons.delete_outline_rounded,
+                          color: Colors.white70,
+                        ),
                       ),
                     ],
                   ),
@@ -130,6 +135,7 @@ class ParticipantsEditor extends StatelessWidget {
                       Expanded(
                         child: DropdownButtonFormField<int>(
                           value: p.gender,
+                          isExpanded: true, // ★ cho phần hiển thị giãn hợp lệ
                           dropdownColor: Colors.black87,
                           style: const TextStyle(color: Colors.white),
                           iconEnabledColor: Colors.white70,
@@ -137,10 +143,22 @@ class ParticipantsEditor extends StatelessWidget {
                             context,
                             label: 'Giới tính',
                             prefix: Icons.wc_rounded,
+                          ).copyWith(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
                           ),
                           items: const [
-                            DropdownMenuItem(value: 0, child: Text('Nữ')),
+                            DropdownMenuItem(value: 2, child: Text('Nữ')),
                             DropdownMenuItem(value: 1, child: Text('Nam')),
+                          ],
+                          // Hiển thị rút gọn khi đã chọn
+                          selectedItemBuilder: (ctx) => const [
+                            Text('Nữ',
+                                overflow: TextOverflow.ellipsis, maxLines: 1),
+                            Text('Nam',
+                                overflow: TextOverflow.ellipsis, maxLines: 1),
                           ],
                           onChanged: (val) {
                             if (val == null) return;
@@ -155,9 +173,12 @@ class ParticipantsEditor extends StatelessWidget {
                         ),
                       ),
                       SizedBox(width: 3.w),
+
+                      // Đối tượng
                       Expanded(
                         child: DropdownButtonFormField<int>(
                           value: p.type,
+                          isExpanded: true, // ★
                           dropdownColor: Colors.black87,
                           style: const TextStyle(color: Colors.white),
                           iconEnabledColor: Colors.white70,
@@ -165,10 +186,22 @@ class ParticipantsEditor extends StatelessWidget {
                             context,
                             label: 'Đối tượng',
                             prefix: Icons.badge_outlined,
+                          ).copyWith(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
                           ),
                           items: const [
-                            DropdownMenuItem(value: 1, child: Text('Người lớn')),
+                            DropdownMenuItem(
+                                value: 1, child: Text('Người lớn')),
                             DropdownMenuItem(value: 2, child: Text('Trẻ em')),
+                          ],
+                          selectedItemBuilder: (ctx) => const [
+                            Text('Người lớn',
+                                overflow: TextOverflow.ellipsis, maxLines: 1),
+                            Text('Trẻ em',
+                                overflow: TextOverflow.ellipsis, maxLines: 1),
                           ],
                           onChanged: (val) {
                             if (val == null) return;
@@ -180,7 +213,8 @@ class ParticipantsEditor extends StatelessWidget {
                             if (val == 2) {
                               // Trẻ em: 5–11
                               if (age < 5 || age > 11) {
-                                newDob = DateTime(now.year - 8, now.month, now.day); // ~8 tuổi
+                                newDob = DateTime(
+                                    now.year - 8, now.month, now.day); // ~8 tuổi
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text(
@@ -192,10 +226,13 @@ class ParticipantsEditor extends StatelessWidget {
                             } else {
                               // Người lớn: ≥12
                               if (age < 12) {
-                                newDob = DateTime(now.year - 18, now.month, now.day); // ~18 tuổi
+                                newDob = DateTime(now.year - 18, now.month,
+                                    now.day); // ~18 tuổi
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text('Người lớn yêu cầu từ 12 tuổi trở lên. Đã điều chỉnh ngày sinh.'),
+                                    content: Text(
+                                      'Người lớn yêu cầu từ 12 tuổi trở lên. Đã điều chỉnh ngày sinh.',
+                                    ),
                                   ),
                                 );
                               }
@@ -224,15 +261,25 @@ class ParticipantsEditor extends StatelessWidget {
                         context,
                         label: 'Ngày sinh',
                         prefix: Icons.event,
+                      ).copyWith(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 12,
+                        ),
                       ),
                       child: Row(
                         children: [
-                          Text(
-                            df.format(p.dateOfBirth),
-                            style: const TextStyle(color: Colors.white),
+                          Expanded(
+                            // ★ để text co giãn + ellipsis, tránh tràn
+                            child: Text(
+                              df.format(p.dateOfBirth),
+                              style: const TextStyle(color: Colors.white),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
                           ),
-                          const Spacer(),
-                          const Icon(Icons.edit_calendar_rounded, color: Colors.white70, size: 18),
+                          const Icon(Icons.edit_calendar_rounded,
+                              color: Colors.white70, size: 18),
                         ],
                       ),
                     ),
@@ -255,8 +302,11 @@ class ParticipantsEditor extends StatelessWidget {
     return InputDecoration(
       labelText: label,
       labelStyle: const TextStyle(color: Colors.white70),
-      prefixIcon: prefix == null ? null : Icon(prefix, color: Colors.white70, size: 18),
+      prefixIcon:
+          prefix == null ? null : Icon(prefix, color: Colors.white70, size: 18),
       isDense: true,
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 12, vertical: 10), // ★
       filled: true,
       fillColor: Colors.white.withOpacity(0.06),
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -329,7 +379,8 @@ class _AvatarIndex extends StatelessWidget {
       backgroundColor: Colors.white.withOpacity(0.18),
       child: Text(
         '$index',
-        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+        style:
+            const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
       ),
     );
   }
@@ -340,7 +391,8 @@ class _AvatarIndex extends StatelessWidget {
 int _ageFromDob(DateTime dob) {
   final now = DateTime.now();
   int age = now.year - dob.year;
-  if (now.month < dob.month || (now.month == dob.month && now.day < dob.day)) {
+  if (now.month < dob.month ||
+      (now.month == dob.month && now.day < dob.day)) {
     age--;
   }
   return age;

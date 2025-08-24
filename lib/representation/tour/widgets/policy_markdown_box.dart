@@ -17,21 +17,22 @@ class PolicyMarkdownBox extends StatelessWidget {
       ),
       child: const MarkdownBody(
         data: '''
-🚩 **Cam kết dịch vụ của Travelogue**
+### 🚩 **Cam kết & Chính sách dịch vụ Travelogue**
 
-✅ **Không hoàn hủy vé** sau khi thanh toán *(trừ khi có lý do đặc biệt được xác nhận)*.
+**1) Huỷ/Hoàn tiền**  
+✅ Bạn được quyền **huỷ đơn trong vòng 24 giờ** kể từ lúc đặt.  
+✅ Sau 24 giờ, đơn sẽ được xác nhận và **không thể huỷ/hoàn**.
 
-✅ Mang theo **CMND/CCCD hoặc hộ chiếu** để xác minh danh tính.
+**2) Xác minh & tuân thủ**  
+✅ Mang theo **CMND/CCCD hoặc hộ chiếu** để xác minh danh tính.  
+✅ **Tuân thủ** hướng dẫn của trưởng đoàn/nhân viên hỗ trợ trong suốt hành trình.
 
-✅ **Tuân thủ tuyệt đối** hướng dẫn trưởng đoàn và nhân viên hỗ trợ.
+**3) Ứng xử & an toàn**  
+✅ Mặc trang phục **lịch sự, phù hợp** văn hoá điểm đến.  
+✅ **Không xả rác**, giữ vệ sinh và hạn chế gây ồn nơi công cộng.  
+✅ Nếu có dấu hiệu **không khoẻ**, hãy **báo ngay** cho hướng dẫn viên để được hỗ trợ.
 
-✅ Mặc trang phục **lịch sự, kín đáo** phù hợp văn hoá điểm đến.
-
-✅ **Không xả rác**, giữ vệ sinh và không gây ồn ào nơi công cộng.
-
-✅ Nếu không khoẻ, **báo ngay hướng dẫn viên** để được hỗ trợ kịp thời.
-
-✨ *Chúng tôi vinh dự được đồng hành cùng bạn trong hành trình đầy ý nghĩa này. Cảm ơn bạn đã tin tưởng Travelogue!* ✨
+> ✨ *Cảm ơn bạn đã đồng hành cùng Travelogue! Chúc bạn có trải nghiệm thật trọn vẹn.* ✨
 ''',
       ),
     );

@@ -6,6 +6,8 @@ import 'package:travelogue_mobile/core/utils/image_network_card.dart';
 import 'package:travelogue_mobile/model/news_model.dart';
 
 import 'package:travelogue_mobile/representation/event/screens/event_detail.dart';
+import 'package:travelogue_mobile/representation/experience/screens/experience_detail_screen.dart';
+import 'package:travelogue_mobile/representation/experience/screens/experience_screen.dart';
 
 class NewsCard extends StatelessWidget {
   final NewsModel news;
@@ -19,7 +21,7 @@ class NewsCard extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         Navigator.of(context).pushNamed(
-          EventDetailScreen.routeName,
+          ExperienceDetailScreen.routeName,
           arguments: news,
         );
       },

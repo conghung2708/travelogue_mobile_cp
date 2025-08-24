@@ -7,6 +7,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:sizer/sizer.dart';
 import 'package:avatar_glow/avatar_glow.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:travelogue_mobile/representation/craft_village/screens/village_mini_map.dart';
 import 'package:travelogue_mobile/representation/map/screens/viet_map_location_screen.dart';
 import 'package:vietmap_flutter_gl/vietmap_flutter_gl.dart' as vietmap;
 
@@ -36,9 +37,8 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
   double currentRating = 4.5;
   late final TabController _tabController;
 
-  FlutterTts flutterTts = FlutterTts();
+  final FlutterTts _tts = FlutterTts();
   bool isSpeaking = false;
-  vietmap.VietmapController? _mapController;
 
   @override
   void initState() {
@@ -48,7 +48,7 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
   }
 
   Future<void> _requestLocationPermission() async {
-    var status = await Permission.location.status;
+    final status = await Permission.location.status;
     if (!status.isGranted) {
       await Permission.location.request();
     }
@@ -56,6 +56,10 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
 
   @override
   void dispose() {
+    // Dừng TTS để không còn callback setState sau khi màn hình đã pop
+    try {
+      _tts.stop();
+    } catch (_) {}
     _tabController.dispose();
     super.dispose();
   }
@@ -66,24 +70,27 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
     if (village == null) {
       final args = ModalRoute.of(context)?.settings.arguments;
       if (args is LocationModel) {
-        setState(() => village = args);
+        village = args;
       }
     }
   }
 
   Future<void> _speakContent() async {
     if (isSpeaking) {
-      await flutterTts.stop();
+      await _tts.stop();
+      if (!mounted) return;
       setState(() => isSpeaking = false);
       return;
     }
     if (village?.content?.isNotEmpty == true) {
-      await flutterTts.setLanguage("vi-VN");
-      await flutterTts.setSpeechRate(0.45);
-      await flutterTts.setPitch(1);
+      await _tts.setLanguage("vi-VN");
+      await _tts.setSpeechRate(0.45);
+      await _tts.setPitch(1.0);
+      if (!mounted) return;
       setState(() => isSpeaking = true);
-      await flutterTts.speak(village!.content!);
-      flutterTts.setCompletionHandler(() {
+      await _tts.speak(village!.content!);
+      _tts.setCompletionHandler(() {
+        if (!mounted) return;
         setState(() => isSpeaking = false);
       });
     }
@@ -128,11 +135,14 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
                   final res = await Navigator.push<double>(
                     context,
                     MaterialPageRoute(
-                        builder: (_) =>
-                            ReviewsScreen<ReviewCraftVillageTestModel>(
-                                reviews: [], averageRating: currentRating)),
+                      builder: (_) =>
+                          ReviewsScreen<ReviewCraftVillageTestModel>(
+                        reviews: [],
+                        averageRating: currentRating,
+                      ),
+                    ),
                   );
-                  if (res != null) {
+                  if (res != null && mounted) {
                     setState(() => currentRating = res);
                   }
                 },
@@ -161,8 +171,8 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
                             ? [Colors.redAccent, Colors.red]
                             : [Colors.blueAccent, Colors.blue],
                       ),
-                      boxShadow: [
-                        const BoxShadow(
+                      boxShadow: const [
+                        BoxShadow(
                           color: Colors.black12,
                           blurRadius: 4,
                           offset: Offset(0, 2),
@@ -236,7 +246,7 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
 
           SizedBox(height: 3.h),
 
-          // Bản đồ
+          // ===== BẢN ĐỒ (đã tách widget an toàn) =====
           Container(
             width: double.infinity,
             height: 40.h,
@@ -244,64 +254,21 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
               border: Border.all(color: Colors.grey),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: Stack(
-                children: [
-                  vietmap.VietmapGL(
-                    myLocationEnabled: false,
-                    trackCameraPosition: true,
-                    rotateGesturesEnabled: false,
-                    scrollGesturesEnabled: false,
-                    zoomGesturesEnabled: false,
-                    tiltGesturesEnabled: false,
-                    styleString:
-                        'https://maps.vietmap.vn/api/maps/light/styles.json?apikey=840f8a8247cb32578fc81fec50af42b8ede321173a31804b',
-                    initialCameraPosition: vietmap.CameraPosition(
-                      target: vietmap.LatLng(
-                        village!.latitude ?? 10.762622,
-                        village!.longitude ?? 106.660172,
-                      ),
-                      zoom: 12,
-                    ),
-                    onMapCreated: (controller) {
-                      setState(() {
-                        _mapController = controller;
-                      });
-                    },
-                    onMapClick: (point, latlng) {
-                      Navigator.pushNamed(
-                        context,
-                        VietMapLocationScreen.routeName,
-                        arguments: vietmap.LatLng(
-                          village!.latitude ?? 10.762622,
-                          village!.longitude ?? 106.660172,
-                        ),
-                      );
-                    },
+            child: VillageMiniMap(
+              lat: village!.latitude ?? 10.762622,
+              lng: village!.longitude ?? 106.660172,
+              styleUrl:
+                  'https://maps.vietmap.vn/api/maps/light/styles.json?apikey=840f8a8247cb32578fc81fec50af42b8ede321173a31804b',
+              onTap: () {
+                Navigator.pushNamed(
+                  context,
+                  VietMapLocationScreen.routeName,
+                  arguments: vietmap.LatLng(
+                    village!.latitude ?? 10.762622,
+                    village!.longitude ?? 106.660172,
                   ),
-                  if (_mapController != null)
-                    vietmap.MarkerLayer(
-                      markers: [
-                        vietmap.Marker(
-                          alignment: Alignment.bottomCenter,
-                          height: 30,
-                          width: 30,
-                          child: const Icon(
-                            Icons.location_on,
-                            color: Colors.red,
-                            size: 30,
-                          ),
-                          latLng: vietmap.LatLng(
-                            village!.latitude ?? 10.762622,
-                            village!.longitude ?? 106.660172,
-                          ),
-                        ),
-                      ],
-                      mapController: _mapController!,
-                    ),
-                ],
-              ),
+                );
+              },
             ),
           ),
 
@@ -345,8 +312,11 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
       body: Stack(children: [
         if (village!.listImages.isNotEmpty)
           Positioned.fill(
-              child:
-                  Image.network(village!.listImages.first, fit: BoxFit.cover)),
+            child: Image.network(
+              village!.listImages.first,
+              fit: BoxFit.cover,
+            ),
+          ),
         Positioned(
           top: 0,
           left: 0,
@@ -359,32 +329,40 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
           builder: (context, sc) {
             return Container(
               decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius:
-                      BorderRadius.vertical(top: Radius.circular(24))),
-              child: Column(children: [
-                Container(
-                  width: 12.w,
-                  height: 0.6.h,
-                  margin: EdgeInsets.only(top: 1.h),
-                  decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    width: 12.w,
+                    height: 0.6.h,
+                    margin: EdgeInsets.only(top: 1.h),
+                    decoration: BoxDecoration(
                       color: Colors.black45,
-                      borderRadius: BorderRadius.circular(10)),
-                ),
-                TabBar(
-                  controller: _tabController,
-                  labelColor: Colors.black,
-                  labelStyle:
-                      TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold),
-                  tabs: const [Tab(text: 'Giới thiệu'), Tab(text: 'Workshop')],
-                ),
-                Expanded(
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [_buildIntroTab(sc), _buildWorkshopTab(sc)],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
-                )
-              ]),
+                  TabBar(
+                    controller: _tabController,
+                    labelColor: Colors.black,
+                    labelStyle: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    tabs: const [
+                      Tab(text: 'Giới thiệu'),
+                      Tab(text: 'Workshop'),
+                    ],
+                  ),
+                  Expanded(
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: [_buildIntroTab(sc), _buildWorkshopTab(sc)],
+                    ),
+                  )
+                ],
+              ),
             );
           },
         )
@@ -398,16 +376,16 @@ class _BackButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Padding(
-        padding: EdgeInsets.all(8),
+        padding: const EdgeInsets.all(8),
         child: GestureDetector(
           onTap: () => Navigator.pop(context),
           child: Container(
-            padding: EdgeInsets.all(8),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.85),
               borderRadius: BorderRadius.circular(30),
             ),
-            child: Icon(FontAwesomeIcons.arrowLeft, size: 20),
+            child: const Icon(FontAwesomeIcons.arrowLeft, size: 20),
           ),
         ),
       ),

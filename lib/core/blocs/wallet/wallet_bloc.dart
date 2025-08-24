@@ -1,4 +1,3 @@
-// lib/core/blocs/wallet/wallet_bloc.dart
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/wallet/wallet_event.dart';
 import 'package:travelogue_mobile/core/blocs/wallet/wallet_state.dart';
@@ -9,6 +8,7 @@ class WalletBloc extends Bloc<WalletEvent, WalletState> {
 
   WalletBloc({required this.walletRepository}) : super(WalletInitial()) {
     on<SendWithdrawalRequestEvent>(_onSendWithdrawalRequest);
+    on<LoadMyWithdrawalRequestsEvent>(_onLoadMyWithdrawalRequests);
   }
 
   Future<void> _onSendWithdrawalRequest(
@@ -19,6 +19,21 @@ class WalletBloc extends Bloc<WalletEvent, WalletState> {
       emit(WalletSuccess());
     } else {
       emit(WalletFailure(error));
+    }
+  }
+
+  Future<void> _onLoadMyWithdrawalRequests(
+      LoadMyWithdrawalRequestsEvent event, Emitter<WalletState> emit) async {
+    emit(WalletLoading());
+    try {
+      final list = await walletRepository.getMyWithdrawalRequests(
+        status: event.status,
+        fromDate: event.fromDate,
+        toDate: event.toDate,
+      );
+      emit(WalletListLoaded(list));
+    } catch (e) {
+      emit(WalletFailure(e.toString()));
     }
   }
 }

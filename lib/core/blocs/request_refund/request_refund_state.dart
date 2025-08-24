@@ -40,3 +40,22 @@ class RefundListLoadFailure extends RefundState {
   @override
   List<Object?> get props => [error];
 }
+
+// 🔎 Chi tiết 1 refund
+class RefundDetailLoaded extends RefundState {
+  final RefundRequestModel refund;
+
+  const RefundDetailLoaded(this.refund);
+
+  @override
+  List<Object?> get props => [refund];
+}
+
+class RefundDetailLoadFailure extends RefundState {
+  final String error;
+
+  const RefundDetailLoadFailure(this.error);
+
+  @override
+  List<Object?> get props => [error];
+}

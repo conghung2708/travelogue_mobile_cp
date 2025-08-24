@@ -26,7 +26,7 @@ class _HotLocationsState extends State<HotLocations> {
         children: [
           const TitleWithCustoneUnderline(
             text: 'Điểm đến',
-            text2: ' Tây Ninh',
+            text2: ' Tây Ninh 🗺️',
           ),
           // SizedBox(height: 15.sp),
           Container(

@@ -45,11 +45,15 @@ class TripPlanCard extends StatelessWidget {
       onTap: () {
         final isDraftOrSketch = trip.statusEnum == TripStatus.draft ||
             trip.statusEnum == TripStatus.sketch;
+        print("➡️ Push SelectTripDay: id=${trip.id}, img=${trip.imageUrl}");
         if (isDraftOrSketch) {
           Navigator.pushNamed(
             context,
             SelectTripDayScreen.routeName,
-            arguments: {'tripId': trip.id},
+            arguments: {
+              'tripId': trip.id,
+              'imageUrl': trip.imageUrl,
+            },
           );
         } else {
           Navigator.pushNamed(
@@ -202,7 +206,10 @@ class TripPlanCard extends StatelessWidget {
                   Navigator.pushNamed(
                     context,
                     SelectTripDayScreen.routeName,
-                    arguments: {'tripId': trip.id},
+                    arguments: {
+                      'tripId': trip.id,
+                      'imageUrl': trip.imageUrl,
+                    },
                   );
                 } else {
                   Navigator.pushNamed(

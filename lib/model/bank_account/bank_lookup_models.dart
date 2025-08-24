@@ -1,23 +1,22 @@
 class BankLookupItem {
   final String code;
   final String name;
-  final String? shortName;
-  final String? logoUrl;
-  final String? iconUrl;
+  final String shortName;
+  final String? logo;
 
   BankLookupItem({
     required this.code,
     required this.name,
-    this.shortName,
-    this.logoUrl,
-    this.iconUrl,
+    required this.shortName,
+    this.logo,
   });
 
-  factory BankLookupItem.fromJson(Map<String, dynamic> j) => BankLookupItem(
-        code: j['code']?.toString() ?? '',
-        name: j['name']?.toString() ?? '',
-        shortName: j['short_name']?.toString(),
-        logoUrl: j['logo_url']?.toString(),
-        iconUrl: j['icon_url']?.toString(),
-      );
+  factory BankLookupItem.fromJson(Map<String, dynamic> json) {
+    return BankLookupItem(
+      code: json['code'] ?? '',
+      name: json['name'] ?? '',
+      shortName: json['shortName'] ?? json['short_name'] ?? '',
+      logo: json['logo_url'],
+    );
+  }
 }

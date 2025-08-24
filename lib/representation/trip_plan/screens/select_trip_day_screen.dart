@@ -11,7 +11,7 @@ import 'package:travelogue_mobile/model/trip_plan/trip_plan_detail_model.dart';
 import 'package:travelogue_mobile/model/trip_plan/trip_day_model.dart';
 import 'package:travelogue_mobile/model/trip_plan/trip_activity_model.dart';
 import 'package:travelogue_mobile/model/trip_plan/trip_plan_location_model.dart';
-import 'package:travelogue_mobile/representation/tour_guide/screens/tour_guide_booking_confirmation_screen.dart';
+import 'package:travelogue_mobile/representation/tour_guide/screens/guide_team_selector_screen.dart';
 import 'package:travelogue_mobile/representation/trip_plan/screens/my_trip_plan_screen.dart';
 
 import 'package:travelogue_mobile/representation/trip_plan/widgets/trip_day_card.dart';
@@ -39,7 +39,7 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
   bool _argsProcessed = false;
   String? _tripId;
 
-  // giữ pending ngày mới sau khi đã PUT locations khi rút ngắn
+  String? _initialImageUrl;
   DateTime? _pendingShortenStart;
   DateTime? _pendingShortenEnd;
 
@@ -137,7 +137,6 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
 
   List<int> _emptyDayIndexes(TripPlanDetailModel d) {
     DateTime _asYmd(DateTime x) => DateTime(x.year, x.month, x.day);
-
     final empty = <int>[];
     for (int i = 0; i < _days.length; i++) {
       final day = _days[i];
@@ -172,6 +171,9 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
 
     if (args is TripPlanDetailModel) {
       detail = args;
+      _initialImageUrl = (detail.imageUrl?.trim().isNotEmpty ?? false)
+          ? detail.imageUrl!.trim()
+          : _initialImageUrl;
     } else if (args is String) {
       tripId = args;
     } else if (args is Map) {
@@ -182,6 +184,18 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
       }
       final rawTripId = args['tripId'] ?? args['tripPlanId'];
       if (rawTripId != null) tripId = rawTripId.toString();
+
+      final argImg = (args['imageUrl'] as String?)?.trim();
+      if (argImg != null &&
+          argImg.isNotEmpty &&
+          argImg.toLowerCase() != 'string') {
+        _initialImageUrl = argImg;
+        print(
+            "📥 [SelectTripDayScreen] Nhận imageUrl từ arguments = $_initialImageUrl");
+      } else {
+        print(
+            "📥 [SelectTripDayScreen] arguments không có imageUrl hợp lệ = $argImg");
+      }
     }
 
     if (detail != null) {
@@ -202,7 +216,8 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Thiếu dữ liệu: cần tripId hoặc detail')),
+          const SnackBar(
+              content: Text('Thiếu dữ liệu: cần tripId hoặc detail')),
         );
       });
     }
@@ -224,7 +239,6 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
     final oldStart = _ymd(_detail!.startDate);
     final oldEnd = _ymd(_detail!.endDate);
 
-    // Cho phép chọn sớm hơn ngày hiện tại của trip, nhưng không trước "today".
     final first = _ymd(oldStart.isBefore(now) ? oldStart : now);
     final last = DateTime(
       (now.year + 2 > oldEnd.year) ? now.year + 2 : oldEnd.year,
@@ -249,15 +263,12 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
     final isShortenedEnd = newEnd.isBefore(oldEnd);
     final isExtendedEnd = newEnd.isAfter(oldEnd);
 
-    // Nếu có bất kỳ rút ngắn nào (đầu hoặc cuối), cần lọc & PUT lại locations.
     if (isShortenedStart || isShortenedEnd) {
       final ok = await _confirmShortenAndDelete(newStart, newEnd);
       if (!ok) return;
 
       final filteredPayload =
           _mapLocationsWithinRange(_detail!, newStart, newEnd);
-
-      // Luôn lưu cả 2 đầu mốc mới để hợp nhất chính xác sau khi PUT locations xong
       _pendingShortenStart = newStart;
       _pendingShortenEnd = newEnd;
 
@@ -268,7 +279,6 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
       return;
     }
 
-    // Chỉ mở rộng (không rút ngắn): cập nhật trip trực tiếp
     if (isExtendedStart || isExtendedEnd) {
       context.read<TripPlanBloc>().add(UpdateTripPlanEvent(
             id: _detail!.id,
@@ -276,12 +286,10 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
             description: _detail!.description,
             startDate: isExtendedStart ? newStart : oldStart,
             endDate: isExtendedEnd ? newEnd : oldEnd,
-            imageUrl: _detail!.imageUrl,
+            imageUrl: _detail!.imageUrl ?? _initialImageUrl,
           ));
       return;
     }
-
-    // Không thay đổi gì
   }
 
   Future<void> _openEditNameSheetPro() async {
@@ -339,7 +347,7 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
           description: _detail!.description,
           startDate: _detail!.startDate,
           endDate: _detail!.endDate,
-          imageUrl: _detail!.imageUrl,
+          imageUrl: _detail!.imageUrl ?? _initialImageUrl,
         ));
   }
 
@@ -349,9 +357,11 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
     int runningOrder = 1;
 
     for (final day in d.days) {
-      final acts = [...day.activities]..sort((a, b) => a.order.compareTo(b.order));
+      final acts = [...day.activities]
+        ..sort((a, b) => a.order.compareTo(b.order));
       for (final act in acts) {
-        print('Mapping activity: ${act.name} (tplId=${act.tripPlanLocationId})');
+        print(
+            'Mapping activity: ${act.name} (tplId=${act.tripPlanLocationId})');
         result.add(
           TripPlanLocationModel(
             tripPlanLocationId: (act.tripPlanLocationId?.isNotEmpty ?? false)
@@ -434,23 +444,18 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
         );
         return;
       }
-
       final ok = await _confirmFinalizeIfHasGuide();
       if (!ok) return;
-
-      final guestCounts = await _selectGuestCounts();
-      if (guestCounts == null) return;
 
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => GuideBookingConfirmationScreen(
-            tripPlanId: d.id,
+          builder: (_) => GuideTeamSelectorScreen(
             guide: _selectedGuide!,
             startDate: d.startDate,
             endDate: d.endDate,
-            adults: guestCounts['adults']!,
-            children: guestCounts['children']!,
+            unitPrice: _selectedGuide!.price ?? 0,
+            tripPlanId: d.id,
           ),
         ),
       );
@@ -496,12 +501,41 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
         if (state is GetTripPlanDetailSuccess) {
           final prevIndex = _selectedTabIndex;
           if (!mounted) return;
+
+          var det = state.tripPlanDetail;
+          final missingServerImg =
+              det.imageUrl == null || det.imageUrl!.isEmpty;
+          final hasArgImg =
+              _initialImageUrl != null && _initialImageUrl!.isNotEmpty;
+          if (missingServerImg && hasArgImg) {
+            det = TripPlanDetailModel(
+              id: det.id,
+              name: det.name,
+              description: det.description,
+              startDate: det.startDate,
+              endDate: det.endDate,
+              totalDays: det.totalDays,
+              status: det.status,
+              statusText: det.statusText,
+              days: det.days,
+              imageUrl: _initialImageUrl, // fallback từ Card
+            );
+          }
+
           setState(() {
-            _detail = state.tripPlanDetail;
+            _detail = det;
             _nameController.text = _detail!.name;
             _rebuildDaysFromDetail(_detail!);
             _selectedTabIndex =
                 _days.isNotEmpty ? prevIndex.clamp(0, _days.length - 1) : 0;
+
+            final trip = _detail;
+            if (trip != null) {
+              print(
+                  "📝 [SelectTripDayScreen] TripPlanDetail = ${trip.toJson()}");
+              print(
+                  "🖼  imageUrl(detail)=${trip.imageUrl} | fallback(arg)=$_initialImageUrl");
+            }
           });
         } else if (state is UpdateTripPlanLocationsSuccess) {
           final hasPendingShorten =
@@ -520,7 +554,7 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
                   description: _detail!.description,
                   startDate: newStart,
                   endDate: newEnd,
-                  imageUrl: _detail!.imageUrl,
+                  imageUrl: _detail!.imageUrl ?? _initialImageUrl,
                 ));
             return;
           }
@@ -574,6 +608,9 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
           isEditingName: false,
           nameController: _nameController,
           onEditTap: _openEditNameSheetPro,
+          coverImage: (d.imageUrl != null && d.imageUrl!.isNotEmpty)
+              ? d.imageUrl
+              : _initialImageUrl,
         ),
         Padding(
           padding:
@@ -784,8 +821,10 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
                       day: _days[_selectedTabIndex],
                       detail: d,
                       onUpdateActivities: (updated) {
-                        DateTime _asLocalYmd(DateTime d) =>
-                            DateTime(d.toLocal().year, d.toLocal().month, d.toLocal().day);
+                        DateTime _asLocalYmd(DateTime d) => DateTime(
+                            d.toLocal().year,
+                            d.toLocal().month,
+                            d.toLocal().day);
 
                         final targetDay = _asLocalYmd(_days[_selectedTabIndex]);
                         final idx = d.days.indexWhere(

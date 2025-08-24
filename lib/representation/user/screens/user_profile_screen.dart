@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:sizer/sizer.dart';
+import 'package:travelogue_mobile/representation/user/screens/my_reports_screen.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 import 'package:travelogue_mobile/core/blocs/app_bloc.dart';
@@ -52,11 +53,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       setState(() {
         _error = e.toString();
       });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Không lấy được thông tin tài khoản: $e')),
-        );
-      }
+      // if (mounted) {
+      //   ScaffoldMessenger.of(context).showSnackBar(
+      //     SnackBar(content: Text('Không lấy được thông tin tài khoản: $e')),
+      //   );
+      // }
     } finally {
       if (mounted) {
         setState(() => _loading = false);
@@ -92,22 +93,25 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   balanceText: _formatVND(wallet),
                   isLoading: _loading,
                   onRefresh: _refreshUser,
-                  onWithdraw: () {
-                    // ✅ Kiểm tra số dư trước khi cho rút
-                    // if (wallet < _minWithdraw) {
-                    //   _showMinBalanceDialog(
-                    //     context,
-                    //     current: wallet,
-                    //     requiredAmount: _minWithdraw,
-                    //   );
-                    //   return;
-                    // }
-
-                    Navigator.pushNamed(
+                  // ✅ Kiểm tra số dư trước khi cho rút
+                  // if (wallet < _minWithdraw) {
+                  //   _showMinBalanceDialog(
+                  //     context,
+                  //     current: wallet,
+                  //     requiredAmount: _minWithdraw,
+                  //   );
+                  //   return;
+                  // }
+                  onWithdraw: () async {
+                    final changed = await Navigator.pushNamed(
                       context,
                       WithdrawRequestScreen.routeName,
                       arguments: WithdrawRequestArgs(balance: wallet),
                     );
+                    if (changed == true) {
+                        print("Có hoạt động");
+                      _refreshUser();
+                    }
                   },
                 ),
               ),
@@ -156,22 +160,26 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         Icons.account_balance_wallet_outlined,
                         "Yêu cầu rút tiền",
                         context: context,
-                        onTap: () {
+                        // if (walletNow < _minWithdraw) {
+                        //   _showMinBalanceDialog(
+                        //     context,
+                        //     current: walletNow,
+                        //     requiredAmount: _minWithdraw,
+                        //   );
+                        //   return;
+                        // }
+                        onTap: () async {
                           final walletNow =
                               (_user.userWalletAmount ?? 0).toDouble();
-                          // if (walletNow < _minWithdraw) {
-                          //   _showMinBalanceDialog(
-                          //     context,
-                          //     current: walletNow,
-                          //     requiredAmount: _minWithdraw,
-                          //   );
-                          //   return;
-                          // }
-                          Navigator.pushNamed(
+                          final changed = await Navigator.pushNamed(
                             context,
                             WithdrawRequestScreen.routeName,
                             arguments: WithdrawRequestArgs(balance: walletNow),
                           );
+                          if (changed == true) {
+                            print("Có hoạt động");
+                            _refreshUser();
+                          }
                         },
                       ),
                       _buildMenuItem(
@@ -182,13 +190,22 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                           Navigator.pushNamed(context, PrivacyScreen.routeName);
                         },
                       ),
+                      // _buildMenuItem(
+                      //   Icons.badge_outlined,
+                      //   "Gia nhập đội ngũ hướng dẫn viên",
+                      //   context: context,
+                      //   onTap: () {
+                      //     Navigator.pushNamed(
+                      //         context, TourGuideRequestScreen.routeName);
+                      //   },
+                      // ),
                       _buildMenuItem(
                         Icons.badge_outlined,
-                        "Gia nhập đội ngũ hướng dẫn viên",
+                        "Quản lý báo cáo",
                         context: context,
                         onTap: () {
                           Navigator.pushNamed(
-                              context, TourGuideRequestScreen.routeName);
+                              context, MyReportsScreen.routeName);
                         },
                       ),
                       _buildMenuItem(
@@ -208,15 +225,15 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                           Navigator.pushNamed(context, SupportScreen.routeName);
                         },
                       ),
-                      _buildMenuItem(
-                        Icons.travel_explore_outlined,
-                        "Gợi ý điểm đến Tây Ninh",
-                        context: context,
-                        onTap: () {
-                          Navigator.pushNamed(
-                              context, TayNinhPredictorScreen.routeName);
-                        },
-                      ),
+                      // _buildMenuItem(
+                      //   Icons.travel_explore_outlined,
+                      //   "Gợi ý điểm đến Tây Ninh",
+                      //   context: context,
+                      //   onTap: () {
+                      //     Navigator.pushNamed(
+                      //         context, TayNinhPredictorScreen.routeName);
+                      //   },
+                      // ),
                       _buildMenuItem(
                         Icons.logout,
                         "Đăng xuất",

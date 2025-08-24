@@ -33,3 +33,13 @@ class LoadUserRefundRequestsEvent extends RefundEvent {
   @override
   List<Object?> get props => [fromDate, toDate, status];
 }
+
+// 🔎 Load chi tiết 1 refund
+class LoadRefundRequestDetailEvent extends RefundEvent {
+  final String refundRequestId;
+
+  const LoadRefundRequestDetailEvent(this.refundRequestId);
+
+  @override
+  List<Object?> get props => [refundRequestId];
+}

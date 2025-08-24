@@ -5,13 +5,11 @@ class CreateBookingTourModel {
   final String scheduledId;
   final String? promotionCode;
 
-  // Contact info (required theo sample BE)
   final String contactName;
   final String contactEmail;
   final String contactPhone;
   final String contactAddress;
 
-  // Danh sách người tham gia
   final List<BookingParticipantModel> participants;
 
   CreateBookingTourModel({

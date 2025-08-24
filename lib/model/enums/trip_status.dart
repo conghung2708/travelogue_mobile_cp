@@ -12,9 +12,9 @@ extension TripStatusExtension on TripStatus {
       case TripStatus.draft:
         return 'Bản nháp';
       case TripStatus.sketch:
-        return 'Đang lên kế hoạch';
+        return 'Phác thảo';
       case TripStatus.booked:
-        return 'Đã đặt tour thành công';
+        return 'Đã đặt';
     }
   }
 

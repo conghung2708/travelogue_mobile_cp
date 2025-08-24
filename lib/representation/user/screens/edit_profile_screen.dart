@@ -37,6 +37,8 @@ class _EditProfileScreenState extends State<EditProfileScreen>
 
   bool _saving = false;
 
+  int? _sex;
+
   final _userRepo = UserRepository();
 
   @override
@@ -51,6 +53,17 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     _phoneController.text = user.phoneNumber ?? '';
 
     _avatarUrl = user.avatarUrl;
+
+    try {
+      // nếu UserLocal có field sex (int?), sẽ gán; nếu không có cũng không sao
+      // ignore: invalid_use_of_protected_member
+      final dynamic possibleSex = (user as dynamic).sex;
+      if (possibleSex is int && (possibleSex == 1 || possibleSex == 2)) {
+        _sex = possibleSex;
+      }
+    } catch (_) {
+      _sex = null;
+    }
 
     _animController = AnimationController(
       vsync: this,
@@ -78,14 +91,10 @@ class _EditProfileScreenState extends State<EditProfileScreen>
         source: ImageSource.gallery,
         imageQuality: 85,
       );
-      if (picked == null) {
-        return;
-      }
+      if (picked == null) return;
       setState(() => _avatarFile = File(picked.path));
     } on PlatformException catch (e) {
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Không thể chọn ảnh: ${e.message}')),
       );
@@ -102,28 +111,19 @@ class _EditProfileScreenState extends State<EditProfileScreen>
       return;
     }
 
-    if (_saving) {
-      return;
-    }
+    if (_saving) return;
     setState(() => _saving = true);
 
     try {
       if (_avatarFile != null) {
-        print('[➡️ UPDATE AVATAR] file=${_avatarFile!.path}');
         final newUrl = await _userRepo.updateAvatar(_avatarFile!);
-        print('[⬅️ UPDATE AVATAR] newUrl=$newUrl');
-
         if (newUrl != null && newUrl.isNotEmpty) {
           _avatarUrl = newUrl;
-          final merged = user.copyWith(avatarUrl: newUrl);
-          UserLocal().saveUser(merged);
-          if (mounted) {
-            setState(() {});
-          }
-        } else {
-          print('[⚠️] Upload avatar không trả về URL.');
+          UserLocal().saveUser(user.copyWith(avatarUrl: newUrl));
+          if (mounted) setState(() {});
         }
       }
+
       final name = _nameController.text.trim();
       final phone = _phoneController.text.trim().isEmpty
           ? null
@@ -132,15 +132,13 @@ class _EditProfileScreenState extends State<EditProfileScreen>
           ? null
           : _addressController.text.trim();
 
-      print(
-          '[➡️ UPDATE PROFILE] id=$userId name=$name phone=$phone address=$addr');
       final updated = await _userRepo.updateUserProfile(
         id: userId,
         fullName: name.isEmpty ? null : name,
         phoneNumber: phone,
         address: addr,
+        sex: _sex,
       );
-      print('[⬅️ UPDATE PROFILE] $updated');
 
       if (updated != null) {
         final merged = user.copyWith(
@@ -148,6 +146,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
           phoneNumber: updated.phoneNumber ?? phone,
           address: updated.address ?? addr,
           avatarUrl: _avatarUrl ?? user.avatarUrl,
+          sex: updated.sex ?? _sex,
         );
         UserLocal().saveUser(merged);
       } else {
@@ -156,28 +155,23 @@ class _EditProfileScreenState extends State<EditProfileScreen>
           phoneNumber: phone ?? user.phoneNumber,
           address: addr ?? user.address,
           avatarUrl: _avatarUrl ?? user.avatarUrl,
+          sex: updated?.sex ?? _sex,
         );
         UserLocal().saveUser(merged);
       }
-      if (!mounted) {
-        return;
-      }
+
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Thông tin đã được cập nhật!")),
       );
       Navigator.pop(context, true);
     } catch (e) {
-      print('[❌ UPDATE PROFILE ERROR] $e');
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Lỗi cập nhật: $e')),
       );
     } finally {
-      if (mounted) {
-        setState(() => _saving = false);
-      }
+      if (mounted) setState(() => _saving = false);
     }
   }
 
@@ -201,9 +195,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
         ) ??
         false;
 
-    if (!ok) {
-      return;
-    }
+    if (!ok) return;
 
     AppBloc.authenicateBloc.add(
       SendOTPEmailEvent(
@@ -211,9 +203,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
         email: _email,
       ),
     );
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
     Navigator.pushNamed(context, OtpVerificationScreen.routeName);
   }
 
@@ -376,8 +366,20 @@ class _EditProfileScreenState extends State<EditProfileScreen>
 
             SizedBox(height: 2.0.h),
             _buildLabel("Số điện thoại"),
-            _buildTextField(_phoneController,
-                icon: Icons.phone_rounded, hint: 'Số điện thoại (tuỳ chọn)'),
+            _buildTextField(
+              _phoneController,
+              icon: Icons.phone_rounded,
+              hint: 'Số điện thoại (tuỳ chọn)',
+              keyboardType: TextInputType.phone, // NEW
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(11),
+              ],
+            ),
+
+            SizedBox(height: 2.0.h),
+            _buildLabel("Giới tính"), // NEW
+            _buildGenderChips(),
 
             SizedBox(height: 2.0.h),
             _buildLabel("Địa chỉ"),
@@ -386,6 +388,51 @@ class _EditProfileScreenState extends State<EditProfileScreen>
           ],
         ),
       ),
+    );
+  }
+
+  // NEW: ChoiceChip Nam/Nữ
+  Widget _buildGenderChips() {
+    Widget chip({
+      required String label,
+      required IconData icon,
+      required int value,
+    }) {
+      final bool selected = _sex == value;
+      return ChoiceChip(
+        label: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 18, color: selected ? Colors.white : Colors.blue),
+            const SizedBox(width: 6),
+            Text(label),
+          ],
+        ),
+        selected: selected,
+        onSelected: (ok) => setState(() => _sex = ok ? value : null),
+        backgroundColor: const Color(0xFFE3F2FD),
+        selectedColor: Colors.blueAccent,
+        labelStyle: TextStyle(
+          color: selected ? Colors.white : Colors.blue[800],
+          fontWeight: FontWeight.w600,
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        shape: StadiumBorder(
+          side: BorderSide(
+            color: selected ? Colors.transparent : Colors.blueAccent,
+            width: 1.1,
+          ),
+        ),
+      );
+    }
+
+    return Wrap(
+      spacing: 10,
+      runSpacing: 8,
+      children: [
+        chip(label: 'Nam', icon: Icons.male, value: 1),
+        chip(label: 'Nữ', icon: Icons.female, value: 2),
+      ],
     );
   }
 
@@ -492,10 +539,14 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     String? hint,
     bool readOnly = false,
     Widget? suffix,
+    TextInputType? keyboardType, // NEW
+    List<TextInputFormatter>? inputFormatters, // NEW
   }) {
     return TextField(
       controller: controller,
       readOnly: readOnly,
+      keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
       style: TextStyle(fontSize: 14.sp, color: Colors.black87),
       decoration: InputDecoration(
         prefixIcon: icon != null

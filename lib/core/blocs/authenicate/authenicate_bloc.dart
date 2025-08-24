@@ -14,7 +14,6 @@ import 'package:travelogue_mobile/representation/tour/screens/tour_screen.dart';
 import 'package:travelogue_mobile/representation/trip_plan/screens/my_trip_plan_screen.dart';
 import 'package:travelogue_mobile/representation/user/screens/new_password_screen.dart';
 
-
 part 'authenicate_event.dart';
 part 'authenicate_state.dart';
 
@@ -48,23 +47,22 @@ class AuthenicateBloc extends Bloc<AuthenicateEvent, AuthenicateState> {
     final success = await _login(event);
     AppBloc().initial();
 
+    // Đóng dialog đúng 1 lần
     if (Navigator.of(event.context).canPop()) {
-      Navigator.of(event.context).pop(); 
+      Navigator.of(event.context).pop();
     }
 
     if (success) {
       debugPrint('✅ Login thành công! Redirect đến: ${event.redirectRoute}');
-
       final redirect = event.redirectRoute;
       const target = MainScreen.routeName;
 
       if (redirect == TourScreen.routeName) {
-        AppBloc.mainBloc.add(const OnChangeIndexEvent(indexChange: 2)); 
+        AppBloc.mainBloc.add(const OnChangeIndexEvent(indexChange: 2));
       } else if (redirect == MyTripPlansScreen.routeName) {
         AppBloc.mainBloc.add(const OnChangeIndexEvent(indexChange: 1));
       } else {
-        AppBloc.mainBloc
-            .add(const OnChangeIndexEvent(indexChange: 0));
+        AppBloc.mainBloc.add(const OnChangeIndexEvent(indexChange: 0));
       }
 
       navigatorKey.currentState?.pushReplacementNamed(target);
@@ -74,20 +72,18 @@ class AuthenicateBloc extends Bloc<AuthenicateEvent, AuthenicateState> {
     }
   }
 
-  Future<void> _onLoginWithGoogle(
-      LoginWithSocialEvent event, Emitter emit) async {
+  Future<void> _onLoginWithGoogle(LoginWithSocialEvent event, Emitter emit) async {
     showDialogLoading(event.context);
     final success = await _loginGoogle(event);
     AppBloc().initial();
 
+    // Đóng dialog đúng 1 lần
     if (Navigator.of(event.context).canPop()) {
       Navigator.of(event.context).pop();
     }
 
     if (success) {
-      debugPrint(
-          '✅ Google login thành công! Redirect đến: ${event.redirectRoute}');
-
+      debugPrint('✅ Google login thành công! Redirect đến: ${event.redirectRoute}');
       final redirect = event.redirectRoute;
       const target = MainScreen.routeName;
 
@@ -111,7 +107,11 @@ class AuthenicateBloc extends Bloc<AuthenicateEvent, AuthenicateState> {
     await Future.delayed(const Duration(milliseconds: 1500));
     UserLocal().clearAccessToken();
     UserLocal().clearUser();
-    Navigator.of(event.context).pop();
+
+    if (Navigator.of(event.context).canPop()) {
+      Navigator.of(event.context).pop(); // đóng dialog
+    }
+
     AppBloc.mainBloc.add(const OnChangeIndexEvent(indexChange: 0));
     AppBloc().initial();
     emit(AuthenicateInitial());
@@ -124,9 +124,11 @@ class AuthenicateBloc extends Bloc<AuthenicateEvent, AuthenicateState> {
       password: event.password,
       fullName: event.fullName,
     );
+
     if (Navigator.of(event.context).canPop()) {
-      Navigator.of(event.context).pop();
+      Navigator.of(event.context).pop(); // đóng dialog
     }
+
     if (success) {
       event.handleRegisterSuccess().call();
     } else {
@@ -139,11 +141,13 @@ class AuthenicateBloc extends Bloc<AuthenicateEvent, AuthenicateState> {
     final (success, message) = await AuthenicationRepository().sendOTPEmail(
       email: event.email,
     );
+
     if (Navigator.of(event.context).canPop()) {
-      Navigator.of(event.context).pop();
+      Navigator.of(event.context).pop(); // đóng dialog
     }
+
     if (!success) {
-      print('❌ Send OTP failed: $message'); 
+      debugPrint('❌ Send OTP failed: $message');
       ScaffoldMessenger.of(event.context).showSnackBar(
         SnackBar(content: Text(message)),
       );
@@ -156,16 +160,19 @@ class AuthenicateBloc extends Bloc<AuthenicateEvent, AuthenicateState> {
       email: event.email,
       otp: event.otp,
     );
+
     if (Navigator.of(event.context).canPop()) {
-      Navigator.of(event.context).pop();
+      Navigator.of(event.context).pop(); // đóng dialog
     }
+
     if (!success) {
-      print('❌ OTP Verification Failed: $message');
+      debugPrint('❌ OTP Verification Failed: $message');
       ScaffoldMessenger.of(event.context).showSnackBar(
         SnackBar(content: Text(message)),
       );
       return;
     }
+
     if (event.isLogin) {
       event.onTapSuccess?.call();
     } else {
@@ -184,33 +191,34 @@ class AuthenicateBloc extends Bloc<AuthenicateEvent, AuthenicateState> {
       otp: event.otp,
       password: event.password,
     );
+
     if (Navigator.of(event.context).canPop()) {
-      Navigator.of(event.context).pop();
+      Navigator.of(event.context).pop(); 
     }
+
     if (!success) {
-      print('❌ Reset Password Failed: $message');
+      debugPrint('❌ Reset Password Failed: $message');
       ScaffoldMessenger.of(event.context).showSnackBar(
         SnackBar(content: Text(message)),
       );
     } else {
       if (!event.isLogin) {
-        Navigator.popUntil(
-            event.context, ModalRoute.withName('/edit_profile_screen'));
+        Navigator.popUntil(event.context, ModalRoute.withName('/edit_profile_screen'));
       }
     }
   }
 
-  Future<void> _onSendSupport(
-      SendContactSupportEvent event, Emitter emit) async {
+  Future<void> _onSendSupport(SendContactSupportEvent event, Emitter emit) async {
     showDialogLoading(event.context);
-    final (success, message) =
-        await AuthenicationRepository().sendContactSupport(
+    final (success, message) = await AuthenicationRepository().sendContactSupport(
       email: event.email,
       message: event.message,
     );
+
     if (Navigator.of(event.context).canPop()) {
-      Navigator.of(event.context).pop();
+      Navigator.of(event.context).pop(); // đóng dialog
     }
+
     if (!success) {
       ScaffoldMessenger.of(event.context).showSnackBar(
         SnackBar(content: Text(message)),
@@ -220,20 +228,23 @@ class AuthenicateBloc extends Bloc<AuthenicateEvent, AuthenicateState> {
     }
   }
 
+  // =========================
+  // HÀM CON: KHÔNG pop() TẠI ĐÂY
+  // =========================
+
   Future<bool> _login(LoginEvent event) async {
     final (user, message) = await AuthenicationRepository().login(
       email: event.email,
       password: event.password,
     );
-    if (Navigator.of(event.context).canPop()) {
-      Navigator.of(event.context).pop();
-    }
+
     if (user == null) {
       ScaffoldMessenger.of(event.context).showSnackBar(
         SnackBar(content: Text(message ?? 'Đăng nhập thất bại')),
       );
       return false;
     }
+
     userName = user.username ?? '';
     return true;
   }
@@ -242,37 +253,35 @@ class AuthenicateBloc extends Bloc<AuthenicateEvent, AuthenicateState> {
     try {
       await GoogleSignIn().signOut();
       final googleUser = await GoogleSignIn().signIn();
-      if (googleUser == null) {
-        return false;
-      }
+      if (googleUser == null) return false;
+
       final googleAuth = await googleUser.authentication;
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
-      final userCredential =
-          await FirebaseAuth.instance.signInWithCredential(credential);
-      final firebaseUser = userCredential.user;
-      if (firebaseUser == null) {
-        return false;
-      }
 
+      final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+      final firebaseUser = userCredential.user;
+      if (firebaseUser == null) return false;
+
+      final token = await firebaseUser.getIdToken() ?? '';
       final (user, message) = await AuthenicationRepository().loginGoogle(
-        token: await firebaseUser.getIdToken() ?? '',
+        token: token,
         user: firebaseUser,
       );
-      if (Navigator.of(event.context).canPop()) {
-        Navigator.of(event.context).pop();
-      }
+
       if (user == null) {
         ScaffoldMessenger.of(event.context).showSnackBar(
           SnackBar(content: Text(message ?? 'Đăng nhập Google thất bại')),
         );
         return false;
       }
+
       userName = user.username ?? '';
       return true;
     } catch (e) {
+      debugPrint('❌ Google login exception: $e');
       return false;
     }
   }

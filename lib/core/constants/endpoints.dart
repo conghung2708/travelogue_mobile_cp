@@ -104,7 +104,24 @@ class Endpoints {
 
   static const String reviewBooking = '/api/booking/review-booking';
 
-  static const String updateUserBase   = '/api/user';           
-    
-  static const String updateUserAvatar = '/api/user/update-avatar'; 
+  static const String updateUserBase = '/api/user';
+
+  static const String updateUserAvatar = '/api/user/update-avatar';
+
+  static const String getMyReviews = '/api/booking/my-reviews';
+
+  static const String reportReview = '/api/report';
+
+  static const String getMyReports = '/api/report/my-reports';
+
+  static String updateReport(String id) => '/api/report/$id';
+
+  static String deleteReport(String id) => '/api/report/$id';
+
+  static const String uploadMultipleImages =
+      '/api/media/upload-multiple-images';
+
+  static const String refundRequest = '/api/refund-request';
+
+  static const String myWithdrawalRequestsFilter = '/api/wallet/my-withdrawal-requests/filter'; 
 }

@@ -71,4 +71,40 @@ class RefundRepository {
       throw Exception(e.toString());
     }
   }
+
+  /// 🔎 Lấy chi tiết 1 refund theo id
+  Future<RefundRequestModel> getRefundRequestDetail(String refundRequestId) async {
+    try {
+      final response = await BaseRepository().getRoute(
+        '${Endpoints.refundRequest}/$refundRequestId',
+      );
+
+      if (response.statusCode == StatusCode.ok) {
+        final body = response.data;
+
+        // API mẫu trong ảnh: { data: { ... }, additionalData, message, succeeded, statusCode }
+        Map<String, dynamic>? json;
+        if (body is Map && body['data'] is Map) {
+          json = (body['data'] as Map).cast<String, dynamic>();
+        } else if (body is Map<String, dynamic>) {
+          // Trong trường hợp backend trả thẳng object
+          json = body;
+        }
+
+        if (json == null) {
+          throw const FormatException('Dữ liệu trả về không hợp lệ');
+        }
+
+        return RefundRequestModel.fromJson(json);
+      }
+
+      throw Exception('Lỗi HTTP ${response.statusCode}');
+    } on DioException catch (e) {
+      final code = e.response?.statusCode;
+      final msg = e.response?.data?['message']?.toString() ?? e.message ?? 'Lỗi kết nối';
+      throw Exception('GET refund detail failed (${code ?? 'no-code'}): $msg');
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
 }

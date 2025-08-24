@@ -26,17 +26,20 @@ class UserRepository {
     return null;
   }
 
- Future<UserProfileModel?> updateUserProfile({
+Future<UserProfileModel?> updateUserProfile({
   required String id,
   String? phoneNumber,
   String? fullName,
+  int? sex,            // 👈 thêm
   String? address,
 }) async {
   final url = '${Endpoints.updateUserBase}/$id';
 
+
   final body = <String, dynamic>{
     if (phoneNumber != null) 'phoneNumber': phoneNumber,
     if (fullName != null) 'fullName': fullName,
+    if (sex != null) 'sex': (sex == 1 || sex == 2) ? sex : 1,
     if (address != null) 'address': address,
   };
 

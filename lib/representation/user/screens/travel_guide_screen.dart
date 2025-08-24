@@ -58,7 +58,6 @@ class _TravelGuideScreenState extends State<TravelGuideScreen> {
     });
   }
 
-  // === Keyword responses (đã đổi Go Young -> Travelogue) ===
   final Map<String, String> _keywordResponses = {
     'tiết kiệm':
         '💰 Đi vào mùa thấp điểm, săn voucher hoặc ở homestay sẽ giúp bạn tiết kiệm đáng kể!',

@@ -24,13 +24,13 @@ class _GoYoungChatState extends State<GoYoungChat> {
     'contact': {
       'text': 'Tôi cần gửi yêu cầu hỗ trợ chi tiết',
       'reply':
-          'Bạn có thể gửi thắc mắc cụ thể để Go Young hỗ trợ kịp thời 💌',
+          'Bạn có thể gửi thắc mắc cụ thể để Travelogue hỗ trợ kịp thời 💌',
       'route': '/contact_support_screen',
       'button': 'Gửi yêu cầu',
     },
     'guide': {
       'text': 'Tư vấn kinh nghiệm du lịch',
-      'reply': 'Go Young có những mẹo khám phá cực hay cho bạn đấy! 🧭',
+      'reply': 'Travelogue có những mẹo khám phá cực hay cho bạn đấy! 🧭',
       'route': '/travel_guide_screen',
       'button': 'Xem cẩm nang',
     },
@@ -107,7 +107,7 @@ SizedBox(height: 1.h),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Text(
-                          'Go Young đang nhập...',
+                          'Travelogue đang nhập...',
                           style: TextStyle(
                             fontStyle: FontStyle.italic,
                             color: Colors.black54,

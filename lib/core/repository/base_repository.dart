@@ -106,24 +106,24 @@ Future<diox.Response> putRoute({
     }
   }
 
-  Future<diox.Response> deleteRoute(
-    String gateway, {
-    String? query,
-    Map<String, dynamic>? body,
-    diox.FormData? formData,
-  }) async {
-    try {
-      final paramsObject = _parseQuery(query);
-      return await dio.delete(
-        _normalize(gateway),
-        data: formData ?? (body == null ? null : convert.jsonEncode(body)),
-        options: _getOptions(),
-        queryParameters: paramsObject,
-      );
-    } on diox.DioException catch (e) {
-      return _catchDioError(e);
-    }
+Future<diox.Response> deleteRoute({
+  required String gateway,
+  String? query,
+  Map<String, dynamic>? body,
+  diox.FormData? formData,
+}) async {
+  try {
+    final paramsObject = _parseQuery(query);
+    return await dio.delete(
+      _normalize(gateway),
+      data: formData ?? (body == null ? null : convert.jsonEncode(body)),
+      options: _getOptions(),
+      queryParameters: paramsObject,
+    );
+  } on diox.DioException catch (e) {
+    return _catchDioError(e);
   }
+}
 
 Future<diox.Response> postFormData(String gateway, diox.FormData formData) async {
   try {

@@ -24,25 +24,24 @@ class TourOverviewHeader extends StatelessWidget {
     this.isBooked,
   });
 
-  // BE trả text: "Xe máy", "Xe hơi", "Xe bus", "Tàu/Thuyền", "Máy bay", ...
   String _transportLabel(String? raw) {
     final s = (raw ?? '').trim();
-    return s.isEmpty ? 'Xe máy' : s; // mặc định: xe máy
+    return s.isEmpty ? 'Xe máy' : s; 
   }
 
   IconData _transportIcon(String? raw) {
-    final s = (raw ?? '').toLowerCase().trim();
-    if (s.contains('máy bay')) return Icons.flight_takeoff_rounded;
-    if (s.contains('bus')) return Icons.directions_bus_filled_rounded;
-    if (s.contains('tàu') || s.contains('thuyền')) {
-      return Icons.directions_boat_filled_rounded;
-    }
-    if (s.contains('hơi') || s.contains('ô tô') || s.contains('oto')) {
-      return Icons.directions_car_rounded;
-    }
-    if (s.contains('máy')) return Icons.two_wheeler_rounded; // xe máy
-    return Icons.route_rounded;
+  final s = (raw ?? '').toLowerCase().trim();
+  if (s.isEmpty) return Icons.two_wheeler_rounded; 
+  if (s.contains('bus')) return Icons.directions_bus_filled_rounded;
+  if (s.contains('tàu') || s.contains('thuyền')) {
+    return Icons.directions_boat_filled_rounded;
   }
+  if (s.contains('hơi') || s.contains('ô tô') || s.contains('oto')) {
+    return Icons.directions_car_rounded;
+  }
+  if (s.contains('máy')) return Icons.two_wheeler_rounded; 
+  return Icons.route_rounded;
+}
 
   @override
   Widget build(BuildContext context) {

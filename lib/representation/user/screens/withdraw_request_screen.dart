@@ -11,17 +11,12 @@ import 'package:travelogue_mobile/core/blocs/bank_lookup/bank_lookup_cubit.dart'
 import 'package:travelogue_mobile/model/bank_account/bank_account_model.dart';
 import 'package:travelogue_mobile/model/bank_account/bank_lookup_models.dart';
 
-// Wallet
 import 'package:travelogue_mobile/core/blocs/wallet/wallet_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/wallet/wallet_event.dart';
 import 'package:travelogue_mobile/core/blocs/wallet/wallet_state.dart';
 import 'package:travelogue_mobile/model/wallet/withdrawal_request_create_model.dart';
+import 'package:travelogue_mobile/representation/user/screens/withdraw_history_screen.dart';
 
-// Update bank account model
-import 'package:travelogue_mobile/model/bank_account/bank_account_model.dart'
-    show UpdateBankAccountModel;
-
-/// === Args nhận từ màn profile
 class WithdrawRequestArgs {
   final num balance;
   const WithdrawRequestArgs({required this.balance});
@@ -45,7 +40,10 @@ class _WithdrawRequestScreenState extends State<WithdrawRequestScreen> {
   final _amountController = TextEditingController();
   final _noteController = TextEditingController();
 
-  BankLookupItem? _selectedBank;
+  // chỉ lưu CODE của ngân hàng (VD: "VCB", "ICB")
+  String? _selectedBankCode;
+
+  bool _dirty = false;
 
   static const double _maxContentWidth = 680; // căn giữa & giới hạn bề rộng
 
@@ -85,215 +83,224 @@ class _WithdrawRequestScreenState extends State<WithdrawRequestScreen> {
     final bankLookup = context.watch<BankLookupCubit>().state;
     final isSubmitting = context.watch<WalletBloc>().state is WalletLoading;
 
-    return Scaffold(
-      backgroundColor: _P.bg,
-      body: Stack(
-        children: [
-          _Header(),
-          SafeArea(
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: _maxContentWidth),
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(4.w, 17.h, 4.w, 2.h),
-                  child: MultiBlocListener(
-                    listeners: [
-                      // lắng nghe tạo/cập nhật tài khoản ngân hàng
-                      BlocListener<BankAccountBloc, BankAccountState>(
-                        listener: (context, state) {
-                          if (state is BankAccountFailure) {
-                            _snack(context, state.message);
+    // ignore: deprecated_member_use
+    return WillPopScope(
+      onWillPop: () async {
+        print(">>> WillPopScope pop with $_dirty");
+        Navigator.of(context).pop(_dirty);
+        return false;
+      },
+      child: Scaffold(
+        backgroundColor: _P.bg,
+        body: Stack(
+          children: [
+            _Header(dirty: _dirty),
+            SafeArea(
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: _maxContentWidth),
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(4.w, 17.h, 4.w, 2.h),
+                    child: MultiBlocListener(
+                      listeners: [
+       
+                        BlocListener<BankAccountBloc, BankAccountState>(
+                          listener: (context, state) {
+                            if (state is BankAccountFailure) {
+                              _snack(context, state.message);
+                            }
+                            if (state is BankAccountCreateSuccess) {
+                              _snack(context, 'Tạo tài khoản thành công');
+                              context
+                                  .read<BankAccountBloc>()
+                                  .add(const GetBankAccountsEvent());
+                            }
+                            if (state is BankAccountUpdateSuccess) {
+                              _snack(context, 'Cập nhật tài khoản thành công');
+                              context
+                                  .read<BankAccountBloc>()
+                                  .add(const GetBankAccountsEvent());
+                            }
+                          },
+                        ),
+                    
+                        BlocListener<WalletBloc, WalletState>(
+                          listener: (context, wState) {
+                            if (wState is WalletFailure) {
+                              _snack(context, wState.error);
+                            }
+                            if (wState is WalletSuccess) {
+                              _snack(
+                                  context, 'Gửi yêu cầu rút tiền thành công');
+                              _amountController.clear();
+                              _noteController.clear();
+                              _dirty = true;
+                              print(">>> WalletSuccess: _dirty = true");
+                            }
+                          },
+                        ),
+                      ],
+                      child: BlocBuilder<BankAccountBloc, BankAccountState>(
+                        builder: (context, state) {
+                          final loading = state is BankAccountLoading;
+                          BankAccountModel? defaultAcc;
+                          if (state is BankAccountListSuccess &&
+                              state.accounts.isNotEmpty) {
+                            defaultAcc = state.accounts.firstWhere(
+                              (e) => e.isDefault == true,
+                              orElse: () => state.accounts.first,
+                            );
                           }
-                          if (state is BankAccountCreateSuccess) {
-                            _snack(context, 'Tạo tài khoản thành công');
-                            context
-                                .read<BankAccountBloc>()
-                                .add(const GetBankAccountsEvent());
-                          }
-                          if (state is BankAccountUpdateSuccess) {
-                            _snack(context, 'Cập nhật tài khoản thành công');
-                            context
-                                .read<BankAccountBloc>()
-                                .add(const GetBankAccountsEvent());
-                          }
-                        },
-                      ),
-                      // lắng nghe gửi yêu cầu rút
-                      BlocListener<WalletBloc, WalletState>(
-                        listener: (context, wState) {
-                          if (wState is WalletFailure) {
-                            _snack(context, wState.error);
-                          }
-                          if (wState is WalletSuccess) {
-                            _snack(context, 'Gửi yêu cầu rút tiền thành công');
-                            _amountController.clear();
-                            _noteController.clear();
-                          }
-                        },
-                      ),
-                    ],
-                    child: BlocBuilder<BankAccountBloc, BankAccountState>(
-                      builder: (context, state) {
-                        final loading = state is BankAccountLoading;
-                        BankAccountModel? defaultAcc;
-                        if (state is BankAccountListSuccess &&
-                            state.accounts.isNotEmpty) {
-                          defaultAcc = state.accounts.firstWhere(
-                            (e) => e.isDefault == true,
-                            orElse: () => state.accounts.first,
-                          );
-                        }
-                        _defaultAcc = defaultAcc; // lưu lại để submit rút
+                          _defaultAcc = defaultAcc; 
 
-                        return AbsorbPointer(
-                          absorbing: loading,
-                          child: AnimatedOpacity(
-                            duration: const Duration(milliseconds: 150),
-                            opacity: loading ? .6 : 1,
-                            child: RefreshIndicator(
-                              color: _P.primary,
-                              onRefresh: () async {
-                                context
-                                    .read<BankAccountBloc>()
-                                    .add(const GetBankAccountsEvent());
-                                context.read<BankLookupCubit>().loadBanks();
-                              },
-                              child: SingleChildScrollView(
-                                physics:
-                                    const AlwaysScrollableScrollPhysics(),
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    // --- Số dư ví ---
-                                    _SectionCard(
-                                      title: 'Số dư ví',
-                                      child: _ReadOnlyInfo(
-                                        label: 'Số dư khả dụng',
-                                        value: '${_availableBalance.vnd()} đ',
+                          return AbsorbPointer(
+                            absorbing: loading,
+                            child: AnimatedOpacity(
+                              duration: const Duration(milliseconds: 150),
+                              opacity: loading ? .6 : 1,
+                              child: RefreshIndicator(
+                                color: _P.primary,
+                                onRefresh: () async {
+                                  context
+                                      .read<BankAccountBloc>()
+                                      .add(const GetBankAccountsEvent());
+                                  context.read<BankLookupCubit>().loadBanks();
+                                },
+                                child: SingleChildScrollView(
+                                  physics:
+                                      const AlwaysScrollableScrollPhysics(),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      
+                                      _SectionCard(
+                                        title: 'Số dư ví',
+                                        child: _ReadOnlyInfo(
+                                          label: 'Số dư khả dụng',
+                                          value: '${_availableBalance.vnd()} đ',
+                                        ),
                                       ),
-                                    ),
 
-                                    if (defaultAcc != null) ...[
-                                      _SectionCard(
-                                        title: 'Tài khoản mặc định',
-                                        child: _AccountCard(
-                                          acc: defaultAcc,
-                                          onEdit: () => _showEditBankSheet(
-                                              context, defaultAcc!),
-                                          onSetDefault:
-                                              defaultAcc.isDefault == true
-                                                  ? null
-                                                  : () => _setDefaultBank(
-                                                      defaultAcc!),
+                                      if (defaultAcc != null) ...[
+                                        _SectionCard(
+                                          title: 'Tài khoản mặc định',
+                                          child: _AccountCard(
+                                            acc: defaultAcc,
+                                            onEdit: () => _showEditBankSheet(
+                                                context, defaultAcc!),
+                                            onSetDefault:
+                                                defaultAcc.isDefault == true
+                                                    ? null
+                                                    : () => _setDefaultBank(
+                                                        defaultAcc!),
+                                          ),
                                         ),
-                                      ),
-                                      SizedBox(height: 1.6.h),
-                                      _SectionCard(
-                                        title: 'Thông tin rút tiền',
-                                        child: _WithdrawForm(
-                                          formKey: _formKeyWithdraw,
-                                          amountController: _amountController,
-                                          noteController: _noteController,
-                                          onSubmit: _handleSubmitWithdraw,
-                                          minAmount: _minAmount,
-                                          maxAmount: _availableBalance,
-                                          isSubmitting: isSubmitting,
+                                        SizedBox(height: 1.6.h),
+                                        _SectionCard(
+                                          title: 'Thông tin rút tiền',
+                                          child: _WithdrawForm(
+                                            formKey: _formKeyWithdraw,
+                                            amountController: _amountController,
+                                            noteController: _noteController,
+                                            onSubmit: _handleSubmitWithdraw,
+                                            minAmount: _minAmount,
+                                            maxAmount: _availableBalance,
+                                            isSubmitting: isSubmitting,
+                                          ),
                                         ),
-                                      ),
-                                    ] else ...[
-                                      _InfoBanner(
-                                        text:
-                                            'Chưa có tài khoản ngân hàng mặc định. Vui lòng nhập thông tin tài khoản.',
-                                      ),
-                                      SizedBox(height: 1.6.h),
-                                      _SectionCard(
-                                        title: 'Tài khoản ngân hàng',
-                                        child: _CreateAccountForm(
-                                          formKey: _formKeyCreate,
-                                          state: bankLookup,
-                                          selectedBank: _selectedBank,
-                                          onBankChanged: (b) {
-                                            setState(() => _selectedBank = b);
-                                            context
-                                                .read<BankLookupCubit>()
-                                                .clearVerify();
-                                          },
-                                          accountController:
-                                              _accountController,
-                                          onLookup: () {
-                                            final code =
-                                                _selectedBank?.code;
-                                            final acc =
-                                                _accountController.text
-                                                    .trim();
-                                            if (code == null ||
-                                                acc.isEmpty) {
-                                              _snack(context,
-                                                  'Chọn ngân hàng và nhập số tài khoản');
-                                              return;
-                                            }
-                                            context
-                                                .read<BankLookupCubit>()
-                                                .verify(
-                                                  bankCode: code,
-                                                  account: acc,
-                                                );
-                                          },
-                                          onCreate: (ownerName) {
-                                            final model =
-                                                CreateBankAccountModel(
-                                              bankName:
-                                                  _selectedBank!.name,
-                                              bankAccountNumber:
-                                                  _accountController.text
-                                                      .trim(),
-                                              bankOwnerName: ownerName,
-                                              isDefault: true,
-                                            );
-                                            context
-                                                .read<BankAccountBloc>()
-                                                .add(CreateBankAccountEvent(
-                                                    model));
-                                          },
+                                      ] else ...[
+                                        _InfoBanner(
+                                          text:
+                                              'Chưa có tài khoản ngân hàng mặc định. Vui lòng nhập thông tin tài khoản.',
                                         ),
-                                      ),
+                                        SizedBox(height: 1.6.h),
+                                        _SectionCard(
+                                          title: 'Tài khoản ngân hàng',
+                                          child: _CreateAccountForm(
+                                            formKey: _formKeyCreate,
+                                            state: bankLookup,
+                                            selectedBankCode: _selectedBankCode,
+                                            onBankChanged: (code) {
+                                              setState(() =>
+                                                  _selectedBankCode = code);
+                                              context
+                                                  .read<BankLookupCubit>()
+                                                  .clearVerify();
+                                            },
+                                            accountController:
+                                                _accountController,
+                                            onLookup: () {
+                                              final code = _selectedBankCode;
+                                              final acc = _accountController
+                                                  .text
+                                                  .trim();
+                                              if (code == null || acc.isEmpty) {
+                                                _snack(context,
+                                                    'Chọn ngân hàng và nhập số tài khoản');
+                                                return;
+                                              }
+                                              context
+                                                  .read<BankLookupCubit>()
+                                                  .verify(
+                                                    bankCode: code,
+                                                    account: acc,
+                                                  );
+                                            },
+                                            onCreate: (ownerName) {
+                                              final model =
+                                                  CreateBankAccountModel(
+                                                bankName: _selectedBankCode!,
+                                                bankAccountNumber:
+                                                    _accountController.text
+                                                        .trim(),
+                                                bankOwnerName: ownerName,
+                                                isDefault: true,
+                                              );
+                                              context
+                                                  .read<BankAccountBloc>()
+                                                  .add(CreateBankAccountEvent(
+                                                      model));
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                      SizedBox(height: 2.h),
                                     ],
-                                    SizedBox(height: 2.h),
-                                  ],
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
 
-          // overlay loading khi BankAccountBloc loading
-          BlocBuilder<BankAccountBloc, BankAccountState>(
-            builder: (context, state) => state is BankAccountLoading
-                ? const _BlockingLoading()
-                : const SizedBox.shrink(),
-          ),
+           
+            BlocBuilder<BankAccountBloc, BankAccountState>(
+              builder: (context, state) => state is BankAccountLoading
+                  ? const _BlockingLoading()
+                  : const SizedBox.shrink(),
+            ),
 
-          // overlay loading khi WalletBloc loading (gửi rút)
-          BlocBuilder<WalletBloc, WalletState>(
-            builder: (context, wState) => wState is WalletLoading
-                ? const _BlockingLoading()
-                : const SizedBox.shrink(),
-          ),
-        ],
+     
+            BlocBuilder<WalletBloc, WalletState>(
+              builder: (context, wState) => wState is WalletLoading
+                  ? const _BlockingLoading()
+                  : const SizedBox.shrink(),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  // ======== ACTIONS =========
+
 
   void _handleSubmitWithdraw() {
     final ok = _formKeyWithdraw.currentState?.validate() ?? false;
@@ -301,8 +308,8 @@ class _WithdrawRequestScreenState extends State<WithdrawRequestScreen> {
 
     // đảm bảo có tk mặc định
     if (_defaultAcc == null || _defaultAcc?.id == null) {
-      _snack(context,
-          'Vui lòng thêm tài khoản ngân hàng mặc định trước khi rút');
+      _snack(
+          context, 'Vui lòng thêm tài khoản ngân hàng mặc định trước khi rút');
       return;
     }
 
@@ -311,7 +318,7 @@ class _WithdrawRequestScreenState extends State<WithdrawRequestScreen> {
 
     final req = WithdrawalRequestCreateModel(
       amount: amount.toDouble(),
-      bankAccountId: _defaultAcc!.id!, // đảm bảo non-null
+      bankAccountId: _defaultAcc!.id!, 
       note: note.isEmpty ? null : note,
     );
 
@@ -323,6 +330,7 @@ class _WithdrawRequestScreenState extends State<WithdrawRequestScreen> {
       _snack(context, 'Không tìm thấy ID tài khoản để đặt mặc định');
       return;
     }
+ 
     context.read<BankAccountBloc>().add(
           UpdateBankAccountEvent(
             bankAccountId: acc.id!,
@@ -331,9 +339,9 @@ class _WithdrawRequestScreenState extends State<WithdrawRequestScreen> {
         );
   }
 
-  /// Bottom sheet chỉnh sửa tài khoản dùng lại UI tra cứu giống tạo mới
+
   void _showEditBankSheet(BuildContext context, BankAccountModel acc) {
-    // reset trạng thái verify để tránh hiển thị kết quả cũ
+
     context.read<BankLookupCubit>().clearVerify();
 
     showModalBottomSheet(
@@ -364,7 +372,6 @@ class _WithdrawRequestScreenState extends State<WithdrawRequestScreen> {
   }
 }
 
-
 class _P {
   static const primary = Color(0xFF3A7DFF);
   static const bg = Color(0xFFF6F9FF);
@@ -374,8 +381,10 @@ class _P {
   static final fill = const Color(0xFF3A7DFF).withOpacity(.06);
 }
 
-
 class _Header extends StatelessWidget {
+  final bool dirty;
+  const _Header({super.key, required this.dirty});
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -396,9 +405,12 @@ class _Header extends StatelessWidget {
               padding: EdgeInsets.symmetric(horizontal: 4.w),
               child: Row(
                 children: [
-                  // 🔹 Nút Back
+                  
                   InkWell(
-                    onTap: () => Navigator.of(context).pop(),
+                    onTap: () {
+                   
+                      Navigator.maybePop(context, dirty);
+                    },
                     borderRadius: BorderRadius.circular(12),
                     child: Container(
                       height: 6.6.h,
@@ -408,41 +420,74 @@ class _Header extends StatelessWidget {
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: Colors.white.withOpacity(.28)),
                       ),
-                      child: const Icon(Icons.arrow_back_ios_new_rounded,
-                          color: Colors.white, size: 20),
+                      child: const Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
                     ),
                   ),
                   SizedBox(width: 3.w),
 
-                  // Icon ví
-                  Container(
-                    height: 6.6.h,
-                    width: 6.6.h,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(.18),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.white.withOpacity(.28)),
+                
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Yêu cầu rút tiền',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 22.sp,
+                          ),
+                        ),
+                        SizedBox(height: .6.h),
+                        Text(
+                          'Rút về tài khoản ngân hàng của bạn',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(.95),
+                            fontSize: 13.sp,
+                          ),
+                        ),
+                      ],
                     ),
-                    child: const Icon(Icons.account_balance_wallet_rounded,
-                        color: Colors.white, size: 28),
                   ),
-                  SizedBox(width: 3.w),
 
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Yêu cầu rút tiền',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 22.sp)),
-                      SizedBox(height: .6.h),
-                      Text('Rút về tài khoản ngân hàng của bạn',
-                          style: TextStyle(
-                              color: Colors.white.withOpacity(.95),
-                              fontSize: 13.sp)),
-                    ],
+                  SizedBox(width: 2.w),
+
+             
+                  Tooltip(
+                    message: 'Lịch sử rút tiền',
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => BlocProvider.value(
+                              value: context.read<WalletBloc>(),
+                              child: const WithdrawHistoryScreen(),
+                            ),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        height: 6.6.h,
+                        width: 6.6.h,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(.18),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.white.withOpacity(.28)),
+                        ),
+                        child: const Icon(Icons.folder_open_rounded,
+                            color: Colors.white, size: 26),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -454,7 +499,8 @@ class _Header extends StatelessWidget {
   }
 }
 
-/// ================== WRAPPERS ==================
+
+
 class _SectionCard extends StatelessWidget {
   const _SectionCard({required this.title, required this.child});
   final String title;
@@ -516,7 +562,6 @@ class _InfoBanner extends StatelessWidget {
   }
 }
 
-/// ================== ACCOUNT CARD ==================
 class _AccountCard extends StatelessWidget {
   const _AccountCard({
     required this.acc,
@@ -549,16 +594,18 @@ class _AccountCard extends StatelessWidget {
             const Spacer(),
             if (acc.isDefault == true) const _Tag('Mặc định'),
             if (acc.isDefault != true && onSetDefault != null) ...[
-              TextButton(onPressed: onSetDefault, child: const Text('Đặt mặc định')),
+              TextButton(
+                  onPressed: onSetDefault, child: const Text('Đặt mặc định')),
             ],
             if (onEdit != null) ...[
               const SizedBox(width: 4),
-              IconButton(icon: const Icon(Icons.edit, size: 20), onPressed: onEdit),
+              IconButton(
+                  icon: const Icon(Icons.edit, size: 20), onPressed: onEdit),
             ],
           ],
         ),
         SizedBox(height: 1.2.h),
-        _kv('Ngân hàng', acc.bankName ?? '-'),
+        _kv('Ngân hàng (CODE)', acc.bankName ?? '-'),
         _kv('Số tài khoản', acc.bankAccountNumber ?? '-'),
         _kv('Chủ tài khoản', acc.bankOwnerName ?? '-'),
       ]),
@@ -600,12 +647,11 @@ class _Tag extends StatelessWidget {
   }
 }
 
-/// ================== CREATE ACCOUNT FORM ==================
 class _CreateAccountForm extends StatelessWidget {
   const _CreateAccountForm({
     required this.formKey,
     required this.state,
-    required this.selectedBank,
+    required this.selectedBankCode,
     required this.onBankChanged,
     required this.accountController,
     required this.onLookup,
@@ -614,31 +660,35 @@ class _CreateAccountForm extends StatelessWidget {
 
   final GlobalKey<FormState> formKey;
   final BankLookupState state;
-  final BankLookupItem? selectedBank;
-  final ValueChanged<BankLookupItem?> onBankChanged;
+  final String? selectedBankCode;
+  final ValueChanged<String?> onBankChanged;
   final TextEditingController accountController;
   final VoidCallback onLookup;
   final ValueChanged<String> onCreate;
 
   @override
   Widget build(BuildContext context) {
+    final String? value = state.banks.any((b) => b.code == selectedBankCode)
+        ? selectedBankCode
+        : null;
+
     return Form(
       key: formKey,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       child: Column(
         children: [
           _FieldLabel('Ngân hàng'),
-          DropdownButtonFormField<BankLookupItem>(
+          DropdownButtonFormField<String>(
             isExpanded: true,
-            value: selectedBank,
+            value: value,
             decoration: _inputDecoration(),
             items: state.banks
-                .map((e) => DropdownMenuItem(
-                      value: e,
+                .map((e) => DropdownMenuItem<String>(
+                      value: e.code,
                       child: Row(
                         children: [
                           Image.network(
-                            e.logoUrl ?? '',
+                            e.logo ?? '',
                             width: 28,
                             height: 28,
                             errorBuilder: (_, __, ___) =>
@@ -734,7 +784,7 @@ class _CreateAccountForm extends StatelessWidget {
       );
 }
 
-/// ================== EDIT ACCOUNT SHEET (re-use UI lookup) ==================
+
 class _EditAccountSheet extends StatefulWidget {
   const _EditAccountSheet({required this.acc});
   final BankAccountModel acc;
@@ -746,26 +796,26 @@ class _EditAccountSheet extends StatefulWidget {
 class _EditAccountSheetState extends State<_EditAccountSheet> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _accNumberCtl;
-  BankLookupItem? _pickedBank;
 
-@override
-void initState() {
-  super.initState();
-  _accNumberCtl = TextEditingController(
-    text: widget.acc.bankAccountNumber ?? '',
-  );
-  final banks = context.read<BankLookupCubit>().state.banks;
+  String? _pickedBankCode;
 
-  if (banks.isEmpty) {
-    _pickedBank = null;
-  } else {
-    _pickedBank = banks.firstWhere(
-      (b) => b.name == (widget.acc.bankName ?? ''),
-      orElse: () => banks.first,
+  @override
+  void initState() {
+    super.initState();
+    _accNumberCtl = TextEditingController(
+      text: widget.acc.bankAccountNumber ?? '',
     );
-  }
-}
+    final banks = context.read<BankLookupCubit>().state.banks;
 
+    if (banks.isEmpty) {
+      _pickedBankCode = null;
+    } else {
+   
+      final savedCode = (widget.acc.bankName ?? '').trim();
+      _pickedBankCode =
+          banks.any((b) => b.code == savedCode) ? savedCode : null;
+    }
+  }
 
   @override
   void dispose() {
@@ -776,11 +826,15 @@ void initState() {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<BankLookupCubit>().state;
+    final String? value = state.banks.any((b) => b.code == _pickedBankCode)
+        ? _pickedBankCode
+        : null;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text('Chỉnh sửa tài khoản', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16.sp)),
+        Text('Chỉnh sửa tài khoản',
+            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16.sp)),
         SizedBox(height: 1.2.h),
 
         // Form giống tạo mới
@@ -789,20 +843,21 @@ void initState() {
           child: Column(
             children: [
               _FieldLabel('Ngân hàng'),
-              DropdownButtonFormField<BankLookupItem>(
+              DropdownButtonFormField<String>(
                 isExpanded: true,
-                value: _pickedBank,
+                value: value,
                 decoration: _editInputDecoration(),
                 items: state.banks
-                    .map((e) => DropdownMenuItem(
-                          value: e,
+                    .map((e) => DropdownMenuItem<String>(
+                          value: e.code,
                           child: Row(
                             children: [
                               Image.network(
-                                e.logoUrl ?? '',
+                                e.logo ?? '',
                                 width: 45,
                                 height: 45,
-                                errorBuilder: (_, __, ___) => const Icon(Icons.account_balance, size: 24),
+                                errorBuilder: (_, __, ___) =>
+                                    const Icon(Icons.account_balance, size: 24),
                               ),
                               const SizedBox(width: 8),
                               Expanded(
@@ -816,8 +871,8 @@ void initState() {
                           ),
                         ))
                     .toList(),
-                onChanged: (b) {
-                  setState(() => _pickedBank = b);
+                onChanged: (code) {
+                  setState(() => _pickedBankCode = code);
                   context.read<BankLookupCubit>().clearVerify();
                 },
               ),
@@ -837,24 +892,31 @@ void initState() {
                 onChanged: (_) => context.read<BankLookupCubit>().clearVerify(),
               ),
               SizedBox(height: 1.4.h),
-
               Row(
                 children: [
                   Expanded(
                     child: _OutlineBtn(
-                      label: state.isVerifying ? 'Đang xác thực...' : 'Tra cứu tên chủ TK',
+                      label: state.isVerifying
+                          ? 'Đang xác thực...'
+                          : 'Tra cứu tên chủ TK',
                       icon: Icons.search_rounded,
                       onPressed: state.isVerifying
                           ? null
                           : () {
-                              final code = _pickedBank?.code;
+                              final code = _pickedBankCode;
                               final accNo = _accNumberCtl.text.trim();
                               if (code == null || accNo.isEmpty) {
-                                _snack(context, 'Chọn ngân hàng và nhập số tài khoản');
+                                _snack(context,
+                                    'Chọn ngân hàng và nhập số tài khoản');
                                 return;
                               }
-                              if (!(_formKey.currentState?.validate() ?? false)) return;
-                              context.read<BankLookupCubit>().verify(bankCode: code, account: accNo);
+                              if (!(_formKey.currentState?.validate() ??
+                                  false)) {
+                                return;
+                              }
+                              context
+                                  .read<BankLookupCubit>()
+                                  .verify(bankCode: code, account: accNo);
                             },
                     ),
                   ),
@@ -865,12 +927,14 @@ void initState() {
                         label: 'Lưu thay đổi',
                         icon: Icons.save_rounded,
                         onPressed: () {
-                          // gửi PUT update sau khi đã verify OK
-                          if (_pickedBank == null) {
+                   
+                          if (_pickedBankCode == null) {
                             _snack(context, 'Vui lòng chọn ngân hàng');
                             return;
                           }
-                          if (!(_formKey.currentState?.validate() ?? false)) return;
+                          if (!(_formKey.currentState?.validate() ?? false)) {
+                            return;
+                          }
                           final id = widget.acc.id;
                           if (id == null) {
                             _snack(context, 'Không tìm thấy ID tài khoản');
@@ -880,9 +944,11 @@ void initState() {
                                 UpdateBankAccountEvent(
                                   bankAccountId: id,
                                   model: UpdateBankAccountModel(
-                                    bankName: _pickedBank!.name,
-                                    bankAccountNumber: _accNumberCtl.text.trim(),
-                                    bankOwnerName: state.ownerName!, // dùng tên đã tra cứu
+                                    bankName: _pickedBankCode!, 
+                                    bankAccountNumber:
+                                        _accNumberCtl.text.trim(),
+                                    bankOwnerName:
+                                        state.ownerName!, 
                                   ),
                                 ),
                               );
@@ -892,21 +958,21 @@ void initState() {
                     ),
                 ],
               ),
-
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 160),
                 child: state.verifyError != null
                     ? Padding(
                         key: const ValueKey('err'),
                         padding: EdgeInsets.only(top: 1.h),
-                        child: Text(state.verifyError!, style: const TextStyle(color: Colors.red)),
+                        child: Text(state.verifyError!,
+                            style: const TextStyle(color: Colors.red)),
                       )
                     : const SizedBox.shrink(key: ValueKey('ok')),
               ),
-
               if (state.ownerName != null) ...[
                 SizedBox(height: 1.2.h),
-                _ReadOnlyInfo(label: 'Tên chủ tài khoản', value: state.ownerName!),
+                _ReadOnlyInfo(
+                    label: 'Tên chủ tài khoản', value: state.ownerName!),
               ],
             ],
           ),
@@ -939,7 +1005,6 @@ void initState() {
   }
 }
 
-/// ================== WITHDRAW FORM ==================
 class _WithdrawForm extends StatelessWidget {
   const _WithdrawForm({
     required this.formKey,
@@ -1024,7 +1089,7 @@ class _WithdrawForm extends StatelessWidget {
       );
 }
 
-/// ================== COMMON ==================
+
 class _FieldLabel extends StatelessWidget {
   const _FieldLabel(this.text);
   final String text;
@@ -1138,7 +1203,6 @@ class _BlockingLoading extends StatelessWidget {
   }
 }
 
-/// ================== FORMATTER & EXT ==================
 class _VndThousandsFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(

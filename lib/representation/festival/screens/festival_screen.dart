@@ -12,6 +12,7 @@ import 'package:travelogue_mobile/data/data_local/user_local.dart';
 import 'package:travelogue_mobile/model/month_model.dart';
 import 'package:travelogue_mobile/model/news_model.dart';
 import 'package:travelogue_mobile/representation/event/widgets/arrow_back_button.dart';
+import 'package:travelogue_mobile/representation/experience/screens/experience_detail_screen.dart';
 import 'package:travelogue_mobile/representation/festival/screens/festival_detail_screen.dart';
 import 'package:travelogue_mobile/representation/festival/widgets/festival_screen_background.dart';
 import 'package:travelogue_mobile/representation/festival/widgets/month_widget.dart';
@@ -35,9 +36,13 @@ class _FestivalScreenState extends State<FestivalScreen> {
         builder: (context, state) {
           final List<NewsModel> allNews = state.props[0] as List<NewsModel>;
 
-          // Tạm thời chỉ lọc category lễ hội (2)
           final List<NewsModel> festivals = allNews.where((n) {
-            return n.newsCategory == 2;
+            if (n.newsCategory != 2) return false;
+
+            if (monthCurrent == 0) return true; // Tất cả tháng
+
+            final start = n.createdTime;
+            return start != null && start.month == monthCurrent;
           }).toList();
 
           return Stack(
@@ -61,13 +66,9 @@ class _FestivalScreenState extends State<FestivalScreen> {
                                 final festival = festivals[index];
                                 return GestureDetector(
                                   onTap: () {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) => Provider<NewsModel>.value(
-                                          value: festival,
-                                          child: const FestivalDetailScreen(),
-                                        ),
-                                      ),
+                                    Navigator.of(context).pushNamed(
+                                      ExperienceDetailScreen.routeName,
+                                      arguments: festival,
                                     );
                                   },
                                   child: FestivalCard(festival: festival),
@@ -169,7 +170,9 @@ class _FestivalScreenState extends State<FestivalScreen> {
           ),
           SizedBox(height: 2.h),
           Text(
-            "Không tìm thấy sự kiện lễ hội trong tháng $monthCurrent",
+            monthCurrent == 0
+                ? "Không tìm thấy sự kiện lễ hội nào"
+                : "Không tìm thấy sự kiện lễ hội trong tháng $monthCurrent",
             style: TextStyle(
               fontSize: 13.sp,
               color: Colors.grey,
@@ -284,8 +287,7 @@ class FestivalCard extends StatelessWidget {
               children: [
                 _dateItem(Icons.date_range, Colors.blueAccent, start),
                 Text("đến",
-                    style: TextStyle(
-                        fontSize: 13.sp, color: Colors.black54)),
+                    style: TextStyle(fontSize: 13.sp, color: Colors.black54)),
                 _dateItem(Icons.event_available, Colors.green, end),
               ],
             ),
