@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:sizer/sizer.dart';
 import 'package:travelogue_mobile/core/blocs/home/home_bloc.dart';
+import 'package:travelogue_mobile/core/config/app_env.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
 import 'package:travelogue_mobile/model/location_model.dart';
 import 'package:vietmap_flutter_navigation/vietmap_flutter_navigation.dart';
@@ -74,19 +75,21 @@ class _VietMapNavigationScreenState extends State<VietMapNavigationScreen> {
     }
   }
 
-  Future<void> _initializeNavigation() async {
-    Vietmap.getInstance(_vietmapApiKey);
-    _navigationOption = _vietmapNavigationPlugin.getDefaultOptions();
-    _navigationOption.simulateRoute = false;
-    _navigationOption.apiKey = _vietmapApiKey;
-    _navigationOption.mapStyle =
-        "https://maps.vietmap.vn/api/maps/light/styles.json?apikey=$_vietmapApiKey";
-    _navigationOption.initialLatitude = 11.383150385232414;
-    _navigationOption.initialLongitude = 106.17638105695075;
-    _navigationOption.zoom = 14;
+Future<void> _initializeNavigation() async {
+  final apiKey = AppEnv.vietmapKey; 
 
-    _vietmapNavigationPlugin.setDefaultOptions(_navigationOption);
-  }
+  Vietmap.getInstance(apiKey);
+  _navigationOption = _vietmapNavigationPlugin.getDefaultOptions();
+  _navigationOption.simulateRoute = false;
+  _navigationOption.apiKey = apiKey;
+  _navigationOption.mapStyle =
+      "https://maps.vietmap.vn/api/maps/light/styles.json?apikey=$apiKey";
+  _navigationOption.initialLatitude = 11.383150385232414;
+  _navigationOption.initialLongitude = 106.17638105695075;
+  _navigationOption.zoom = 14;
+
+  _vietmapNavigationPlugin.setDefaultOptions(_navigationOption);
+}
 
   void _buildRouteToDestination(LatLng clickedLocation) {
     if (currentLocation == null) {

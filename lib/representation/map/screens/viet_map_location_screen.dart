@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:travelogue_mobile/core/config/app_env.dart';
 import 'package:vietmap_flutter_navigation/vietmap_flutter_navigation.dart';
 
 class VietMapLocationScreen extends StatefulWidget {
@@ -42,10 +43,11 @@ class _VietMapLocationScreenState extends State<VietMapLocationScreen> {
     try {
       _navigationOption = _vietmapNavigationPlugin.getDefaultOptions();
       _navigationOption.simulateRoute = false;
-      _navigationOption.apiKey =
-          "840f8a8247cb32578fc81fec50af42b8ede321173a31804b";
-      _navigationOption.mapStyle =
-          "https://maps.vietmap.vn/api/maps/light/styles.json?apikey=840f8a8247cb32578fc81fec50af42b8ede321173a31804b";
+      final apiKey = AppEnv.vietmapKey;
+
+    _navigationOption.apiKey = apiKey;
+    _navigationOption.mapStyle =
+        "https://maps.vietmap.vn/api/maps/light/styles.json?apikey=$apiKey";
 
       _vietmapNavigationPlugin.setDefaultOptions(_navigationOption);
       setState(() => _mapInitialized = true);

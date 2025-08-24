@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:sizer/sizer.dart';
+import 'package:travelogue_mobile/core/config/app_env.dart';
 import 'package:travelogue_mobile/representation/home/widgets/title_widget.dart';
 import 'package:travelogue_mobile/representation/news/widgets/highlight_stack.dart';
 import 'package:travelogue_mobile/representation/news/widgets/spotlight_news.dart';
@@ -48,7 +49,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   Weather? _weather;
-  final String apiKey = '971b89c53f966b43dcea3ce43525c2f9';
   late WeatherFactory wf;
   late AnimationController _sunController;
   final double lat = 11.3495;
@@ -59,8 +59,11 @@ class _HomeScreenState extends State<HomeScreen>
   void initState() {
     super.initState();
     AppBloc.homeBloc.add(const GetAllLocationEvent());
+
+    final apiKey = AppEnv.openWeatherKey;
     wf = WeatherFactory(apiKey, language: Language.VIETNAMESE);
     _getWeather();
+
     _sunController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 20),
@@ -471,7 +474,7 @@ class _HomeScreenState extends State<HomeScreen>
 
                                 // Stack parallax còn lại
                                 if (remain.isNotEmpty) ...[
-                           HighlightStack(highlighted: remain),
+                                  HighlightStack(highlighted: remain),
                                   SizedBox(height: 1.6.h),
                                 ],
 
@@ -548,7 +551,6 @@ class _EmptyInfo extends StatelessWidget {
 }
 
 /// Spotlight 1 bài lớn
-
 
 class _CategoryBadge extends StatelessWidget {
   final String text;

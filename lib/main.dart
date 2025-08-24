@@ -19,7 +19,7 @@ import 'package:travelogue_mobile/routes.dart';
 import 'package:travelogue_mobile/representation/main_screen.dart';
 
 import 'package:flutter_localizations/flutter_localizations.dart';
-
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -28,7 +28,10 @@ void main() async {
     final WidgetsBinding widgetsBinding =
         WidgetsFlutterBinding.ensureInitialized();
 
+    print("🔄 App init start...");
+
     await initializeDateFormatting('vi', null);
+    print("✅ Date formatting ok");
 
     widgetsBinding.requestPerformanceMode(DartPerformanceMode.latency);
 
@@ -40,15 +43,42 @@ void main() async {
       ),
     );
 
-    await Future.wait([
-      Firebase.initializeApp(),
-      Hive.initFlutter(),
-      BaseLocalData().initialBox(),
-    ]);
+    // Load .env
+    try {
+      await dotenv.load(fileName: ".env");
+      print("✅ .env loaded");
+    } catch (e) {
+      print("❌ .env load error: $e");
+    }
 
+    // Init Firebase
+    try {
+      await Firebase.initializeApp();
+      print("✅ Firebase init ok");
+    } catch (e) {
+      print("❌ Firebase init error: $e");
+    }
+
+    // Init Hive
+    try {
+      await Hive.initFlutter();
+      print("✅ Hive init ok");
+    } catch (e) {
+      print("❌ Hive init error: $e");
+    }
+
+    // Init Local Data
+    try {
+      await BaseLocalData().initialBox();
+      print("✅ BaseLocalData init ok");
+    } catch (e) {
+      print("❌ BaseLocalData init error: $e");
+    }
+
+    print("🚀 RunApp starting...");
     runApp(const MyApp());
   }, (error, stackTrace) async {
-  
+    print("❌ Uncaught error: $error");
   });
 }
 
@@ -94,7 +124,7 @@ class _MyAppState extends State<MyApp> {
         builder: (context, orientation, deviceType) {
           return ShowCaseWidget(
             builder: (context) => MaterialApp(
-              navigatorKey: navigatorKey, 
+              navigatorKey: navigatorKey,
               title: 'Travelogue',
               theme: ThemeData(
                 fontFamily: 'Roboto',
