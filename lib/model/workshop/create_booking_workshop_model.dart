@@ -2,14 +2,14 @@ import 'package:intl/intl.dart';
 import 'package:travelogue_mobile/model/booking/booking_participant_model.dart';
 
 class CreateBookingWorkshopModel {
-  final String workshopId;          // required
-  final String workshopScheduleId;  // required
-  final String? promotionCode;      // optional
-  final String contactName;         // required
-  final String contactEmail;        // required
-  final String contactPhone;        // required
-  final String contactAddress;      // required
-  final List<BookingParticipantModel> participants; // required
+  final String workshopId;         
+  final String workshopScheduleId; 
+  final String? promotionCode;      
+  final String contactName;         
+  final String contactEmail;      
+  final String contactPhone;       
+  final String contactAddress;     
+  final List<BookingParticipantModel> participants;
 
   CreateBookingWorkshopModel({
     required this.workshopId,

@@ -102,7 +102,7 @@ class TourTeamSummaryCard extends StatelessWidget {
                           ),
                         ),
 
-                      // nhẹ nhàng làm ảnh nổi
+                     
                       Positioned.fill(
                         child: DecoratedBox(
                           decoration: BoxDecoration(

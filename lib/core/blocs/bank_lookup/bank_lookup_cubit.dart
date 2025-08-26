@@ -15,7 +15,7 @@ class BankLookupCubit extends Cubit<BankLookupState> {
   Future<void> loadBanks() async {
     emit(state.copyWith(isLoadingBanks: true, error: null));
     try {
-      final banks = await repository.listBanks(); // <- trả về List<BankLookupItem>
+      final banks = await repository.listBanks();
       emit(state.copyWith(isLoadingBanks: false, banks: banks));
     } catch (e) {
       emit(state.copyWith(isLoadingBanks: false, error: e.toString()));

@@ -3,7 +3,7 @@ part of 'bank_lookup_cubit.dart';
 
 class BankLookupState extends Equatable {
   final bool isLoadingBanks;
-  final List<BankLookupItem> banks; // <- đúng kiểu
+  final List<BankLookupItem> banks;
   final String? error;
 
   final bool isVerifying;
@@ -27,7 +27,7 @@ class BankLookupState extends Equatable {
 
   BankLookupState copyWith({
     bool? isLoadingBanks,
-    List<BankLookupItem>? banks, // <- đổi sang BankLookupItem
+    List<BankLookupItem>? banks, 
     String? error,
     bool? isVerifying,
     String? ownerName,

@@ -15,6 +15,7 @@ class GuideInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('GuideInfoCard.toJson = ${guide.toJsonString()}');
     final name = (guide.userName?.isNotEmpty == true)
         ? guide.userName!
         : (guide.email ?? 'Hướng dẫn viên');
@@ -22,6 +23,12 @@ class GuideInfoCard extends StatelessWidget {
     final reviews = guide.totalReviews ?? 0;
     final price = guide.price;
     final sex = guide.sexText;
+
+  
+      print('GuideInfoCard -> name="$name", sexText="$sex"'
+          '${guide is dynamic && (guide as dynamic).sex != null ? ', sex="${(guide as dynamic).sex}"' : ''}');
+    
+
 
     final avatar = (guide.avatarUrl != null && guide.avatarUrl!.isNotEmpty)
         ? NetworkImage(guide.avatarUrl!)
@@ -97,11 +104,11 @@ class GuideInfoCard extends StatelessWidget {
                 Wrap(
                   spacing: 8, runSpacing: 6,
                   children: [
-                    if (price != null)
-                      ChipPill(
-                        icon: Icons.payments_rounded,
-                        label: 'Phí: ${NumberFormat('#,###').format(price.round())}đ',
-                      ),
+                    // if (price != null)
+                    //   ChipPill(
+                    //     icon: Icons.payments_rounded,
+                    //     label: 'Phí: ${NumberFormat('#,###').format(price.round())}đ',
+                    //   ),
                     if (sex?.isNotEmpty == true)
                       ChipPill(icon: Icons.wc_rounded, label: sex!, tone: ChipTone.neutral),
                   ],

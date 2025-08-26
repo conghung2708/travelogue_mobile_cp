@@ -28,7 +28,7 @@ class SpotlightNews extends StatelessWidget {
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => Container(color: Colors.black12),
               ),
-              // overlay đậm ở đáy
+          
               Container(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
@@ -37,12 +37,12 @@ class SpotlightNews extends StatelessWidget {
                   ),
                 ),
               ),
-              // badge category
+             
               Positioned(
                 top: 1.2.h, left: 3.5.w,
                 child: _CategoryBadge(text: catName),
               ),
-              // title
+            
               Positioned(
                 left: 3.5.w, right: 3.5.w, bottom: 1.6.h,
                 child: Text(

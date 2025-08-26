@@ -58,7 +58,7 @@ class _TourQrPaymentScreenState extends State<TourQrPaymentScreen> {
   bool _isLoading = true;
   bool _navigated = false;
 
-  // Countdown 5 phút
+
   late DateTime _deadline;
   Duration _remaining = Duration.zero;
   Timer? _timer;

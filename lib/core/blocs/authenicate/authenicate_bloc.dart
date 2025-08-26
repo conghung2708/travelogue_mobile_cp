@@ -47,7 +47,6 @@ class AuthenicateBloc extends Bloc<AuthenicateEvent, AuthenicateState> {
     final success = await _login(event);
     AppBloc().initial();
 
-    // Đóng dialog đúng 1 lần
     if (Navigator.of(event.context).canPop()) {
       Navigator.of(event.context).pop();
     }
@@ -77,7 +76,7 @@ class AuthenicateBloc extends Bloc<AuthenicateEvent, AuthenicateState> {
     final success = await _loginGoogle(event);
     AppBloc().initial();
 
-    // Đóng dialog đúng 1 lần
+
     if (Navigator.of(event.context).canPop()) {
       Navigator.of(event.context).pop();
     }
@@ -109,7 +108,7 @@ class AuthenicateBloc extends Bloc<AuthenicateEvent, AuthenicateState> {
     UserLocal().clearUser();
 
     if (Navigator.of(event.context).canPop()) {
-      Navigator.of(event.context).pop(); // đóng dialog
+      Navigator.of(event.context).pop(); 
     }
 
     AppBloc.mainBloc.add(const OnChangeIndexEvent(indexChange: 0));
@@ -126,7 +125,7 @@ class AuthenicateBloc extends Bloc<AuthenicateEvent, AuthenicateState> {
     );
 
     if (Navigator.of(event.context).canPop()) {
-      Navigator.of(event.context).pop(); // đóng dialog
+      Navigator.of(event.context).pop(); 
     }
 
     if (success) {
@@ -143,7 +142,7 @@ class AuthenicateBloc extends Bloc<AuthenicateEvent, AuthenicateState> {
     );
 
     if (Navigator.of(event.context).canPop()) {
-      Navigator.of(event.context).pop(); // đóng dialog
+      Navigator.of(event.context).pop();
     }
 
     if (!success) {
@@ -162,7 +161,7 @@ class AuthenicateBloc extends Bloc<AuthenicateEvent, AuthenicateState> {
     );
 
     if (Navigator.of(event.context).canPop()) {
-      Navigator.of(event.context).pop(); // đóng dialog
+      Navigator.of(event.context).pop(); 
     }
 
     if (!success) {

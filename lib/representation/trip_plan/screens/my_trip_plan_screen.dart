@@ -137,12 +137,12 @@ Widget _buildMasonryTripPlansList() {
   return BlocBuilder<TripPlanBloc, TripPlanState>(
     bloc: AppBloc.tripPlanBloc,
     builder: (context, state) {
-      // Loading giữ nguyên
+   
       if (state is TripPlanLoading) {
         return const Center(child: CircularProgressIndicator());
       }
 
-      // Lỗi: hiện thông điệp + nút thử lại + CreateTripCard
+
       if (state is TripPlanError) {
         return Padding(
           padding: EdgeInsets.symmetric(horizontal: 4.w),

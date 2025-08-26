@@ -5,10 +5,10 @@ import 'package:travelogue_mobile/core/repository/base_repository.dart';
 import 'package:travelogue_mobile/data/data_local/user_local.dart';
 import 'package:travelogue_mobile/model/bank_account/bank_account_model.dart';
 class BankAccountRepository {
-  /// Lấy danh sách tài khoản ngân hàng của user
+
   Future<List<BankAccountModel>> getBankAccounts({String? userId}) async {
     try {
-      // nếu không truyền thì lấy từ user đang đăng nhập
+   
       final id = (userId != null && userId.isNotEmpty)
           ? userId
           : (UserLocal().getUser().id ?? '');
@@ -49,7 +49,7 @@ class BankAccountRepository {
   }
 
 
-  /// Thêm mới tài khoản ngân hàng
+ 
   Future<String?> createBankAccount(CreateBankAccountModel model) async {
     try {
       final response = await BaseRepository().postRoute(
@@ -59,7 +59,7 @@ class BankAccountRepository {
 
       if (response.statusCode == StatusCode.ok ||
           response.statusCode == StatusCode.created) {
-        return null; // null nghĩa là thành công
+        return null; 
       }
       return response.data?['message']?.toString() ?? 'Tạo tài khoản thất bại';
     } on DioException catch (e) {
@@ -84,7 +84,7 @@ class BankAccountRepository {
       );
 
       if (response.statusCode == StatusCode.ok) {
-        return null; // thành công
+        return null;
       }
       return response.data?['message']?.toString() ?? 'Cập nhật tài khoản thất bại';
     } on DioException catch (e) {

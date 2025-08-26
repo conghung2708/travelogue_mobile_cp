@@ -135,7 +135,7 @@ class ParticipantsEditor extends StatelessWidget {
                       Expanded(
                         child: DropdownButtonFormField<int>(
                           value: p.gender,
-                          isExpanded: true, // ★ cho phần hiển thị giãn hợp lệ
+                          isExpanded: true,
                           dropdownColor: Colors.black87,
                           style: const TextStyle(color: Colors.white),
                           iconEnabledColor: Colors.white70,
@@ -178,7 +178,7 @@ class ParticipantsEditor extends StatelessWidget {
                       Expanded(
                         child: DropdownButtonFormField<int>(
                           value: p.type,
-                          isExpanded: true, // ★
+                          isExpanded: true,
                           dropdownColor: Colors.black87,
                           style: const TextStyle(color: Colors.white),
                           iconEnabledColor: Colors.white70,
@@ -270,7 +270,7 @@ class ParticipantsEditor extends StatelessWidget {
                       child: Row(
                         children: [
                           Expanded(
-                            // ★ để text co giãn + ellipsis, tránh tràn
+                    
                             child: Text(
                               df.format(p.dateOfBirth),
                               style: const TextStyle(color: Colors.white),
@@ -293,7 +293,7 @@ class ParticipantsEditor extends StatelessWidget {
     );
   }
 
-  // Input decoration (dark/glass)
+ 
   InputDecoration _decor(
     BuildContext context, {
     required String label,
@@ -322,7 +322,7 @@ class ParticipantsEditor extends StatelessWidget {
   }
 }
 
-/* ========= Small UI atoms ========= */
+
 
 class _CounterTag extends StatelessWidget {
   final int count;

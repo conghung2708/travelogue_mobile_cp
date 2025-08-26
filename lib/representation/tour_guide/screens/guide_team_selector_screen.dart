@@ -234,11 +234,11 @@ class _GuideTeamSelectorScreenState extends State<GuideTeamSelectorScreen> {
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 3.h),
 
-              // 🔥 Toàn bộ nội dung cuộn 1 lần, không dùng Column+Expanded
+           
               child: SingleChildScrollView(
                 keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                 padding: EdgeInsets.only(
-                  bottom: 2.h + 72, // chừa chỗ cho footer
+                  bottom: 2.h + 72, 
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

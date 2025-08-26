@@ -8,7 +8,7 @@ abstract class WalletEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-/// Gửi yêu cầu rút tiền (POST)
+
 class SendWithdrawalRequestEvent extends WalletEvent {
   final WithdrawalRequestCreateModel model;
 
@@ -18,9 +18,9 @@ class SendWithdrawalRequestEvent extends WalletEvent {
   List<Object?> get props => [model];
 }
 
-/// Lấy danh sách yêu cầu rút tiền (GET /filter)
+
 class LoadMyWithdrawalRequestsEvent extends WalletEvent {
-  final int? status;        // 1 | 2 | 3
+  final int? status;     
   final DateTime? fromDate;
   final DateTime? toDate;
 

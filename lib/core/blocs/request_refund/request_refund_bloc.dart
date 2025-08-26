@@ -42,7 +42,7 @@ class RefundBloc extends Bloc<RefundEvent, RefundState> {
     }
   }
 
-  // 🔎 Handler detail
+
   Future<void> _onLoadRefundRequestDetail(
     LoadRefundRequestDetailEvent event,
     Emitter<RefundState> emit,

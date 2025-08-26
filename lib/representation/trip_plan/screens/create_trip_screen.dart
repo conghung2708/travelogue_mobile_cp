@@ -31,22 +31,22 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
   DateTime? _startDate;
   DateTime? _endDate;
 
-  // Ảnh: chỉ 1 ảnh, tự upload
+
   final ImagePicker _picker = ImagePicker();
-  File? _selectedFile; // ảnh local vừa chọn (hiển thị tạm)
-  String? _coverUrl; // URL ảnh sau khi upload (dùng làm imageUrl)
+  File? _selectedFile; 
+  String? _coverUrl; 
   bool _isUploadingImage = false;
 
   bool _loadingShown = false;
 
   ImageProvider<Object> _buildHeaderImage() {
     if (_selectedFile != null) {
-      return FileImage(_selectedFile!); // preview local
+      return FileImage(_selectedFile!); 
     }
     return const AssetImage(AssetHelper.img_ex_ba_den_5);
   }
 
-  // ===== Loading overlay cho TripPlanBloc =====
+
   void _showLoading() {
     if (_loadingShown) return;
     _loadingShown = true;
@@ -66,7 +66,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
 
   DateTime _atStartOfDay(DateTime d) => DateTime(d.year, d.month, d.day);
 
-  // ====== PICK ONE & AUTO UPLOAD ======
+
   Future<void> _pickImageAndUpload() async {
     final x = await _picker.pickImage(
       imageQuality: 90,
@@ -79,11 +79,11 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
       _isUploadingImage = true;
     });
 
-    // Tự upload ngay khi chọn
+
     context.read<MediaBloc>().add(UploadMultipleImagesEvent([_selectedFile!]));
   }
 
-  // ====== NEXT: chọn ngày + tạo trip ======
+
   Future<void> _handleNext() async {
     final name = _nameController.text.trim();
     final description = _descController.text.trim();
@@ -136,8 +136,6 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
       _startDate = normalizedStart;
       _endDate = normalizedEnd;
     });
-
-    // Truyền imageUrl nếu có
     context.read<TripPlanBloc>().add(
           CreateTripPlanEvent(
             name: name,
@@ -160,7 +158,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
   Widget build(BuildContext context) {
     return MultiBlocListener(
       listeners: [
-        // TripPlan Bloc
+  
         BlocListener<TripPlanBloc, TripPlanState>(
           listener: (context, state) async {
             if (state is TripPlanLoading) {
@@ -187,7 +185,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
           },
         ),
 
-        // Media Bloc (upload ảnh)
+ 
         BlocListener<MediaBloc, MediaState>(
           listener: (context, state) {
             if (state is MediaUploading) {
@@ -196,7 +194,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
               setState(() {
                 _isUploadingImage = false;
                 _coverUrl = state.urls.isNotEmpty ? state.urls.first : null;
-                // _selectedFile = null; // đã có URL -> không cần giữ file local
+                // _selectedFile = null;
               });
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Tải ảnh lên thành công.')),
@@ -220,7 +218,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
         ),
         body: Column(
           children: [
-            // ===== Header có ảnh bìa (ưu tiên URL, sau đó file local, cuối cùng asset) =====
+
             ClipRRect(
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(6.w),
@@ -299,7 +297,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // ---- Khu preview 1 ảnh + tiến trình upload ----
+                     
                       Text(
                         "🖼️ Ảnh bìa",
                         style: TextStyle(

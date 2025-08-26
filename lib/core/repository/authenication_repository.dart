@@ -14,7 +14,7 @@ class AuthenicationRepository {
       final data = res.data is Map ? res.data['data'] : null;
       if (data is Map<String, dynamic>) {
         final user = UserModel.fromMap(data);
-        // lưu vào local cho toàn app dùng
+      
         UserLocal().saveAccount(user);
         return user;
       }
@@ -23,7 +23,7 @@ class AuthenicationRepository {
     throw Exception('HTTP ${res.statusCode}');
   }
 
-  // chỉnh login: sau khi lưu token → gọi fetchCurrentUser()
+
   Future<(UserModel?, String?)> login({
     required String email,
     required String password,
@@ -38,7 +38,7 @@ class AuthenicationRepository {
       final String token = dataJson['verificationToken'];
       final String refreshToken = dataJson['refreshTokens'];
 
-      // lưu token trước
+      
       UserLocal().saveAccessToken(token, refreshToken);
 
       // lấy full profile từ /get-current-user
@@ -138,7 +138,7 @@ class AuthenicationRepository {
     }
   }
 
-  // chỉnh loginGoogle tương tự
+
   Future<(UserModel?, String?)> loginGoogle({
     required String token,
     required User user,
@@ -156,7 +156,7 @@ class AuthenicationRepository {
       UserLocal().saveAccessToken(access, refresh);
 
       final current = await fetchCurrentUser();
-      // optional: update display name nếu cần
+      
       final merged =
           current.copyWith(username: current.username ?? user.displayName);
 

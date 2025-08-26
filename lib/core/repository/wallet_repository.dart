@@ -44,7 +44,6 @@ class WalletRepository {
       if (response.statusCode == StatusCode.ok) {
         final body = response.data;
 
-        // hỗ trợ cả [] hoặc {data: []}, {items: []}
         List list;
         if (body is List) {
           list = body;

@@ -26,7 +26,6 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
   bool _isValidEmail(String v) {
     final s = v.trim();
     if (s.isEmpty) return false;
-    // validate đơn giản
     return s.contains('@') && s.contains('.') && s.length >= 6;
   }
 
@@ -73,7 +72,7 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      backgroundColor: Colors.white, // nền trắng
+      backgroundColor: Colors.white, 
       appBar: AppBar(
         elevation: 0.6,
         title: Text(

@@ -9,13 +9,12 @@ abstract class HomeState extends Equatable {
   List<Object?> get props => [];
 }
 
-/// Trạng thái khởi tạo ban đầu (chưa fetch bất kỳ dữ liệu nào)
+
 class HomeInitial extends HomeState {
   @override
   List<Object> get props => [];
 }
 
-/// Trạng thái đang loading (ví dụ khi fetch API)
 class HomeLoading extends HomeState {
   const HomeLoading();
 }

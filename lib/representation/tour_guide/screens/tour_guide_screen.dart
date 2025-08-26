@@ -267,13 +267,13 @@ class _TourGuideScreenState extends State<TourGuideScreen> {
               Expanded(
                 child: BlocBuilder<TourGuideBloc, TourGuideState>(
                   builder: (context, state) {
-                    // Bọc mọi state trong RefreshIndicator để kéo là reload
+                 
                     return RefreshIndicator.adaptive(
                       color: ColorPalette.primaryColor,
                       onRefresh: _reloadGuides,
                       child: () {
                         if (state is TourGuideLoading) {
-                          // Vẫn cho kéo (AlwaysScrollable) dù đang loading
+                    
                           return ListView(
                             physics: const AlwaysScrollableScrollPhysics(
                               parent: BouncingScrollPhysics(),
@@ -289,7 +289,7 @@ class _TourGuideScreenState extends State<TourGuideScreen> {
                         if (state is TourGuideLoaded) {
                           final guides = state.guides;
                           if (guides.isEmpty) {
-                            // Khi rỗng vẫn cho kéo để refresh
+                         
                             return ListView(
                               physics: const AlwaysScrollableScrollPhysics(
                                 parent: BouncingScrollPhysics(),
@@ -328,7 +328,7 @@ class _TourGuideScreenState extends State<TourGuideScreen> {
                         }
 
                         if (state is TourGuideError) {
-                          // Cho kéo để thử lại
+                         
                           return ListView(
                             physics: const AlwaysScrollableScrollPhysics(
                               parent: BouncingScrollPhysics(),
@@ -349,7 +349,7 @@ class _TourGuideScreenState extends State<TourGuideScreen> {
                           );
                         }
 
-                        // State khác/initial
+                        
                         return ListView(
                           physics: const AlwaysScrollableScrollPhysics(
                             parent: BouncingScrollPhysics(),

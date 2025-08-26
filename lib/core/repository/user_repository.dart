@@ -30,7 +30,7 @@ Future<UserProfileModel?> updateUserProfile({
   required String id,
   String? phoneNumber,
   String? fullName,
-  int? sex,            // 👈 thêm
+  int? sex,            
   String? address,
 }) async {
   final url = '${Endpoints.updateUserBase}/$id';

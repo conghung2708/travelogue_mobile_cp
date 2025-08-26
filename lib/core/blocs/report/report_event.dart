@@ -14,7 +14,6 @@ class SubmitReportEvent extends ReportEvent {
   List<Object?> get props => [request];
 }
 
-// NEW
 class FetchMyReportsEvent extends ReportEvent {
   const FetchMyReportsEvent();
 }

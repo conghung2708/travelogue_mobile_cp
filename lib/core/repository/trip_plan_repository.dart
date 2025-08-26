@@ -36,7 +36,7 @@ Future<TripPlanDetailModel> getTripPlanDetail(String id) async {
   final Response response =
       await BaseRepository().getRoute("${Endpoints.tripPlans}/$id");
 
-  // 📝 log status, headers và raw data
+
   print("📡 [API] GET TripPlanDetail($id)");
   print("  ↳ Status: ${response.statusCode}");
   print("  ↳ Headers: ${response.headers.map}");
@@ -45,7 +45,6 @@ Future<TripPlanDetailModel> getTripPlanDetail(String id) async {
   if (response.statusCode == StatusCode.ok) {
     try {
       final detail = TripPlanDetailModel.fromJson(response.data['data']);
-      // 📝 log model đã parse
       print("✅ Parsed TripPlanDetail = ${detail.toJson()}");
       return detail;
     } catch (e, s) {

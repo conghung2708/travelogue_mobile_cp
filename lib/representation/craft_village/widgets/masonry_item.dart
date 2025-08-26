@@ -13,7 +13,7 @@ class MasonryItem extends StatelessWidget {
     final imageUrl = workshop.imageList!.first;
     final priceText =
         workshop.averageRating != null ? "${workshop.averageRating}★" : "N/A";
-    // final dateStr = "--/--/----"; 
+   
     final Widget imageWidget = imageUrl.startsWith('http')
         ? Image.network(
             imageUrl,

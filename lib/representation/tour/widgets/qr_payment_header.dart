@@ -34,7 +34,6 @@ class QrPaymentHeader extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Icon trong vòng tròn trắng
           Container(
             padding: EdgeInsets.all(2.h),
             decoration: BoxDecoration(

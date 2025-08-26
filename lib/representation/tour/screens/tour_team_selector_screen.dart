@@ -85,14 +85,14 @@ class _TourTeamSelectorScreenState extends State<TourTeamSelectorScreen> {
     DateTime firstDate, lastDate, init;
 
     if (p.type == 2) {
-      // Trẻ em: 5–11
+  
       firstDate = DateTime(now.year - 11, now.month, now.day);
       lastDate  = DateTime(now.year - 5,  now.month, now.day);
       init = (p.dateOfBirth.isBefore(firstDate) || p.dateOfBirth.isAfter(lastDate))
           ? DateTime(now.year - 8, now.month, now.day)
           : p.dateOfBirth;
     } else {
-      // Người lớn: ≥12
+  
       firstDate = DateTime(now.year - 100, 1, 1);
       lastDate  = DateTime(now.year - 12, now.month, now.day);
       init = (p.dateOfBirth.isAfter(lastDate) || p.dateOfBirth.isBefore(firstDate))
@@ -188,11 +188,10 @@ class _TourTeamSelectorScreenState extends State<TourTeamSelectorScreen> {
     final safeBottom  = MediaQuery.of(context).padding.bottom;
 
     return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(), // tap ra ngoài để đóng bàn phím
+      onTap: () => FocusScope.of(context).unfocus(), 
       child: Scaffold(
         resizeToAvoidBottomInset: true,
 
-        // Footer nổi, có nền tối mờ, tự né bàn phím
         bottomNavigationBar: AnimatedPadding(
           duration: const Duration(milliseconds: 150),
           curve: Curves.easeOut,
@@ -228,10 +227,9 @@ class _TourTeamSelectorScreenState extends State<TourTeamSelectorScreen> {
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 3.h),
 
-                // Toàn bộ nội dung cuộn 1 lần
                 child: SingleChildScrollView(
                   keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                  padding: EdgeInsets.only(bottom: 2.h + 72), // chừa chỗ cho footer
+                  padding: EdgeInsets.only(bottom: 2.h + 72), 
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -249,7 +247,7 @@ class _TourTeamSelectorScreenState extends State<TourTeamSelectorScreen> {
                       ),
                       SizedBox(height: 2.h),
 
-                      // (tuỳ bạn có dùng PersonCounterRow hay không)
+            
                       // PersonCounterRow(...),
 
                       ParticipantsEditor(

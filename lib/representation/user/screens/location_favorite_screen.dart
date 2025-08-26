@@ -14,8 +14,8 @@ class FavoriteLocationScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color primary = const Color(0xFF3A7DFF); // xanh dương nhạt
-    final Color chipBg = const Color(0xFFEAF2FF);   // nền nhạt cho chip
+    final Color primary = const Color(0xFF3A7DFF);
+    final Color chipBg = const Color(0xFFEAF2FF);   
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -35,7 +35,7 @@ class FavoriteLocationScreen extends StatelessWidget {
       ),
       body: BlocBuilder<HomeBloc, HomeState>(
         builder: (context, state) {
-          // lấy list từ state (giống code của bạn)
+
           final List<LocationModel> locationFavorite =
               state.props[3] as List<LocationModel>;
 
@@ -76,7 +76,7 @@ class FavoriteLocationScreen extends StatelessWidget {
             itemBuilder: (context, index) {
               final location = locationFavorite[index];
 
-              // ✅ KHÔNG dùng medias.first -> tránh "Bad state: No element"
+ 
               final imageUrl = location.imgUrlFirst;
 
               return GestureDetector(
@@ -102,15 +102,14 @@ class FavoriteLocationScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Ảnh
+                    
                       ClipRRect(
                         borderRadius: const BorderRadius.vertical(
                           top: Radius.circular(18),
                         ),
                         child: Stack(
                           children: [
-                            // ImageNetworkCard đã có errorBuilder nội bộ, nhưng
-                            // mình vẫn để placeholder khi url rỗng để chắc chắn.
+                       
                             if (imageUrl.isNotEmpty)
                               ImageNetworkCard(
                                 url: imageUrl,
@@ -128,7 +127,7 @@ class FavoriteLocationScreen extends StatelessWidget {
                                     color: primary.withOpacity(.50), size: 26),
                               ),
 
-                            // Nút “tim”
+                            
                             Positioned(
                               top: 8,
                               right: 8,
@@ -156,14 +155,14 @@ class FavoriteLocationScreen extends StatelessWidget {
                         ),
                       ),
 
-                      // Nội dung
+                
                       Expanded(
                         child: Padding(
                           padding: EdgeInsets.fromLTRB(3.8.w, 1.6.h, 3.8.w, 1.4.h),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Tên
+                          
                               Text(
                                 location.name ?? '',
                                 maxLines: 2,
@@ -177,7 +176,7 @@ class FavoriteLocationScreen extends StatelessWidget {
                               ),
                               SizedBox(height: 0.8.h),
 
-                              // Chip loại địa điểm (dùng category)
+                              
                               if ((location.category ?? '').isNotEmpty)
                                 Container(
                                   padding: EdgeInsets.symmetric(
@@ -205,7 +204,7 @@ class FavoriteLocationScreen extends StatelessWidget {
 
                               SizedBox(height: 1.0.h),
 
-                              // Mô tả ngắn
+                         
                               Expanded(
                                 child: Text(
                                   location.description ?? '',
@@ -219,7 +218,7 @@ class FavoriteLocationScreen extends StatelessWidget {
                                 ),
                               ),
 
-                              // Khu vực (nếu muốn hiện)
+                          
                               if ((location.districtName ?? '').isNotEmpty) ...[
                                 SizedBox(height: 0.6.h),
                                 Row(

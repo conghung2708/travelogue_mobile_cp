@@ -6,14 +6,14 @@ class FaqScreen extends StatelessWidget {
   static const routeName = '/faq_screen';
   const FaqScreen({super.key});
 
-  // Accent nhẹ nhàng
-  static const _blue = Color(0xFF42A5F5);       // xanh dương nhạt
-  static const _blueBorder = Color(0xFFE3F2FD); // viền rất nhạt
+
+  static const _blue = Color(0xFF42A5F5);       
+  static const _blueBorder = Color(0xFFE3F2FD); 
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // nền trắng
+      backgroundColor: Colors.white, 
       appBar: AppBar(
         elevation: 0.6,
         backgroundColor: Colors.white,
@@ -47,10 +47,10 @@ class FaqScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _blueBorder), // viền xanh nhạt
+        border: Border.all(color: _blueBorder), 
         boxShadow: const [
           BoxShadow(
-            color: Color(0x14000000), // rất nhẹ
+            color: Color(0x14000000), 
             blurRadius: 8,
             offset: Offset(0, 4),
           ),
@@ -63,7 +63,7 @@ class FaqScreen extends StatelessWidget {
           childrenPadding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
           title: Row(
             children: [
-              Icon(Icons.question_answer_rounded, color: _blue, size: 16.sp), // icon xanh dương nhạt
+              Icon(Icons.question_answer_rounded, color: _blue, size: 16.sp), 
               SizedBox(width: 2.w),
               Expanded(
                 child: Text(
@@ -77,7 +77,7 @@ class FaqScreen extends StatelessWidget {
               ),
             ],
           ),
-          trailing: Icon(Icons.expand_more, color: _blue, size: 18.sp), // mũi tên xanh nhạt
+          trailing: Icon(Icons.expand_more, color: _blue, size: 18.sp), 
           children: [
             Align(
               alignment: Alignment.centerLeft,

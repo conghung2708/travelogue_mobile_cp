@@ -86,7 +86,6 @@ class TourConfirmedActionCard extends StatelessWidget {
           ),
           SizedBox(height: 2.h),
 
-          // Button nếu chưa booked và không readonly
           if (!isViewingOnly && !hasBeenBooked)
             SizedBox(
               width: double.infinity,
@@ -116,7 +115,7 @@ class TourConfirmedActionCard extends StatelessWidget {
               ),
             )
 
-          // Nếu đã đặt hoặc chỉ xem
+   
           else
             _buildBookedMessage(context, hasBeenBooked),
         ],
@@ -124,7 +123,7 @@ class TourConfirmedActionCard extends StatelessWidget {
     );
   }
 
-  // Xây dialog xác nhận đặt tour
+
   Widget _buildConfirmDialog(BuildContext context) {
     return Dialog(
       elevation: 10,
@@ -219,7 +218,7 @@ class TourConfirmedActionCard extends StatelessWidget {
     );
   }
 
-  // Thông báo khi đã booked hoặc chỉ xem
+
   Widget _buildBookedMessage(BuildContext context, bool hasBeenBooked) {
     return Container(
       margin: EdgeInsets.only(top: 2.h),

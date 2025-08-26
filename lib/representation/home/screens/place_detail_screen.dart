@@ -25,10 +25,10 @@ void initState() {
 
   final locationId = widget.place.id ?? '';
 
-  // Nếu vẫn cần gọi dữ liệu nhà hàng/khách sạn riêng
+
   // AppBloc.hotelRestaurantBloc.add(GetHotelRestaurantEvent(locationId: locationId));
 
-  // Gọi 2 sự kiện từ NearestDataBloc
+
   context.read<NearestDataBloc>().add(GetNearestCuisineEvent(locationId));
   context.read<NearestDataBloc>().add(GetNearestHistoricalEvent(locationId));
 }

@@ -72,9 +72,9 @@ class _TourGuideDetailScreenState extends State<TourGuideDetailScreen> {
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // Ảnh nền
+                
                   Image(image: _avatar(), fit: BoxFit.cover),
-                  // gradient phủ dưới ảnh
+              
                   Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(

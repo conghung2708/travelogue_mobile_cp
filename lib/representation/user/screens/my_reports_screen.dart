@@ -36,7 +36,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
 
     return Scaffold(
       backgroundColor: bg,
-      // ✅ Dùng GlassAppBar thay cho AppBar mặc định
+      
       appBar: const GlassAppBar(
         title: 'Quản lý báo cáo',
         subtitle: 'Theo dõi & quản lý báo cáo của bạn',
@@ -330,7 +330,7 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
   }
 }
 
-/* ====================== Header tóm tắt (gradient) ====================== */
+
 class _SummaryHeader extends StatelessWidget {
   const _SummaryHeader({
     required this.total,
@@ -450,7 +450,7 @@ class _MetricDivider extends StatelessWidget {
   }
 }
 
-/* ====================== Filter bar ====================== */
+
 class _FilterBar extends StatelessWidget {
   const _FilterBar({required this.value, required this.onChanged});
   final _Filter value;
@@ -655,7 +655,7 @@ class _ItemMenu extends StatelessWidget {
   }
 }
 
-/* ====================== Status chip ====================== */
+
 class _StatusChip extends StatelessWidget {
   const _StatusChip({required this.status});
   final int status; // 1 pending, 2 accepted, 3 rejected
@@ -699,7 +699,7 @@ class _StatusChip extends StatelessWidget {
   }
 }
 
-/* ====================== States ====================== */
+
 class _LoadingView extends StatelessWidget {
   const _LoadingView();
 
@@ -808,7 +808,7 @@ class _ErrorView extends StatelessWidget {
   }
 }
 
-/* ====================== Buttons dùng gradient ====================== */
+
 class _GradientButton extends StatelessWidget {
   const _GradientButton({
     required this.label,

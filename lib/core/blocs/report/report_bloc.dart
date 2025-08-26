@@ -55,7 +55,6 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
       );
       if (result.ok) {
         emit(MyReportsActionSuccess(message: result.message));
-        // Optionally reload
         final reports = await reportRepository.getMyReports();
         emit(MyReportsLoaded(reports));
       } else {

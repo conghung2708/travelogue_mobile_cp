@@ -14,10 +14,10 @@ class TripDayCard extends StatelessWidget {
   final DateTime day;
   final TripPlanDetailModel detail;
 
-  /// Cập nhật UI: truyền lại danh sách FINAL sau khi thêm mới (append + de-dup)
+
   final void Function(List<TripActivityModel> activities)? onUpdateActivities;
 
-  /// Gọi PUT: nhận payload TripPlanLocationModel (parent sẽ bỏ qua nội dung và PUT full list)
+
   final void Function(List<TripPlanLocationModel> locations)? onUpdateLocations;
 
   const TripDayCard({
@@ -40,7 +40,6 @@ class TripDayCard extends StatelessWidget {
     return null;
   }
 
-  // safe cast helper
   List<T> _castList<T>(dynamic v) {
     if (v is List) {
       try {

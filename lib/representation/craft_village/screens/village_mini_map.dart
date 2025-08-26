@@ -24,7 +24,6 @@ class _VillageMiniMapState extends State<VillageMiniMap> {
 
   @override
   void dispose() {
-    // KHÔNG gọi _controller?.dispose(); VietmapGL tự quản lý
     _controller = null;
     super.dispose();
   }
@@ -56,7 +55,7 @@ class _VillageMiniMapState extends State<VillageMiniMap> {
             onMapClick: (_, __) => widget.onTap?.call(),
           ),
 
-          // Gắn marker **chung subtree** với VietmapGL → an toàn khi dispose
+    
           if (_controller != null)
             vietmap.MarkerLayer(
               key: ValueKey(_controller),
@@ -72,7 +71,7 @@ class _VillageMiniMapState extends State<VillageMiniMap> {
               ],
             ),
 
-          // Layer bắt tap nguyên bản đồ (nếu muốn)
+      
           Positioned.fill(
             child: Material(
               color: Colors.transparent,

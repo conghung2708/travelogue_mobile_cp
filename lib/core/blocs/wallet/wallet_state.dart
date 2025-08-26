@@ -12,10 +12,9 @@ class WalletInitial extends WalletState {}
 
 class WalletLoading extends WalletState {}
 
-/// Thành công khi gửi yêu cầu rút tiền
 class WalletSuccess extends WalletState {}
 
-/// Lỗi chung (tạo hoặc load)
+
 class WalletFailure extends WalletState {
   final String error;
 
@@ -25,7 +24,7 @@ class WalletFailure extends WalletState {
   List<Object?> get props => [error];
 }
 
-/// Thành công khi load danh sách filter
+
 class WalletListLoaded extends WalletState {
   final List<WithdrawalRequestModel> items;
 
