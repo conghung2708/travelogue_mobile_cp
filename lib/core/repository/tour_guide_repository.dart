@@ -50,23 +50,20 @@ class TourGuideRepository {
     return results.any((g) => g.id == guideId || g.id == guideId);
   }
 
-  /// Gợi ý các khoảng ngày gần nhất mà HDV rảnh, dùng filter lặp để tìm.
-  /// - Giữ nguyên độ dài khoảng ngày gốc (end-start).
-  /// - Tìm xuôi trước, rồi lùi lại sau (hoặc ngược lại), thu tối đa [limit] gợi ý.
+
   Future<List<DateTimeRange>> suggestNearestAvailabilityUsingFilter({
     required String guideId,
     required DateTime from,
     required DateTime to,
     int limit = 4,
-    int maxSearchDays = 30, // không nên quá lớn để tránh gọi API nhiều
+    int maxSearchDays = 30,
   }) async {
     final suggestions = <DateTimeRange>[];
-    final days = to.difference(from).inDays.clamp(1, 30); // độ dài range
+    final days = to.difference(from).inDays.clamp(1, 30); 
     int offset = 1;
 
-    // Tìm lần lượt +offset, -offset cho tới khi đủ limit hoặc hết maxSearchDays
+
     while (suggestions.length < limit && offset <= maxSearchDays) {
-      // thử tiến về phía trước
       final f1 = from.add(Duration(days: offset));
       final t1 = f1.add(Duration(days: days));
       final ok1 = await isAvailableUsingFilter(guideId: guideId, start: f1, end: t1);
@@ -74,8 +71,6 @@ class TourGuideRepository {
         suggestions.add(DateTimeRange(start: f1, end: t1));
         if (suggestions.length >= limit) break;
       }
-
-      // thử lùi về phía sau
       final f2 = from.subtract(Duration(days: offset));
       final t2 = f2.add(Duration(days: days));
       if (f2.isAfter(DateTime.now().subtract(const Duration(days: 1)))) {

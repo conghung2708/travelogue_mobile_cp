@@ -21,7 +21,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         on<GetMyReviewsEvent>(_onGetMyReviews); 
   }
 
-  /* ========================= TOUR ========================= */
+
 
   Future<void> _onCreateBookingTour(
     CreateBookingTourEvent event,
@@ -41,7 +41,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     }
   }
 
-  /* ========================= GUIDE ========================= */
+
 
   Future<void> _onCreateTourGuideBooking(
     CreateTourGuideBookingEvent event,
@@ -62,15 +62,13 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     }
   }
 
-  /* ========================= WORKSHOP ========================= */
-
   Future<void> _onCreateWorkshopBooking(
     CreateWorkshopBookingEvent event,
     Emitter<BookingState> emit,
   ) async {
     emit(BookingLoading());
     try {
-      // Model-based API
+      
       final BookingModel? booking =
           await bookingRepository.createWorkshopBooking(
         event.model as CreateBookingWorkshopModel,
@@ -86,7 +84,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     }
   }
 
-  /* ========================= PAYMENT LINK (dùng chung) ========================= */
+
 
   Future<void> _onCreatePaymentLink(
     CreatePaymentLinkEvent event,
@@ -111,7 +109,6 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     }
   }
 
-  /* ========================= LIST / HISTORY ========================= */
 
   Future<void> _onGetAllMyBookings(
     GetAllMyBookingsEvent event,
@@ -126,7 +123,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     }
   }
 
-  /* ========================= CANCEL ========================= */
+
 
   Future<void> _onCancelBooking(
     CancelBookingEvent event,
@@ -152,7 +149,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     }
   }
 
-  /* ========================= REVIEW ========================= */
+ 
 
   Future<void> _onReviewBooking(
     ReviewBookingEvent event,

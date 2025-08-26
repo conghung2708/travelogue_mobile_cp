@@ -18,8 +18,7 @@ class ConfirmPaymentButton extends StatefulWidget {
   final String? bookingId;
   final String? media;
 
-  /// Truyền hàm này từ màn xác nhận:
-  ///   ({CreateBookingTourModel? model, String? error}) Function()
+
   final ({CreateBookingTourModel? model, String? error}) Function()? payloadBuilder;
 
   const ConfirmPaymentButton({

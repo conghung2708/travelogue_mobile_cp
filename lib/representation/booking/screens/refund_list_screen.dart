@@ -20,10 +20,9 @@ class _AppColors {
 }
 
 class RefundListScreen extends StatefulWidget {
-  /// Map bookingId -> displayTitle (được truyền từ MyBookingScreen)
   final Map<String, String> bookingTitleLookup;
 
-  /// Nếu muốn focus/lọc sẵn một booking cụ thể khi mở màn
+
   final String? focusBookingId;
 
   const RefundListScreen({
@@ -49,7 +48,7 @@ class _RefundListScreenState extends State<RefundListScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Nếu có yêu cầu focus 1 booking khi mở, thì điền sẵn search = displayTitle
+    
       final focusId = widget.focusBookingId;
       if (focusId != null && focusId.isNotEmpty) {
         final focusTitle = widget.bookingTitleLookup[focusId];
@@ -98,7 +97,7 @@ class _RefundListScreenState extends State<RefundListScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Tìm theo TÊN (displayTitle), không theo mã
+         
             Padding(
               padding: EdgeInsets.fromLTRB(4.w, 2.h, 4.w, 1.2.h),
               child: TextField(
@@ -158,11 +157,11 @@ class _RefundListScreenState extends State<RefundListScreen> {
                     return _ErrorView(message: state.error, onRetry: _reload);
                   }
                   if (state is RefundListLoaded) {
-                    // Lọc client-side
+               
                     List<RefundRequestModel> refunds = state.refunds;
 
                     final q = _searchCtrl.text.trim().toLowerCase();
-                    // --- Lọc theo TITLE (displayTitle), không theo mã ---
+              
                     if (q.isNotEmpty) {
                       refunds = refunds.where((r) {
                         final title = widget.bookingTitleLookup[r.bookingId] ??
@@ -209,7 +208,7 @@ class _RefundListScreenState extends State<RefundListScreen> {
                             return _RefundCard(
                               data: r,
                               currency: _currency,
-                              displayTitle: displayTitle, // 👈 truyền title vào card
+                              displayTitle: displayTitle, 
                               onCancel: r.status == 1
                                   ? () => ScaffoldMessenger.of(context)
                                           .showSnackBar(
@@ -257,7 +256,7 @@ class _RefundListScreenState extends State<RefundListScreen> {
                                     }
                                   : null,
                               onViewDetail: () {
-                                // 👉 GỬI CẢ refundId + bookingTitle sang Detail
+                        
                                 Navigator.of(context).pushNamed(
                                   RefundDetailScreen.routeName,
                                   arguments: {
@@ -374,13 +373,12 @@ class _RefundCard extends StatelessWidget {
   final RefundRequestModel data;
   final NumberFormat currency;
 
-  /// Title hiển thị (đã map từ bookingId)
   final String displayTitle;
 
   final VoidCallback? onCancel;
   final VoidCallback? onWithdraw;
 
-  /// Mở detail (để truyền kèm cả title)
+
   final VoidCallback? onViewDetail;
 
   const _RefundCard({
@@ -439,14 +437,14 @@ class _RefundCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Label
+                  
                     Text('Tên Đơn',
                         style: TextStyle(
                             fontSize: 10.5.sp,
                             color: _AppColors.textMute,
                             fontWeight: FontWeight.w600)),
                     SizedBox(height: .4.h),
-                    // HIỂN THỊ TITLE - ẩn hoàn toàn mã
+                
                     Text(
                       displayTitle,
                       style: TextStyle(
@@ -465,7 +463,7 @@ class _RefundCard extends StatelessWidget {
           ),
           SizedBox(height: 1.8.h),
 
-          // Row 2: User & Amount
+         
           Row(
             children: [
               Expanded(
@@ -483,7 +481,7 @@ class _RefundCard extends StatelessWidget {
           ),
           SizedBox(height: 1.2.h),
 
-          // Row 3: Dates
+       
           Row(
             children: [
               Expanded(

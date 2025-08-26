@@ -15,7 +15,7 @@ class TourTypeSelector extends StatelessWidget {
   final TourModel tour;
   const TourTypeSelector({super.key, required this.tour});
 
-  /// Dùng cho onGenerateRoute
+
   static Route<dynamic> routeFromSettings(RouteSettings settings) {
     final args = settings.arguments as Map<String, dynamic>;
     final parsedTour = TourModel.fromJson(args['tour']);
@@ -86,7 +86,7 @@ class TourTypeSelector extends StatelessWidget {
 
                   SizedBox(height: 5.h),
 
-                  // Option 1: Solo
+                
                   AnimatedEntrance(
                     delay: const Duration(milliseconds: 200),
                     child: TourMoodCard.solo(
@@ -96,7 +96,7 @@ class TourTypeSelector extends StatelessWidget {
 
                   SizedBox(height: 3.h),
 
-                  // Option 2: Group
+                
                   AnimatedEntrance(
                     delay: const Duration(milliseconds: 600),
                     child: TourMoodCard.group(

@@ -21,7 +21,7 @@ class BookingParticipantModel {
     required this.dateOfBirth,
   });
 
-  // ------- helpers -------
+ 
   static int _toInt(dynamic v, {int fallback = 0}) {
     if (v == null) return fallback;
     if (v is int) return v;

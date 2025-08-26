@@ -249,7 +249,7 @@ class _TravelGuideScreenState extends State<TravelGuideScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // nền trắng
+      backgroundColor: Colors.white, 
       appBar: AppBar(
         elevation: 0.6,
         centerTitle: true,

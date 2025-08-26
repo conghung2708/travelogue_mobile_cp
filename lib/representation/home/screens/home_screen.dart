@@ -34,7 +34,6 @@ import 'package:travelogue_mobile/representation/home/widgets/rotating_suprise_b
 import 'package:travelogue_mobile/representation/home/widgets/upcoming_festivals.dart';
 import 'package:travelogue_mobile/representation/home/widgets/hot_location.dart';
 
-// Card tin tức bạn đã có
 import 'package:travelogue_mobile/representation/experience/widgets/experience_new_card.dart';
 import 'package:travelogue_mobile/representation/experience/screens/experience_detail_screen.dart';
 
@@ -298,7 +297,7 @@ class _HomeScreenState extends State<HomeScreen>
                     physics: const BouncingScrollPhysics(),
                     child: Column(
                       children: [
-                        // ====== CATEGORIES (ĐƯA LÊN TRƯỚC) ======
+                    
                         Padding(
                           padding: const EdgeInsets.symmetric(
                               horizontal: kMediumPadding),
@@ -375,7 +374,7 @@ class _HomeScreenState extends State<HomeScreen>
                                 ),
                         ),
 
-                        // ====== HOT LOCATIONS & FESTIVALS (CŨNG Ở TRÊN) ======
+                    
                         BlocBuilder<HomeBloc, HomeState>(
                           builder: (context, state) {
                             if (state is GetHomeSuccess) {
@@ -400,7 +399,7 @@ class _HomeScreenState extends State<HomeScreen>
                           },
                         ),
 
-                        // ngăn cách nhẹ
+                       
                         Padding(
                           padding: EdgeInsets.symmetric(horizontal: 4.w),
                           child: Divider(
@@ -408,7 +407,7 @@ class _HomeScreenState extends State<HomeScreen>
                           ),
                         ),
 
-                        // ====== NEWS HIGHLIGHTED SECTION (ĐƯA XUỐNG DƯỚI) ======
+                       
                         Padding(
                           padding: const EdgeInsets.only(
                             left: kMediumPadding,
@@ -472,7 +471,7 @@ class _HomeScreenState extends State<HomeScreen>
                                 ),
                                 SizedBox(height: 1.6.h),
 
-                                // Stack parallax còn lại
+                                
                                 if (remain.isNotEmpty) ...[
                                   HighlightStack(highlighted: remain),
                                   SizedBox(height: 1.6.h),
@@ -519,7 +518,7 @@ class _HomeScreenState extends State<HomeScreen>
   }
 }
 
-// ================== UI PHỤ TRỢ CHO HIGHLIGHTED NEWS ==================
+
 
 class _EmptyInfo extends StatelessWidget {
   final String text;
@@ -550,32 +549,10 @@ class _EmptyInfo extends StatelessWidget {
   }
 }
 
-/// Spotlight 1 bài lớn
 
-class _CategoryBadge extends StatelessWidget {
-  final String text;
-  const _CategoryBadge({required this.text});
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: .6.h),
-      decoration: BoxDecoration(
-        color: Colors.blueAccent.withOpacity(.9),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w700,
-          fontSize: 11.5.sp,
-        ),
-      ),
-    );
-  }
-}
 
-/// Stack parallax cho danh sách highlight còn lại
+
+
 
 

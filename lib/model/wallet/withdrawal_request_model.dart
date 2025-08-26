@@ -4,7 +4,7 @@ class WithdrawalRequestModel {
   final int amount;
   final int status;
   final String statusText;
-  final DateTime requestTime; // NON-NULL
+  final DateTime requestTime; 
   final BankAccountMini? bankAccount;
 
   WithdrawalRequestModel({
@@ -12,7 +12,7 @@ class WithdrawalRequestModel {
     required this.amount,
     required this.status,
     required this.statusText,
-    required this.requestTime,      // <- required
+    required this.requestTime,      
     this.bankAccount,
   });
 
@@ -29,7 +29,7 @@ class WithdrawalRequestModel {
           : int.tryParse('${json['status']}') ?? 0,
       statusText: json['statusText']?.toString() ?? '',
       requestTime: DateTime.tryParse(timeRaw ?? '') 
-          ?? DateTime.fromMillisecondsSinceEpoch(0), // Fallback an toàn
+          ?? DateTime.fromMillisecondsSinceEpoch(0), 
       bankAccount: (json['bankAccount'] is Map<String, dynamic>)
           ? BankAccountMini.fromJson(json['bankAccount'] as Map<String, dynamic>)
           : null,

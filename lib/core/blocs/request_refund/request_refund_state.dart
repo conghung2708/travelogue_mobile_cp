@@ -41,7 +41,7 @@ class RefundListLoadFailure extends RefundState {
   List<Object?> get props => [error];
 }
 
-// 🔎 Chi tiết 1 refund
+
 class RefundDetailLoaded extends RefundState {
   final RefundRequestModel refund;
 

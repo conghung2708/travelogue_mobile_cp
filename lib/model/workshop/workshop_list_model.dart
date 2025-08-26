@@ -12,7 +12,7 @@ class WorkshopListModel {
   final String? statusText;
   final double? averageRating;
   final int? totalReviews;
-  final List<String>? imageList; // 🔹 thêm field ảnh
+  final List<String>? imageList; 
 
   WorkshopListModel({
     this.id,

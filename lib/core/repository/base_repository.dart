@@ -1,8 +1,8 @@
-// Dart imports:
+
 import 'dart:async';
 import 'dart:convert' as convert;
 
-// Package imports:
+
 import 'package:dio/dio.dart' as diox;
 
 import 'package:travelogue_mobile/core/constants/dimension_constants.dart';
@@ -52,7 +52,7 @@ class BaseRepository {
 
 Future<diox.Response> postRoute({
   required String gateway,
-  dynamic data, // <- optional
+  dynamic data, 
   String? query,
 }) async {
   try {
@@ -71,7 +71,7 @@ Future<diox.Response> postRoute({
 
 Future<diox.Response> putRoute({
   required String gateway,
-  dynamic data, // <- optional
+  dynamic data, 
   String? query,
 }) async {
   try {
@@ -181,7 +181,7 @@ Future<diox.Response> postFormData(String gateway, diox.FormData formData) async
       case diox.DioExceptionType.connectionTimeout:
       case diox.DioExceptionType.receiveTimeout:
       case diox.DioExceptionType.sendTimeout:
-        return StatusCode.requestTimeout; // 408
+        return StatusCode.requestTimeout;
       case diox.DioExceptionType.badCertificate:
         return 495;
       case diox.DioExceptionType.connectionError:
@@ -210,7 +210,7 @@ diox.Options _getOptions({bool isMultipart = false, bool hasBody = false}) {
     return map;
   }
 
-// THAY _getHeaders()
+
 Map<String, String> _getHeaders({bool isMultipart = false, bool hasBody = false}) {
   final token = _readToken();
   final headers = <String, String>{
@@ -223,7 +223,7 @@ Map<String, String> _getHeaders({bool isMultipart = false, bool hasBody = false}
   } else if (hasBody) {
     headers['Content-Type'] = 'application/json; charset=UTF-8';
   }
-  // ⬆️ Không set Content-Type khi không có body
+
 
   if (token != null) headers['Authorization'] = 'Bearer $token';
   return headers;

@@ -26,7 +26,7 @@ class GetUserByIdEvent extends UserEvent {
   List<Object?> get props => [id];
 }
 
-// 🔶 NEW
+
 class UpdateUserProfileEvent extends UserEvent {
   final String id;
   final String? phoneNumber;

@@ -22,9 +22,9 @@ class ReviewPillButton extends StatelessWidget {
 
     return DecoratedBox(
       decoration: ShapeDecoration(
-        color: theme.cardColor, // nền cùng màu với card lớn
+        color: theme.cardColor, 
         shape: _DashedBorderShape(
-          borderRadius: BorderRadius.circular(12), // bo góc vuông nhẹ
+          borderRadius: BorderRadius.circular(12), 
           dashWidth: 6,
           dashGap: 3,
           borderColor: Colors.grey.shade400,
@@ -60,7 +60,7 @@ class ReviewPillButton extends StatelessWidget {
   }
 }
 
-/// Custom shape với border nét đứt
+
 class _DashedBorderShape extends ShapeBorder {
   final BorderRadius borderRadius;
   final double dashWidth;
@@ -114,7 +114,7 @@ class _DashedBorderShape extends ShapeBorder {
         );
         distance = next + dashGap;
       }
-      distance = 0.0; // reset cho edge tiếp theo
+      distance = 0.0; 
     }
 
     canvas.drawPath(dashPath, paint);

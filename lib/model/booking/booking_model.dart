@@ -1,7 +1,7 @@
 import 'package:travelogue_mobile/model/booking/booking_participant_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_model.dart';
 
-/// BookingModel: immutable, friendly for UI & BE interop
+
 class BookingModel {
   final String id;
   final String userId;
@@ -24,7 +24,7 @@ class BookingModel {
 
   final String? paymentLinkId;
 
-  /// BE có thể trả số hoặc text, giữ String để không lệch schema
+ 
   final String status;
   final String? statusText;
 
@@ -43,7 +43,7 @@ class BookingModel {
   final double discountAmount;
   final double finalPrice;
 
-  // contact info
+
   final String? contactName;
   final String? contactEmail;
   final String? contactPhone;
@@ -51,7 +51,7 @@ class BookingModel {
 
   final List<BookingParticipantModel> participants;
 
-  /// client-only
+
   final TourModel? tour;
 
   const BookingModel({
@@ -90,7 +90,7 @@ class BookingModel {
     this.tour,
   });
 
-  // ---------- JSON helpers ----------
+
   static double _toDouble(dynamic v) {
     if (v == null) return 0.0;
     if (v is num) return v.toDouble();
@@ -157,7 +157,7 @@ class BookingModel {
               ?.map((e) => BookingParticipantModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
-      tour: null, // client-only
+      tour: null, 
     );
   }
 
@@ -195,11 +195,11 @@ class BookingModel {
       'contactPhone': contactPhone,
       'contactAddress': contactAddress,
       'participants': participants.map((e) => e.toJson()).toList(),
-      // 'tour' không gửi lên BE
+   
     };
   }
 
-  // ---------- copyWith ----------
+  
   BookingModel copyWith({
     String? id,
     String? userId,
@@ -272,7 +272,7 @@ class BookingModel {
     );
   }
 
-  // ---------- Convenience for UI ----------
+
   static const int kPending = 0;
   static const int kConfirmed = 1;
   static const int kCancelledUnpaid = 2;
@@ -281,13 +281,13 @@ class BookingModel {
   static const int kCompleted = 5;
   static const int kExpired = 6;
 
-  /// Ép về mã trạng thái gốc của BE (0..6).
+
   int get rawStatus {
-    // 1) ưu tiên numeric từ `status`
+    
     final n = int.tryParse(status.trim());
     if (n != null) return n;
 
-    // 2) fallback theo text (vi + en)
+ 
     final s = status.trim().toLowerCase();
     final t = (statusText ?? '').trim().toLowerCase();
     bool has(String needle) => s.contains(needle) || t.contains(needle);
@@ -300,14 +300,14 @@ class BookingModel {
     if (has('completed') || has('đã hoàn thành') || has('đã hoàn tất')) return kCompleted;
     if (has('expired') || has('hết hạn')) return kExpired;
 
-    // Trường hợp BE chỉ trả "bị huỷ" chung:
+
     if (has('bị hủy') || has('bị huỷ') || has('canceled') || has('cancelled')) {
       return kCancelledUnpaid;
     }
     return kPending;
   }
 
-  // Nhóm tiện ích
+
   bool get isPending => rawStatus == kPending;
   bool get isConfirmed => rawStatus == kConfirmed;
   bool get isCancelledUnpaid => rawStatus == kCancelledUnpaid;
@@ -317,7 +317,7 @@ class BookingModel {
   bool get isExpired => rawStatus == kExpired;
   bool get isCancelledAny => isCancelledUnpaid || isCancelledPaid || isCancelledByProvider;
 
-  /// Dùng cho lọc theo 4 tab trong UI:
+
   /// 0 = Hết hạn (gộp Pending + Expired)
   /// 1 = Đã thanh toán (Confirmed)
   /// 2 = Đã hoàn thành (Completed)
@@ -329,7 +329,7 @@ class BookingModel {
     return 0; // pending/expired
   }
 
-  /// Text hiển thị chi tiết
+
   String get statusTextUi {
     switch (rawStatus) {
       case kPending:
@@ -351,8 +351,8 @@ class BookingModel {
     }
   }
 
-  // alias cũ
-  int get statusCode => tabCode; // 0..3
+ 
+  int get statusCode => tabCode; 
   bool get isPaid => isConfirmed;
   bool get isCanceled => isCancelledAny;
 }

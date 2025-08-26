@@ -11,7 +11,7 @@ class TripPlanDetailModel {
   final int status;
   final String statusText;
   final List<TripDayModel> days;
-  final String? imageUrl; // <-- nullable
+  final String? imageUrl; 
 
   TripPlanDetailModel({
     required this.id,
@@ -23,7 +23,7 @@ class TripPlanDetailModel {
     required this.status,
     required this.statusText,
     required this.days,
-    this.imageUrl, // <-- nullable
+    this.imageUrl, 
   });
 
   static int _asInt(dynamic v, {int fallback = 0}) {
@@ -62,7 +62,6 @@ class TripPlanDetailModel {
     final safeStatusText =
         (statusTextRaw == null || statusTextRaw.isEmpty) ? _statusToText(stt) : statusTextRaw;
 
-    // ❗Không đặt placeholder ở model
     final rawImage = (json['imageUrl'] as String?)?.trim();
     final safeImage = (rawImage == null || rawImage.isEmpty) ? null : rawImage;
 
@@ -78,7 +77,7 @@ class TripPlanDetailModel {
       days: daysJson
           .map((e) => TripDayModel.fromJson(e as Map<String, dynamic>))
           .toList(),
-      imageUrl: safeImage, // <-- có thể null
+      imageUrl: safeImage, 
     );
   }
 
@@ -98,10 +97,9 @@ class TripPlanDetailModel {
     );
   }
 
-  /// Tuỳ chọn: getter chỉ dành cho UI hiển thị ảnh fallback
-  String get displayImageUrl =>
-      imageUrl ?? 'https://your.cdn.com/placeholder.png'; // dùng riêng cho UI
 
+  String get displayImageUrl =>
+      imageUrl ?? 'https://your.cdn.com/placeholder.png'; 
       Map<String, dynamic> toJson() {
   return {
     'id': id,

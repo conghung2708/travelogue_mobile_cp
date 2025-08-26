@@ -40,18 +40,18 @@ class _WithdrawRequestScreenState extends State<WithdrawRequestScreen> {
   final _amountController = TextEditingController();
   final _noteController = TextEditingController();
 
-  // chỉ lưu CODE của ngân hàng (VD: "VCB", "ICB")
+
   String? _selectedBankCode;
 
   bool _dirty = false;
 
-  static const double _maxContentWidth = 680; // căn giữa & giới hạn bề rộng
+  static const double _maxContentWidth = 680; 
 
-  // nhận số dư từ args
+ 
   num _availableBalance = 0;
-  static const int _minAmount = 10000; // yêu cầu tối thiểu 10 đ
+  static const int _minAmount = 10000; 
 
-  // giữ tk mặc định để gửi kèm yêu cầu rút
+
   BankAccountModel? _defaultAcc;
 
   @override
@@ -306,7 +306,7 @@ class _WithdrawRequestScreenState extends State<WithdrawRequestScreen> {
     final ok = _formKeyWithdraw.currentState?.validate() ?? false;
     if (!ok) return;
 
-    // đảm bảo có tk mặc định
+ 
     if (_defaultAcc == null || _defaultAcc?.id == null) {
       _snack(
           context, 'Vui lòng thêm tài khoản ngân hàng mặc định trước khi rút');

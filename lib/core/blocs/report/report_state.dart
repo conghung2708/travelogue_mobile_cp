@@ -27,7 +27,6 @@ class ReportFailure extends ReportState {
   List<Object?> get props => [error];
 }
 
-// NEW: My reports list
 class MyReportsLoading extends ReportState {}
 
 class MyReportsLoaded extends ReportState {

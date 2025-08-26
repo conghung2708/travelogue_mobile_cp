@@ -185,12 +185,12 @@ class BookingRepository {
     }
   }
 
-// BookingRepository.cancelBooking
+
   Future<({bool ok, String? message})> cancelBooking(String id) async {
     final endpoint = '${Endpoints.cancelBooking}/$id/cancel';
     print('[📤 CANCEL BOOKING] PUT $endpoint');
 
-    // ❌ bỏ data: {}
+  
     final res = await BaseRepository().putRoute(gateway: endpoint);
 
     print('[📥 CANCEL BOOKING] Status: ${res.statusCode}');
@@ -208,7 +208,7 @@ class BookingRepository {
     return (ok: false, message: msg);
   }
 
-// core/repository/booking_repository.dart
+
   Future<BookingModel?> getBookingById(String id) async {
     final endpoint = '${Endpoints.getBookingById}/$id';
     print('[📤 GET BOOKING] $endpoint');

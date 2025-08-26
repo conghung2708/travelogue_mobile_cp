@@ -26,9 +26,7 @@ class _TourScreenState extends State<TourScreen> {
   }
 
   void _onSearchChanged(String keyword) {
-    // Nếu bạn có event filter, dùng:
-    // context.read<TourBloc>().add(FilterToursEvent(keyword));
-    // Nếu chưa có, tạm thời để trống, hoặc debounce và filter client-side ở widget grid.
+
   }
 
   @override

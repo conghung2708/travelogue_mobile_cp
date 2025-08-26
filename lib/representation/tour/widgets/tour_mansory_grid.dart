@@ -16,6 +16,16 @@ class TourMasonryGrid extends StatelessWidget {
     required this.tours,
   });
 
+
+String _coverImage(TourModel tour) {
+  if (tour.medias.isNotEmpty) {
+    final url = tour.medias.first.mediaUrl;
+    print("👉 Tour ${tour.name} dùng ảnh: $url");
+    if (url != null && url.isNotEmpty) return url;
+  }
+  print("👉 Tour ${tour.name} fallback ảnh default");
+  return AssetHelper.img_default;
+}
   @override
   Widget build(BuildContext context) {
     final random = Random();
@@ -27,7 +37,7 @@ class TourMasonryGrid extends StatelessWidget {
       itemCount: tours.length,
       itemBuilder: (context, index) {
         final tour = tours[index];
-        final image = AssetHelper.img_default;
+        final image = _coverImage(tour); 
         final height = (20 + random.nextInt(10)).h;
 
         return SizedBox(
@@ -42,7 +52,7 @@ class TourMasonryGrid extends StatelessWidget {
                   builder: (_) => TourDetailScreen(
                     tour: tour,
                     image: image,
-                     showGuideTab: false, 
+                    showGuideTab: false,
                   ),
                 ),
               );

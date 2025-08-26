@@ -42,7 +42,7 @@ class TourDetailContent extends StatelessWidget {
       this.showGuideTab = true, 
   });
 
-  // Lấy userId hiện tại từ UserLocal
+
   String _currentUserIdSafe() {
     try {
       final u = UserLocal().getUser();
@@ -136,7 +136,7 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
     );
   }
 
-  /* ====================== Tabs ====================== */
+
 
   Widget _buildDetailTab(BuildContext context) {
     return SingleChildScrollView(
@@ -233,7 +233,7 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
     }
   }
 
-  /* ====================== Reviews + Report ====================== */
+
 
   Widget _buildReviewsTab() {
     final List<TourReviewModel> reviews =
@@ -332,7 +332,7 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
                           message: 'Báo cáo đánh giá',
                           child: InkWell(
                             onTap: () => _openReportSheet(
-                              context: ctx, // ✅ dùng ctx thay cho context
+                              context: ctx, 
                               reviewId: reviewId,
                               userName: r.userName ?? 'Người dùng',
                             ),
@@ -463,7 +463,7 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
                         child: Text(
                           'Báo cáo đánh giá của “$userName”',
                           style: TextStyle(
-                            fontSize: 15.sp, // to hơn
+                            fontSize: 15.sp, 
                             fontWeight: FontWeight.w800,
                             color: Colors.black87,
                             height: 1.2,
@@ -474,11 +474,11 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
                   ),
                   SizedBox(height: 2.2.h),
 
-                  // Label chọn lý do
+                  
                   Text(
                     'Chọn lý do báo cáo',
                     style: TextStyle(
-                      fontSize: 13.sp, // to hơn
+                      fontSize: 13.sp, 
                       fontWeight: FontWeight.w700,
                       color: Colors.black87,
                     ),
@@ -497,7 +497,7 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
                         label: Text(
                           reason,
                           style: TextStyle(
-                            fontSize: 12.5.sp, // to hơn
+                            fontSize: 12.5.sp,
                             fontWeight: FontWeight.w600,
                             color:
                                 isSelected ? Colors.red[800] : Colors.black87,
@@ -526,7 +526,7 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
                   Text(
                     'Mô tả chi tiết (tùy chọn)',
                     style: TextStyle(
-                      fontSize: 13.sp, // to hơn
+                      fontSize: 13.sp, 
                       fontWeight: FontWeight.w700,
                       color: Colors.black87,
                     ),
@@ -602,11 +602,11 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
 
                                   if (selectedReason != null &&
                                       note.isNotEmpty) {
-                                    // GHÉP lý do + mô tả
+                                    
                                     reason =
                                         'Lý do: ${selectedReason!}. Mô tả: $note';
                                   } else {
-                                    // Chỉ có 1 trong 2
+                                   
                                     reason = (selectedReason ?? note);
                                   }
 
@@ -624,7 +624,7 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
                           label: Text(
                             'Gửi báo cáo',
                             style: TextStyle(
-                              fontSize: 13.5.sp, // to hơn
+                              fontSize: 13.5.sp, 
                               fontWeight: FontWeight.w800,
                               color: Colors.white,
                               letterSpacing: 0.2,
@@ -641,7 +641,7 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
                               if (states.contains(MaterialState.disabled)) {
                                 return 0;
                               }
-                              return 3; // nổi hơn khi enable
+                              return 3; 
                             }),
                             shape: MaterialStateProperty.all(
                               RoundedRectangleBorder(
@@ -651,9 +651,9 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
                             backgroundColor:
                                 MaterialStateProperty.resolveWith((states) {
                               if (states.contains(MaterialState.disabled)) {
-                                return Colors.red[200]; // màu disabled
+                                return Colors.red[200]; 
                               }
-                              return Colors.red[700]; // màu nổi bật khi enable
+                              return Colors.red[700]; 
                             }),
                             shadowColor:
                                 MaterialStateProperty.all(Colors.red[200]),

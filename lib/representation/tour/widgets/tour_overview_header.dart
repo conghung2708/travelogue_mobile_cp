@@ -141,7 +141,7 @@ class TourOverviewHeader extends StatelessWidget {
           price: tourPrice,
           readOnly: readOnly,
           onConfirmed: () async {
-            // schedules giờ là non-null (default [])
+            
             final schedules = tour.schedules;
             if (schedules.isEmpty) {
               ScaffoldMessenger.of(context).showSnackBar(

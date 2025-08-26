@@ -32,13 +32,13 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFE0F7FA),
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
           "Xác minh mã OTP",
           style: TextStyle(fontFamily: "Pattaya"),
         ),
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.white,
         foregroundColor: Colors.black87,
         elevation: 0,
         centerTitle: true,
@@ -49,7 +49,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           children: [
             Text(
               "Vui lòng nhập mã gồm 4 chữ số đã gửi về email",
-              style: TextStyle(fontSize: 15.sp, color: Colors.teal),
+              style: TextStyle(fontSize: 15.sp, color: Colors.blueAccent),
               textAlign: TextAlign.center,
             ),
             SizedBox(height: 4.h),
@@ -85,7 +85,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               icon: const Icon(Icons.verified),
               label: const Text("Xác nhận mã"),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.teal,
+                backgroundColor: Colors.blueAccent,
                 foregroundColor: Colors.white,
                 padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 1.8.h),
                 shape: RoundedRectangleBorder(

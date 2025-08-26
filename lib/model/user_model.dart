@@ -4,7 +4,7 @@ class UserModel {
   // Core
   String? id;
   String? email;
-  String? userName; // từ API: userName
+  String? userName;
   String? fullName;
   String? avatarUrl;
 
@@ -18,9 +18,9 @@ class UserModel {
   String? address;
 
   // Others
-  List<String>? roles;             // ["User","TourGuide"]
-  num? userWalletAmount;           // 0
-  int? sex;                        // 0
+  List<String>? roles;
+  num? userWalletAmount;
+  int? sex;
 
   // Audit
   DateTime? createdTime;
@@ -30,10 +30,9 @@ class UserModel {
   String? lastUpdatedBy;
   String? lastUpdatedByName;
 
-  // (Để tương thích code cũ nếu có dùng)
   String? verificationToken;
   String? refreshTokens;
-  // username alias để không vỡ chỗ dùng user.username
+
   String? get username => userName;
 
   UserModel({
@@ -108,7 +107,6 @@ class UserModel {
     );
   }
 
-  // -------- Mapping --------
   factory UserModel.fromMap(Map<String, dynamic> map) {
     List<String>? _roles;
     final rolesRaw = map['roles'];
@@ -151,7 +149,6 @@ class UserModel {
       createdByName: map['createdByName']?.toString(),
       lastUpdatedBy: map['lastUpdatedBy']?.toString(),
       lastUpdatedByName: map['lastUpdatedByName']?.toString(),
-      // giữ tương thích nếu backend login trả kèm token
       verificationToken: map['verificationToken']?.toString(),
       refreshTokens: map['refreshTokens']?.toString(),
     );
@@ -185,26 +182,24 @@ class UserModel {
     };
   }
 
-  // Dành cho response dạng { data: {...}, message, succeeded, statusCode }
   factory UserModel.fromApiResponse(Map<String, dynamic> resp) {
     final data = resp['data'];
     if (data is Map<String, dynamic>) {
       return UserModel.fromMap(data);
     }
-    // fallback: nếu resp chính là object user
+
     if (resp.isNotEmpty) return UserModel.fromMap(resp);
     return UserModel();
   }
 
-  // -------- JSON String (giữ tương thích Hive hiện tại) --------
   String toJson() => json.encode(toMap());
   factory UserModel.fromJson(String source) =>
       UserModel.fromMap(json.decode(source) as Map<String, dynamic>);
 
-  // Helpers
   bool get hasName => (fullName != null && fullName!.isNotEmpty);
   bool get hasEmail => (email != null && email!.isNotEmpty);
 
   @override
-  String toString() => 'UserModel(id: $id, email: $email, userName: $userName, fullName: $fullName)';
+  String toString() =>
+      'UserModel(id: $id, email: $email, userName: $userName, fullName: $fullName)';
 }

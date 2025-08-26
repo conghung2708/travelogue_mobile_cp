@@ -32,10 +32,10 @@ class SelectPlaceForDayScreen extends StatefulWidget {
 }
 
 class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
-  // ===== THEME CONSTANTS FOR DIALOGS / BUTTONS =====
-  static const _kBlue = Color(0xFF1565C0); // primary text/icon
-  static const _kBlueLight = Color(0xFFE3F2FD); // button background
-  static const _kBlueLight2 = Color(0xFFEEF6FF); // surfaces
+
+  static const _kBlue = Color(0xFF1565C0); 
+  static const _kBlueLight = Color(0xFFE3F2FD); 
+  static const _kBlueLight2 = Color(0xFFEEF6FF); 
 
   ButtonStyle get _tonalBlueButton => ElevatedButton.styleFrom(
         backgroundColor: _kBlueLight,
@@ -94,7 +94,6 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
           ),
           contentPadding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
           titlePadding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-          // Use LayoutBuilder to insert the actual title text nicely aligned with icon
           insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -214,7 +213,7 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
           travelMeters = route.distanceMeters;
           travelSeconds = route.durationSeconds;
         } catch (e) {
-          // UI-only change: keep logic, soften log
+     
           debugPrint('[RECOMPUTE][WARN] Lỗi khi tính route A→C: $e');
         }
       }

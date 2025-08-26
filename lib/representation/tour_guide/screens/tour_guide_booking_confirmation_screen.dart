@@ -29,11 +29,11 @@ class GuideBookingConfirmationScreen extends StatefulWidget {
   final DateTime startDate;
   final DateTime endDate;
 
-  /// Chỉ dùng để hiển thị/tính giá (không gửi lên API)
+
   final int adults;
   final int children;
 
-  /// Tuỳ chọn: nếu truyền, sẽ map thành `participants` trong payload.
+
   final List<BookingParticipantModel>? participants;
 
   const GuideBookingConfirmationScreen({
@@ -57,16 +57,16 @@ class _GuideBookingConfirmationScreenState
   late DateTime _startDate;
   late DateTime _endDate;
 
-  // Đồng ý điều khoản
+
   final hasAcceptedTerms = ValueNotifier<bool>(false);
 
-  // Prefill contact info
+
   final _nameCtl = TextEditingController();
   final _emailCtl = TextEditingController();
   final _phoneCtl = TextEditingController();
   final _addrCtl = TextEditingController();
 
-  // Form key để autovalidate realtime
+
   final _formKey = GlobalKey<FormState>();
 
   bool _loadingUser = true;
@@ -114,9 +114,9 @@ class _GuideBookingConfirmationScreenState
     super.dispose();
   }
 
-  // ===== Validators =====
+
   bool _isValidVietnamPhone(String phone) {
-    // Hợp lệ: +84xxxxxxxxx (9 số sau +84) hoặc 0xxxxxxxxx (9 số sau 0) => tổng 10 số nội địa
+
     final pattern = r'^(?:\+84|0)\d{9}$';
     return RegExp(pattern).hasMatch(phone);
   }
@@ -153,7 +153,7 @@ class _GuideBookingConfirmationScreenState
   }
 
   void _onConfirmBooking() {
-    // Validate form trước
+
     if (!(_formKey.currentState?.validate() ?? false)) {
       _showInfo('Vui lòng nhập đúng và đầy đủ thông tin liên hệ.');
       return;
@@ -163,7 +163,6 @@ class _GuideBookingConfirmationScreenState
       return;
     }
 
-    // Map participants nếu có
     final mappedParticipants = widget.participants == null
         ? null
         : widget.participants!
@@ -175,7 +174,7 @@ class _GuideBookingConfirmationScreenState
                 ))
             .toList();
 
-    // Payload theo API (KHÔNG có promotionCode ở UI)
+
     final model = CreateBookingTourGuideModel(
       tourGuideId: widget.guide.id!,
       startDate: _startDate,
@@ -293,7 +292,7 @@ class _GuideBookingConfirmationScreenState
                             ),
                             SizedBox(height: 1.h),
 
-                            // 🔥 Bọc trong Form để autovalidate realtime
+                           
                             Form(
                               key: _formKey,
                               autovalidateMode:
@@ -305,7 +304,7 @@ class _GuideBookingConfirmationScreenState
                                 addrCtl: _addrCtl,
                                 loading: _loadingUser,
                                 error: _loadError,
-                                // truyền validators
+                           
                                 validatorName: (v) => (v == null ||
                                         v.trim().isEmpty)
                                     ? 'Vui lòng nhập họ tên'
@@ -367,7 +366,7 @@ class _GuideBookingConfirmationScreenState
   }
 }
 
-/* ===== Contact UI ===== */
+
 
 class _GuideContactCard extends StatelessWidget {
   final TextEditingController nameCtl;
@@ -377,7 +376,7 @@ class _GuideContactCard extends StatelessWidget {
   final bool loading;
   final String? error;
 
-  // Validators được truyền từ trên xuống để tái sử dụng
+
   final String? Function(String?)? validatorName;
   final String? Function(String?)? validatorEmail;
   final String? Function(String?)? validatorPhone;
@@ -536,7 +535,6 @@ class _GuideContactCard extends StatelessWidget {
   }
 }
 
-/* ===== Shared UI ===== */
 
 class _GlassCard extends StatelessWidget {
   final Widget child;

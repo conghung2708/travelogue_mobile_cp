@@ -21,7 +21,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     });
   }
 
-  // Private funcation
+
   SearchSuccess get _searchSuccess => SearchSuccess(listSearch: listSearch);
 
   Future<void> _searchLocation(SearchLocationEvent event) async {

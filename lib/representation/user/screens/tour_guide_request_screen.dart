@@ -30,7 +30,7 @@ class _TourGuideRequestScreenState extends State<TourGuideRequestScreen> {
   final _introController = TextEditingController();
   final _priceController = TextEditingController();
 
-  /// Danh sách chứng chỉ (đã là URL sau upload)
+
   final List<Certification> _certifications = [];
 
   bool _uploadingCerts = false;
@@ -40,7 +40,7 @@ class _TourGuideRequestScreenState extends State<TourGuideRequestScreen> {
   @override
   void initState() {
     super.initState();
-    // Decode JWT lấy userId → gọi GetUserByIdEvent để lấy roles
+
     final token = _readAccessToken();
     final userId = _extractUserIdFromJwt(token);
     if (userId != null && userId.isNotEmpty) {
@@ -59,7 +59,7 @@ class _TourGuideRequestScreenState extends State<TourGuideRequestScreen> {
   Widget build(BuildContext context) {
     return MultiBlocListener(
       listeners: [
-        // Upload chứng chỉ
+      
         BlocListener<MediaBloc, MediaState>(
           listener: (context, state) {
             if (state is MediaUploading) {
@@ -88,10 +88,10 @@ class _TourGuideRequestScreenState extends State<TourGuideRequestScreen> {
           },
         ),
 
-        // Gửi yêu cầu & lấy user theo id
+        
         BlocListener<UserBloc, UserState>(
           listener: (context, state) {
-            // Flow submit
+           
             if (state is UserLoading) setState(() => _submitting = true);
             if (state is TourGuideRequestSuccess) {
               setState(() => _submitting = false);
@@ -106,7 +106,7 @@ class _TourGuideRequestScreenState extends State<TourGuideRequestScreen> {
               );
             }
 
-            // Flow lấy roles
+           
             if (state is GetUserByIdSuccess) {
               setState(() {
                 _isTourGuide = state.user.roles.contains('TourGuide');
@@ -130,7 +130,7 @@ class _TourGuideRequestScreenState extends State<TourGuideRequestScreen> {
                 ),
               ],
             ),
-            // Sticky submit bar: Ẩn hoàn toàn nếu đã là HDV
+         
             if (!_isTourGuide)
               Positioned(
                 left: 0,
@@ -162,7 +162,6 @@ class _TourGuideRequestScreenState extends State<TourGuideRequestScreen> {
     );
   }
 
-  // ---------- APPBAR ----------
 
   SliverAppBar _buildHeroAppBar(BuildContext context) {
     return SliverAppBar(
@@ -201,13 +200,13 @@ class _TourGuideRequestScreenState extends State<TourGuideRequestScreen> {
     );
   }
 
-  // ---------- CONGRATS VIEW (đã là TourGuide, đọc-only) ----------
+ 
 
   Widget _buildCongratsCard() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Thẻ chúc mừng lớn
+       
         Container(
           padding: EdgeInsets.all(4.w),
           decoration: BoxDecoration(
@@ -260,7 +259,7 @@ class _TourGuideRequestScreenState extends State<TourGuideRequestScreen> {
               // ),
               // SizedBox(height: 2.6.h),
 
-              // Panel khích lệ đọc-only (không có nút hành động)
+           
               const _MotivationPanel(),
 
               SizedBox(height: 1.h),
@@ -269,13 +268,13 @@ class _TourGuideRequestScreenState extends State<TourGuideRequestScreen> {
         ),
         // SizedBox(height: 2.h),
 
-        // // Thẻ tips nhanh (giữ/ẩn tuỳ ý)
+     
         // _QuickTipsCard(),
       ],
     );
   }
 
-  // ---------- FORM VIEW (chưa là TourGuide) ----------
+
 
   Widget _buildFormCard() {
     return Form(
@@ -357,7 +356,7 @@ class _TourGuideRequestScreenState extends State<TourGuideRequestScreen> {
     );
   }
 
-  // ---------- PICK & UPLOAD ----------
+
 
   Future<void> _pickAndUploadCertificates() async {
     try {
@@ -387,7 +386,7 @@ class _TourGuideRequestScreenState extends State<TourGuideRequestScreen> {
     }
   }
 
-  // ---------- HELPERS ----------
+
 
   InputDecoration _inputDecoration(String hint) => InputDecoration(
         hintText: hint,
@@ -450,7 +449,6 @@ class _TourGuideRequestScreenState extends State<TourGuideRequestScreen> {
   }
 }
 
-// ===================== SUB-WIDGETS =====================
 
 class _CertificationTile extends StatelessWidget {
   final int index;
@@ -815,7 +813,7 @@ class _MotivationTile extends StatelessWidget {
   }
 }
 
-/// Format thousands separators while typing (e.g., 1200000 -> 1.200.000)
+
 class _ThousandsSeparatorInputFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {

@@ -21,7 +21,6 @@ class NewsBloc extends Bloc<NewsEvent, NewsState> {
     });
   }
 
-  // Private function
   GetNewsSuccess get _getNewSuccess => GetNewsSuccess(listNews: listNews);
 
   Future<void> _getAllNews() async {

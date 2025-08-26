@@ -15,6 +15,7 @@ import 'package:sizer/sizer.dart';
 import 'package:travelogue_mobile/core/blocs/app_bloc.dart';
 import 'package:travelogue_mobile/core/constants/color_constants.dart';
 import 'package:travelogue_mobile/data/data_local/base_local_data.dart';
+import 'package:travelogue_mobile/representation/user/screens/otp_vertification_screen.dart';
 import 'package:travelogue_mobile/routes.dart';
 import 'package:travelogue_mobile/representation/main_screen.dart';
 
@@ -150,7 +151,7 @@ class _MyAppState extends State<MyApp> {
               ],
               locale: const Locale('vi', 'VN'),
               routes: routes,
-              home: const MainScreen(),
+              home: const OtpVerificationScreen(),
             ),
           );
         },

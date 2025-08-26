@@ -10,11 +10,11 @@ import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
 import 'package:travelogue_mobile/model/booking/booking_model.dart';
 import 'package:travelogue_mobile/model/booking/booking_participant_model.dart';
 
-// HDV
+
 import 'package:travelogue_mobile/core/repository/tour_guide_repository.dart';
 import 'package:travelogue_mobile/model/tour_guide/tour_guide_model.dart';
 
-// Nhận DisplayBookingArgs để lấy displayTitle (được push từ MyBookingScreen)
+
 import 'package:travelogue_mobile/representation/booking/screens/my_booking_screen.dart'
     show DisplayBookingArgs;
 
@@ -34,11 +34,11 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   final _guideRepo = TourGuideRepository();
   Future<TourGuideModel?>? _guideFuture;
 
-  // 🆕 Lưu lại HDV & avatar để update header image khi fetch xong
+ 
   TourGuideModel? _guide;
   String? _guideAvatarUrl;
 
-  // ---------- Helpers đọc args ----------
+
   BookingModel get _booking {
     final args = ModalRoute.of(context)?.settings.arguments;
     if (widget.booking != null) return widget.booking!;
@@ -53,15 +53,15 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     return null;
   }
 
-  // ---------- Lifecycle ----------
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final b = _booking;
-    // Chỉ fetch avatar HDV nếu là booking type = 3 và có tourGuideId
+  
     if (_bookingTypeOf(b) == 3 && (b.tourGuideId?.isNotEmpty ?? false) && _guideFuture == null) {
       _guideFuture = _guideRepo.getTourGuideById(b.tourGuideId!).then((g) {
-        // Lưu lại để header có thể setState đổi ảnh
+       
         _guide = g;
         if ((g?.avatarUrl?.startsWith('http') ?? false)) {
           setState(() => _guideAvatarUrl = g!.avatarUrl);
@@ -71,7 +71,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     }
   }
 
-  // ---------- Formatters ----------
+
   NumberFormat get _currency =>
       NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
 
@@ -87,7 +87,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     return DateFormat('dd/MM/yyyy • HH:mm').format(d);
   }
 
-  // ---------- Business ----------
+
   int _bookingTypeOf(BookingModel b) {
     final t = b.bookingType.trim();
     final parsed = int.tryParse(t);
@@ -110,18 +110,18 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     return b.bookingTypeText ?? 'Khác';
   }
 
-  // ---------- Header image logic ----------
+
   ImageProvider _headerImage(BookingModel b) {
-    // 1) Tour: lấy ảnh tour
+ 
     if (b.tour?.medias.isNotEmpty == true) {
       final url = b.tour!.medias.first.mediaUrl;
       if (url != null && url.startsWith('http')) return NetworkImage(url);
     }
-    // 2) Hướng dẫn viên: nếu đã fetch avatar -> dùng avatar
+
     if ((_bookingTypeOf(b) == 3) && (_guideAvatarUrl?.startsWith('http') ?? false)) {
       return NetworkImage(_guideAvatarUrl!);
     }
-    // 3) Fallback
+  
     return const AssetImage(AssetHelper.img_tay_ninh_login);
   }
 
@@ -415,7 +415,6 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     }
   }
 
-  // ---------- Participants ----------
   Widget _participantsCard(List<BookingParticipantModel> list) {
     if (list.isEmpty) return const SizedBox.shrink();
 
@@ -483,7 +482,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     );
   }
 
-  // ---------- Guide card ----------
+
   Widget _guideCardBasic({required String name}) {
     return _card(
       Column(
@@ -567,7 +566,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final b = _booking;
-    final headerImg = _headerImage(b); // ảnh header đã tính theo logic trên
+    final headerImg = _headerImage(b); 
 
     int? totalDays;
     if (b.startDate != null && b.endDate != null) {
@@ -579,7 +578,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
 
     final showGuide = _bookingTypeOf(b) == 3;
 
-    // Tiêu đề ưu tiên tên truyền vào, fallback loại đơn
+
     final headerTitle = _displayTitle ?? _typeLabelVi(b);
 
     return Scaffold(
@@ -660,14 +659,14 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Thông tin đơn
+                  
                     _card(
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _sectionTitle('Thông tin đơn', icon: Icons.receipt_long_outlined),
                           SizedBox(height: 1.8.h),
-                          // Nếu muốn ẩn luôn mã đơn, xoá dòng dưới
+                          
                           _kv('Mã đơn', b.id, icon: Icons.qr_code_2_rounded),
                           SizedBox(height: 1.4.h),
                           _kv('Loại đơn', _typeLabelVi(b), icon: Icons.category_outlined),
@@ -687,7 +686,6 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                     ),
                     SizedBox(height: 2.h),
 
-                    // Hướng dẫn viên (nếu là type 3)
                     if (showGuide)
                       FutureBuilder<TourGuideModel?>(
                         future: _guideFuture,
@@ -721,7 +719,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                       ),
                     if (showGuide) SizedBox(height: 2.h),
 
-                    // Lịch & thời gian
+            
                     _card(
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -746,7 +744,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                     ),
                     SizedBox(height: 2.h),
 
-                    // Thông tin liên hệ
+                 
                     if ((b.contactName ?? b.contactEmail ?? b.contactPhone ?? b.contactAddress) != null)
                       _card(
                         Column(
@@ -767,11 +765,11 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                     if ((b.contactName ?? b.contactEmail ?? b.contactPhone ?? b.contactAddress) != null)
                       SizedBox(height: 2.h),
 
-                    // Hành khách
+               
                     _participantsCard(b.participants),
                     if (b.participants.isNotEmpty) SizedBox(height: 2.h),
 
-                    // Thanh toán
+                  
                     _card(
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -827,7 +825,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   }
 }
 
-// ====== Ô hành khách ======
+
 class _ParticipantTile extends StatelessWidget {
   final int index;
   final String fullName;

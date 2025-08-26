@@ -8,7 +8,7 @@ abstract class RefundEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-// Gửi yêu cầu hoàn tiền
+
 class SendRefundRequestEvent extends RefundEvent {
   final RefundCreateModel model;
 
@@ -18,7 +18,7 @@ class SendRefundRequestEvent extends RefundEvent {
   List<Object?> get props => [model];
 }
 
-// Load danh sách yêu cầu hoàn tiền của user
+
 class LoadUserRefundRequestsEvent extends RefundEvent {
   final DateTime? fromDate;
   final DateTime? toDate;
@@ -34,7 +34,7 @@ class LoadUserRefundRequestsEvent extends RefundEvent {
   List<Object?> get props => [fromDate, toDate, status];
 }
 
-// 🔎 Load chi tiết 1 refund
+
 class LoadRefundRequestDetailEvent extends RefundEvent {
   final String refundRequestId;
 

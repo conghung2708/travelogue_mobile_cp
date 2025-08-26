@@ -126,7 +126,7 @@ class RefundDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ==== NHẬN ARGUMENTS: ưu tiên Map {refundId, bookingTitle}, fallback String ====
+  
     final args = ModalRoute.of(context)?.settings.arguments;
     String refundRequestId;
     String? bookingTitle;
@@ -159,7 +159,7 @@ class RefundDetailScreen extends StatelessWidget {
 
               final r = state.refund;
 
-              // Nếu vì lý do nào đó không truyền được title, dùng fallback "Đơn #<bookingId>"
+      
               final safeDisplayTitle =
                   bookingTitle?.trim().isNotEmpty == true
                       ? bookingTitle!.trim()
@@ -176,7 +176,7 @@ class RefundDetailScreen extends StatelessWidget {
                       background: Stack(
                         fit: StackFit.expand,
                         children: [
-                          // ảnh nền từ AssetHelper
+                    
                           const Image(
                             image: AssetImage(AssetHelper.img_tay_ninh_login),
                             fit: BoxFit.cover,
@@ -213,7 +213,7 @@ class RefundDetailScreen extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // ==== HIỂN THỊ TÊN (displayTitle) THAY CHO MÃ ====
+                            
                                 Text(
                                   safeDisplayTitle,
                                   style: TextStyle(
@@ -251,7 +251,7 @@ class RefundDetailScreen extends StatelessWidget {
                                   icon: Icons.receipt_long),
                               SizedBox(height: 1.6.h),
 
-                              // ==== Đơn/tiêu đề (ẩn hoàn toàn mã booking) ====
+                       
                               _kv('Đơn / tiêu đề', safeDisplayTitle,
                                   icon: Icons.confirmation_number),
 

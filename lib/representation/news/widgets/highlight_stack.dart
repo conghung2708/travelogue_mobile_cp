@@ -24,7 +24,7 @@ class _HighlightStackState extends State<HighlightStack> {
     return Column(
       children: [
         CarouselSlider.builder(
-          carouselController: _controller, // ✅ đúng kiểu controller
+          carouselController: _controller,
           itemCount: widget.highlighted.length,
           itemBuilder: (context, index, realIndex) {
             final news = widget.highlighted[index];
@@ -57,7 +57,7 @@ class _HighlightStackState extends State<HighlightStack> {
             dotColor: Colors.grey.shade300,
           ),
           onDotClicked: (index) async {
-            // ✅ chờ controller sẵn sàng rồi animate
+         
             await _controller.onReady;
             await _controller.animateToPage(
               index,

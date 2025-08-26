@@ -1,10 +1,10 @@
 class TourGuideFilterModel {
   final String? userName;
-  final DateTime? startDate; // inclusive
-  final DateTime? endDate; // inclusive
-  final int? minRating; // 1..5
-  final int? maxRating; // 1..5
-  final int? gender; // tuỳ BE (0/1 hoặc 1/2)
+  final DateTime? startDate; 
+  final DateTime? endDate; 
+  final int? minRating; 
+  final int? maxRating; 
+  final int? gender; 
   final double? minPrice;
   final double? maxPrice;
 
@@ -19,7 +19,7 @@ class TourGuideFilterModel {
     this.maxPrice,
   });
 
-  /// Tạo bản sao với các field thay đổi
+
   TourGuideFilterModel copyWith({
     String? userName,
     DateTime? startDate,
@@ -47,9 +47,9 @@ class TourGuideFilterModel {
     );
   }
 
-  /// Định dạng ngày theo yyyy-MM-dd (hay dùng cho query filter BE)
+  
   String _fmtDate(DateTime d) {
-    // chỉ lấy phần ngày, không timezone
+    
     final mm = d.month.toString().padLeft(2, '0');
     final dd = d.day.toString().padLeft(2, '0');
     return '${d.year}-$mm-$dd';
@@ -58,13 +58,13 @@ class TourGuideFilterModel {
   Map<String, dynamic> toQueryParams() {
     final Map<String, dynamic> params = {};
 
-    // FullName
+
     final name = userName?.trim();
     if (name != null && name.isNotEmpty) {
       params['FullName'] = name;
     }
 
-    // Dates: swap nếu ngược, format yyyy-MM-dd
+
     DateTime? s = startDate;
     DateTime? e = endDate;
     if (s != null && e != null && s.isAfter(e)) {
@@ -75,7 +75,7 @@ class TourGuideFilterModel {
     if (s != null) params['StartDate'] = _fmtDate(s);
     if (e != null) params['EndDate'] = _fmtDate(e);
 
-    // Rating: clamp 1..5, swap nếu min > max
+
     int? minR = minRating;
     int? maxR = maxRating;
     if (minR != null) minR = minR.clamp(0, 5);
@@ -88,10 +88,8 @@ class TourGuideFilterModel {
     if (minR != null) params['MinRating'] = minR;
     if (maxR != null) params['MaxRating'] = maxR;
 
-    // Gender (để nguyên theo BE)
     if (gender != null) params['Gender'] = gender;
 
-    // Price: swap nếu min > max
     double? minP = minPrice;
     double? maxP = maxPrice;
     if (minP != null && maxP != null && minP > maxP) {

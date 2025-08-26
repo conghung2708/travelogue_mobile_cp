@@ -5,6 +5,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 import 'package:sizer/sizer.dart';
+import 'package:travelogue_mobile/core/config/app_env.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
 import 'package:travelogue_mobile/core/utils/image_network_card.dart';
 import 'package:travelogue_mobile/model/location_model.dart';
@@ -251,8 +252,8 @@ class _PlaceBottomBarState extends State<PlaceBottomBar> {
                       },
                     ),
                   ),
-                  const Hotels(),
-                  const Restaurents(),
+                const Hotels(),
+                const Restaurents(),
                 SizedBox(height: 20.sp),
                 Container(
                   width: double.infinity,
@@ -275,7 +276,7 @@ class _PlaceBottomBarState extends State<PlaceBottomBar> {
                           zoomGesturesEnabled: false,
                           tiltGesturesEnabled: false,
                           styleString:
-                              'https://maps.vietmap.vn/api/maps/light/styles.json?apikey=840f8a8247cb32578fc81fec50af42b8ede321173a31804b',
+                              'https://maps.vietmap.vn/api/maps/light/styles.json?apikey=${AppEnv.vietmapKey}',
                           initialCameraPosition: vietmap.CameraPosition(
                             target: vietmap.LatLng(
                               widget.place.latitude ?? 10.762622,

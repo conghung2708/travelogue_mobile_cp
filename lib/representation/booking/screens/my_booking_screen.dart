@@ -20,13 +20,13 @@ import 'package:travelogue_mobile/core/repository/booking_repository.dart';
 import 'package:travelogue_mobile/core/repository/refund_request_repository.dart';
 import 'package:travelogue_mobile/core/repository/tour_repository.dart';
 import 'package:travelogue_mobile/core/repository/tour_guide_repository.dart';
-// 🔽 Thêm 2 repo mới để lấy tên & ảnh
 import 'package:travelogue_mobile/core/repository/trip_plan_repository.dart';
 import 'package:travelogue_mobile/core/repository/workshop_repository.dart';
 
 import 'package:travelogue_mobile/model/booking/booking_model.dart';
 import 'package:travelogue_mobile/model/booking/review_booking_request.dart';
 import 'package:travelogue_mobile/model/refund_request/refund_create_model.dart';
+import 'package:travelogue_mobile/model/refund_request/refund_request_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_model.dart';
 import 'package:travelogue_mobile/model/tour_guide/tour_guide_model.dart';
 
@@ -50,11 +50,10 @@ class MyBookingScreen extends StatefulWidget {
 
 enum SortOrder { newest, oldest }
 
-/// 👉 Arguments truyền sang BookingDetailScreen để có tiêu đề + ảnh hiển thị
 class DisplayBookingArgs {
   final BookingModel booking;
   final String displayTitle;
-  final String? displayImageUrl; // 👈 thêm ảnh
+  final String? displayImageUrl;
   const DisplayBookingArgs({
     required this.booking,
     required this.displayTitle,
@@ -74,17 +73,14 @@ class _MyBookingScreenState extends State<MyBookingScreen>
     "Đã hủy",
   ];
 
-  /// bookingId đã có refund (từ BE và trong phiên)
   final Set<String> _refundRequestedIdsBE = <String>{};
   void _markRefundRequested(String bookingId) {
     _refundRequestedIdsBE.add(bookingId);
     if (mounted) setState(() {});
   }
 
-  /// stars user vừa gửi trong phiên (ẩn nhanh nút + hiện ★)
   final Map<String, int> _reviewed = {};
 
-  /// bookingId đã review lấy từ BE (ẩn nút khi quay lại app)
   final Set<String> _reviewedIdsBE = <String>{};
 
   bool _metaLoaded = false;
@@ -96,15 +92,14 @@ class _MyBookingScreenState extends State<MyBookingScreen>
 
   static const int _REFUND_WINDOW_HOURS = 24;
 
-  // 🔤 Cache tên & ảnh theo id (không sửa BookingModel)
   final Map<String, String> _tripPlanTitleById = {};
-  final Map<String, String> _tripPlanImgById = {}; // 👈 ảnh TripPlan
+  final Map<String, String> _tripPlanImgById = {};
 
   final Map<String, String> _guideNameById = {};
-  final Map<String, String> _guideAvatarById = {}; // 👈 ảnh Guide
+  final Map<String, String> _guideAvatarById = {};
 
   final Map<String, String> _workshopNameById = {};
-  final Map<String, String> _workshopImgById = {}; // 👈 ảnh Workshop
+  final Map<String, String> _workshopImgById = {};
 
   @override
   void initState() {
@@ -118,16 +113,27 @@ class _MyBookingScreenState extends State<MyBookingScreen>
   Future<void> _loadExistingRefunds() async {
     try {
       final refunds = await RefundRepository().getUserRefundRequests();
+
+      final latestByBooking = <String, RefundRequestModel>{};
+      for (final r in refunds) {
+        final old = latestByBooking[r.bookingId];
+        if (old == null || r.lastUpdatedTime.isAfter(old.lastUpdatedTime)) {
+          latestByBooking[r.bookingId] = r;
+        }
+      }
+
       _refundRequestedIdsBE
         ..clear()
-        ..addAll(refunds.map((r) => r.bookingId));
+        ..addAll(
+          latestByBooking.entries
+              .where((e) => e.value.status == 1 || e.value.status == 2)
+              .map((e) => e.key),
+        );
+
       if (mounted) setState(() {});
-    } catch (_) {
-      // optional
-    }
+    } catch (_) {}
   }
 
-  // ===== helpers =====
   int _asInt(dynamic v, {int fallback = 0}) {
     if (v is int) return v;
     if (v is String) return int.tryParse(v) ?? fallback;
@@ -148,7 +154,7 @@ class _MyBookingScreenState extends State<MyBookingScreen>
 
   void _markReviewed(BookingModel b, int rating) {
     _reviewed[b.id] = rating;
-    _reviewedIdsBE.add(b.id); // ẩn ngay
+    _reviewedIdsBE.add(b.id);
     if (mounted) setState(() {});
   }
 
@@ -220,7 +226,6 @@ class _MyBookingScreenState extends State<MyBookingScreen>
     if (mounted) setState(() {});
   }
 
-  // ===== screen =====
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -243,25 +248,25 @@ class _MyBookingScreenState extends State<MyBookingScreen>
             backgroundColor: Colors.green.shade50,
             radius: 20,
             child: IconButton(
-  tooltip: 'Yêu cầu hoàn tiền',
-  icon: Icon(Icons.money_off_rounded, color: Colors.green[700]),
-  onPressed: () {
-    // Tạo map: bookingId -> displayTitle
-    final bookingTitleLookup = {
-      for (final b in _items) b.id: _displayTitle(b),
-    };
+              tooltip: 'Yêu cầu hoàn tiền',
+              icon: Icon(Icons.money_off_rounded, color: Colors.green[700]),
+              onPressed: () async {
+                final bookingTitleLookup = {
+                  for (final b in _items) b.id: _displayTitle(b),
+                };
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => RefundListScreen( // bỏ const vì có tham số runtime
-          bookingTitleLookup: bookingTitleLookup,
-        ),
-      ),
-    );
-  },
-),
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => RefundListScreen(
+                      bookingTitleLookup: bookingTitleLookup,
+                    ),
+                  ),
+                );
 
+                await _loadExistingRefunds();
+              },
+            ),
           ),
           SizedBox(width: 2.w),
         ],
@@ -331,7 +336,6 @@ class _MyBookingScreenState extends State<MyBookingScreen>
     }
   }
 
-  // ===== filters & tabs =====
   Widget _buildTypeFilterChips() {
     const items = [
       {'label': 'Tất cả', 'value': 0, 'icon': Icons.all_inbox_outlined},
@@ -473,7 +477,6 @@ class _MyBookingScreenState extends State<MyBookingScreen>
     );
   }
 
-  // ===== business rules =====
   bool _withinRefundWindow(BookingModel b) {
     final bookingTime = _safeBookingDate(b);
     return DateTime.now().difference(bookingTime).inHours <
@@ -488,9 +491,7 @@ class _MyBookingScreenState extends State<MyBookingScreen>
     return b.isCancelledPaid && wasPaidOnline;
   }
 
-  // ===== list =====
   Widget _buildBookingList() {
-    // type filter
     final typeFiltered = _items.where((b) {
       if (selectedType == 0) return true;
       final bt = _bookingTypeOf(b);
@@ -501,7 +502,6 @@ class _MyBookingScreenState extends State<MyBookingScreen>
       return true;
     }).toList();
 
-    // status tab filter
     final filtered = typeFiltered.where((b) {
       final code = b.tabCode;
       switch (selectedStatusTab) {
@@ -518,7 +518,6 @@ class _MyBookingScreenState extends State<MyBookingScreen>
       }
     }).toList();
 
-    // sort
     filtered.sort((a, b) {
       final da = _safeBookingDate(a);
       final db = _safeBookingDate(b);
@@ -538,13 +537,10 @@ class _MyBookingScreenState extends State<MyBookingScreen>
         final b = filtered[index];
         final bt = _bookingTypeOf(b);
 
-        // 👉 tiêu đề theo logic mới
         final title = _displayTitle(b);
 
-        // 👉 ảnh theo logic mới
         final coverUrl = _displayImageUrl(b);
 
-        // image widget
         Widget imageWidget;
         if ((coverUrl ?? '').isNotEmpty) {
           imageWidget = Image.network(
@@ -565,7 +561,6 @@ class _MyBookingScreenState extends State<MyBookingScreen>
             ),
           );
         } else {
-          // fallback (giữ thêm overlay cá nhân như trước)
           if (bt == 3 && _isPersonalGuide(b)) {
             imageWidget = Stack(
               children: [
@@ -735,7 +730,6 @@ class _MyBookingScreenState extends State<MyBookingScreen>
     );
   }
 
-  /// 🔁 Tiêu đề hiển thị theo yêu cầu
   String _displayTitle(BookingModel b) {
     final bt = _bookingTypeOf(b);
 
@@ -775,7 +769,6 @@ class _MyBookingScreenState extends State<MyBookingScreen>
     return b.bookingTypeText ?? _typeText(bt);
   }
 
-  /// 🔁 Ảnh hiển thị theo yêu cầu (ưu tiên có URL)
   String? _displayImageUrl(BookingModel b) {
     final bt = _bookingTypeOf(b);
 
@@ -810,7 +803,7 @@ class _MyBookingScreenState extends State<MyBookingScreen>
         }
         return null;
       }
-      // Guide độc lập
+      // Guide
       final gid = b.tourGuideId;
       if (gid != null && gid.isNotEmpty) {
         final url = (_guideAvatarById[gid] ?? '').trim();
@@ -835,45 +828,162 @@ class _MyBookingScreenState extends State<MyBookingScreen>
     }
   }
 
-  // ===== cancel / refund =====
   Future<void> _confirmAndCancel(BuildContext context, BookingModel b) async {
     final allow = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Huỷ đơn?'),
-        content: const Text(
-            'Huỷ đơn sẽ chuyển trạng thái sang "Đã huỷ". Bạn có thể yêu cầu hoàn tiền sau khi huỷ.'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Không')),
-          ElevatedButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Huỷ đơn')),
-        ],
-      ),
+      barrierColor: Colors.black.withOpacity(.35),
+      builder: (ctx) {
+        return Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: Colors.white,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Header với gradient
+                Container(
+                  width: double.infinity,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                  decoration: const BoxDecoration(
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(20)),
+                    gradient: Gradients.defaultGradientBackground,
+                  ),
+                  child: Row(
+                    children: const [
+                      Icon(Icons.help_outline_rounded,
+                          color: Colors.white, size: 26),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Huỷ đơn?',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Nội dung
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: const [
+                      Text(
+                        'Huỷ đơn sẽ chuyển trạng thái sang "Đã huỷ". '
+                        'Bạn có thể yêu cầu hoàn tiền sau khi huỷ.',
+                        style: TextStyle(fontSize: 14.5, height: 1.4),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 16),
+                    ],
+                  ),
+                ),
+
+                const Divider(height: 1, color: ColorPalette.dividerColor),
+
+                // Buttons
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: ColorPalette.primaryColor,
+                            side: const BorderSide(
+                                color: ColorPalette.primaryColor),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          onPressed: () => Navigator.pop(ctx, false),
+                          child: const Text('Không'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            elevation: 0,
+                            padding: EdgeInsets.zero,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: () => Navigator.pop(ctx, true),
+                          child: Ink(
+                            decoration: const BoxDecoration(
+                              gradient: Gradients.defaultGradientBackground,
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(12)),
+                            ),
+                            child: Container(
+                              alignment: Alignment.center,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              child: const Text(
+                                'Huỷ đơn',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              ],
+            ),
+          ),
+        );
+      },
     );
+
     if (allow != true) return;
 
+    // Hiển thị loading
     showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => const Center(child: CircularProgressIndicator()));
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(color: ColorPalette.primaryColor),
+      ),
+    );
+
     final result = await BookingRepository().cancelBooking(b.id);
-    if (mounted) Navigator.pop(context);
+    if (Navigator.of(context).canPop()) Navigator.pop(context); // tắt loading
 
     if (!result.ok) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
           content: Text(result.message ??
-              'Không thể hủy đơn đã hoàn tất hoặc đã hết hạn.')));
+              'Không thể hủy đơn đã hoàn tất hoặc đã hết hạn.'),
+          backgroundColor: ColorPalette.secondColor,
+        ),
+      );
       return;
     }
 
     _markBookingCanceled(b);
-    if (!mounted) return;
-    ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text('Đã huỷ đơn thành công.')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Đã huỷ đơn thành công.'),
+        backgroundColor: ColorPalette.primaryColor,
+      ),
+    );
   }
 
   void _markBookingCanceled(BookingModel b) {
@@ -1038,7 +1148,6 @@ class _MyBookingScreenState extends State<MyBookingScreen>
     );
   }
 
-  // ===== card =====
   Widget _buildBookingCard({
     required Widget image,
     required String title,
@@ -1057,7 +1166,6 @@ class _MyBookingScreenState extends State<MyBookingScreen>
     int? reviewedStars,
     bool showReviewedBadge = false,
   }) {
-    // màu theo nhóm status
     late Color fg;
     late Color bg;
     late IconData icon;
@@ -1317,7 +1425,6 @@ class _MyBookingScreenState extends State<MyBookingScreen>
     );
   }
 
-  // ===== review sheet =====
   void _showReviewSheet(BuildContext context, BookingModel b) {
     final commentCtrl = TextEditingController();
     double stars = 5;

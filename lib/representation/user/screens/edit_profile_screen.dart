@@ -55,7 +55,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     _avatarUrl = user.avatarUrl;
 
     try {
-      // nếu UserLocal có field sex (int?), sẽ gán; nếu không có cũng không sao
+    
       // ignore: invalid_use_of_protected_member
       final dynamic possibleSex = (user as dynamic).sex;
       if (possibleSex is int && (possibleSex == 1 || possibleSex == 2)) {
@@ -370,7 +370,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
               _phoneController,
               icon: Icons.phone_rounded,
               hint: 'Số điện thoại (tuỳ chọn)',
-              keyboardType: TextInputType.phone, // NEW
+              keyboardType: TextInputType.phone, 
               inputFormatters: [
                 FilteringTextInputFormatter.digitsOnly,
                 LengthLimitingTextInputFormatter(11),
@@ -378,7 +378,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
             ),
 
             SizedBox(height: 2.0.h),
-            _buildLabel("Giới tính"), // NEW
+            _buildLabel("Giới tính"),
             _buildGenderChips(),
 
             SizedBox(height: 2.0.h),
@@ -391,7 +391,6 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     );
   }
 
-  // NEW: ChoiceChip Nam/Nữ
   Widget _buildGenderChips() {
     Widget chip({
       required String label,
@@ -539,8 +538,8 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     String? hint,
     bool readOnly = false,
     Widget? suffix,
-    TextInputType? keyboardType, // NEW
-    List<TextInputFormatter>? inputFormatters, // NEW
+    TextInputType? keyboardType, 
+    List<TextInputFormatter>? inputFormatters, 
   }) {
     return TextField(
       controller: controller,

@@ -15,8 +15,7 @@ class WithdrawHistoryScreen extends StatefulWidget {
 }
 
 class _WithdrawHistoryScreenState extends State<WithdrawHistoryScreen> {
-  int? _statusFilter; // null: tất cả, 1/2/3 theo API
-
+  int? _statusFilter; 
   @override
   void initState() {
     super.initState();
@@ -202,7 +201,7 @@ class _WithdrawHistoryScreenState extends State<WithdrawHistoryScreen> {
   }
 }
 
-/// ================== Filter Chips (đẹp, có icon, hiệu ứng) ==================
+
 class _StatusChips extends StatelessWidget {
   const _StatusChips({required this.current, required this.onChanged});
   final int? current;
@@ -210,7 +209,7 @@ class _StatusChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Dùng map để tương thích Dart < 3 (không dùng record type)
+ 
     final items = <Map<String, dynamic>>[
       {'label': 'Tất cả', 'icon': Icons.all_inbox_rounded, 'value': null},
       {'label': 'Đang chờ', 'icon': Icons.schedule_rounded, 'value': 1},
@@ -275,7 +274,7 @@ class _StatusChips extends StatelessWidget {
   }
 }
 
-/// ================== Withdrawal Card (mềm, gradient, animation) ==================
+
 class _WithdrawCard extends StatelessWidget {
   const _WithdrawCard({required this.item, this.onTap});
   final WithdrawalRequestModel item;
@@ -438,7 +437,7 @@ class _WithdrawCard extends StatelessWidget {
   }
 }
 
-/// ================== Empty / Error Views (bóng bẩy) ==================
+
 class _EmptyView extends StatelessWidget {
   const _EmptyView({required this.onRefresh});
   final VoidCallback onRefresh;
@@ -510,7 +509,7 @@ class _ErrorView extends StatelessWidget {
   }
 }
 
-/// ================== Helpers ==================
+
 extension _VndView on num {
   String vnd() {
     final s = toStringAsFixed(0);

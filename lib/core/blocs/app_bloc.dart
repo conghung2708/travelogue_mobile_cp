@@ -157,7 +157,7 @@ class AppBloc {
     reportBloc.close();
   }
 
-  ///Singleton factory
+
   static final AppBloc instance = AppBloc._internal();
 
   factory AppBloc() {

@@ -65,12 +65,29 @@ class TourModel {
   });
 
   factory TourModel.fromLiteJson(Map<String, dynamic> json) {
+    final rawMedias = (json['medias'] is List)
+        ? json['medias']
+        : (json['mediaList'] is List ? json['mediaList'] : const []);
+
+    print(
+        '[fromLiteJson] ${json['name']} - rawMedias type=${rawMedias.runtimeType} len=${(rawMedias as List).length}');
+    if (rawMedias is List && rawMedias.isNotEmpty) {
+      print('[fromLiteJson] first media: ${rawMedias.first}');
+    }
+
+    final mediaList = (rawMedias as List)
+        .whereType<Map<String, dynamic>>()
+        .map((e) => MediaModel.fromJson(e))
+        .toList();
+    print(
+        '[fromLiteJson] ${json['name']} -> medias.length=${mediaList.length}');
+
     return TourModel(
       tourId: json['tourId'] as String?,
       name: json['name'] as String?,
       description: json['description'] as String?,
       content: json['content'] as String?,
-      transportType: json['transportType'] as String?, // 👈 đổi sang string
+      transportType: json['transportType'] as String?,
       totalDays: json['totalDays'] as int?,
       tourType: json['tourType'] as int?,
       tourTypeText: json['tourTypeText'] as String?,
@@ -83,6 +100,7 @@ class TourModel {
       statusText: json['statusText'] as String?,
       averageRating: (json['averageRating'] as num?)?.toDouble(),
       totalReviews: json['totalReviews'] as int?,
+      medias: mediaList,
     );
   }
 
@@ -106,7 +124,7 @@ class TourModel {
       name: json['name'] as String?,
       description: json['description'] as String?,
       content: json['content'] as String?,
-      transportType: json['transportType'] as String?, // 👈 đổi sang string
+      transportType: json['transportType'] as String?,
       totalDays: json['totalDays'] as int?,
       tourType: json['tourType'] as int?,
       tourTypeText: json['tourTypeText'] as String?,

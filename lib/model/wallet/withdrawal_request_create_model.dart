@@ -1,7 +1,7 @@
 class WithdrawalRequestCreateModel {
   final double amount;
   final String bankAccountId;
-  final String? note; // cho phép null
+  final String? note; 
 
   WithdrawalRequestCreateModel({
     required this.amount,

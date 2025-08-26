@@ -100,7 +100,7 @@ class _TourPaymentConfirmationScreenState
     return RegExp(pattern).hasMatch(phone);
   }
 
-  /// Trả về (model, error). KHÔNG show SnackBar ở đây.
+
   ({CreateBookingTourModel? model, String? error}) _buildPayload() {
     final participants = widget.participants ?? [];
 
@@ -315,7 +315,7 @@ class _ContactCard extends StatelessWidget {
           ),
           SizedBox(height: 1.2.h),
 
-          // Email + Phone (2 cột nếu đủ rộng)
+          // Email + Phone 
           LayoutBuilder(
             builder: (context, c) {
               final twoCols = c.maxWidth > 600;
@@ -393,7 +393,7 @@ class _ContactCard extends StatelessWidget {
   }
 }
 
-/* ======= UI Atoms ======= */
+
 
 class _GlassCard extends StatelessWidget {
   final Widget child;

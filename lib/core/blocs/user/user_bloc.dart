@@ -16,8 +16,6 @@ class UserBloc extends Bloc<UserEvent, UserState> {
   UserBloc(this.userRepository) : super(UserInitial()) {
     on<SendTourGuideRequestEvent>(_onSendTourGuideRequest);
     on<GetUserByIdEvent>(_onGetUserById);
-
-    // 🔶 NEW
     on<UpdateUserProfileEvent>(_onUpdateUserProfile);
     on<UpdateAvatarEvent>(_onUpdateAvatar);
   }
@@ -57,7 +55,6 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     }
   }
 
-  // 🔶 NEW: PUT /api/user/{id}
   Future<void> _onUpdateUserProfile(
     UpdateUserProfileEvent event,
     Emitter<UserState> emit,
@@ -78,7 +75,6 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     }
   }
 
-  // 🔶 NEW: PUT /api/user/update-avatar
   Future<void> _onUpdateAvatar(
     UpdateAvatarEvent event,
     Emitter<UserState> emit,

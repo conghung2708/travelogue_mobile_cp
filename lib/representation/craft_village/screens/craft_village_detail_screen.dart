@@ -7,6 +7,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:sizer/sizer.dart';
 import 'package:avatar_glow/avatar_glow.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:travelogue_mobile/core/config/app_env.dart';
 import 'package:travelogue_mobile/representation/craft_village/screens/village_mini_map.dart';
 import 'package:travelogue_mobile/representation/map/screens/viet_map_location_screen.dart';
 import 'package:vietmap_flutter_gl/vietmap_flutter_gl.dart' as vietmap;
@@ -56,7 +57,6 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
 
   @override
   void dispose() {
-    // Dừng TTS để không còn callback setState sau khi màn hình đã pop
     try {
       _tts.stop();
     } catch (_) {}
@@ -149,10 +149,7 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
               ),
             ],
           ),
-
           SizedBox(height: 2.h),
-
-          // Nút Loa đọc
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -204,11 +201,11 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
                 ),
               ),
             ),
-
           SizedBox(height: 1.h),
           Padding(
             padding: EdgeInsets.only(right: 55.w),
-            child: const TitleWithCustoneUnderline(text: 'Giới ', text2: 'thiệu : '),
+            child: const TitleWithCustoneUnderline(
+                text: 'Giới ', text2: 'thiệu : '),
           ),
           SizedBox(height: 1.h),
           MarkdownBody(
@@ -218,7 +215,6 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
               listBullet: TextStyle(fontSize: 14.sp),
             ),
           ),
-
           SizedBox(height: 2.5.h),
           Padding(
             padding: EdgeInsets.only(right: 55.w),
@@ -229,7 +225,6 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
           ),
           SizedBox(height: 1.h),
           ImageGridPreview(images: village!.listImages),
-
           SizedBox(height: 2.5.h),
           Padding(
             padding: EdgeInsets.only(right: 45.w),
@@ -243,10 +238,7 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
           if (village!.closeTime != null)
             Text('🕒 Giờ đóng cửa: ${village!.closeTime}',
                 style: TextStyle(fontSize: 14.sp)),
-
           SizedBox(height: 3.h),
-
-          // ===== BẢN ĐỒ (đã tách widget an toàn) =====
           Container(
             width: double.infinity,
             height: 40.h,
@@ -258,7 +250,7 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
               lat: village!.latitude ?? 10.762622,
               lng: village!.longitude ?? 106.660172,
               styleUrl:
-                  'https://maps.vietmap.vn/api/maps/light/styles.json?apikey=840f8a8247cb32578fc81fec50af42b8ede321173a31804b',
+                  'https://maps.vietmap.vn/api/maps/light/styles.json?apikey=${AppEnv.vietmapKey}',
               onTap: () {
                 Navigator.pushNamed(
                   context,
@@ -271,7 +263,6 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
               },
             ),
           ),
-
           SizedBox(height: 4.h),
         ],
       );
