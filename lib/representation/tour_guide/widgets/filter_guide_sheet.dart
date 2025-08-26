@@ -9,12 +9,14 @@ class FilterGuideSheet extends StatefulWidget {
   final void Function(TourGuideFilterModel) onApplyFilter;
   final DateTime? initialStartDate;
   final DateTime? initialEndDate;
+  final DateTime? minStart;
 
   const FilterGuideSheet({
     super.key,
     required this.onApplyFilter,
     this.initialStartDate,
     this.initialEndDate,
+    this.minStart,
   });
 
   @override
@@ -31,6 +33,17 @@ class _FilterGuideSheetState extends State<FilterGuideSheet> {
   int minRating = 0;
   int maxRating = 5;
 
+  DateTime _dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
+  DateTime get _defaultMinStart {
+    final t = DateTime.now();
+    return _dateOnly(t).add(const Duration(days: 2));
+  }
+
+  DateTime get _effectiveMinStart =>
+      _dateOnly(widget.minStart ?? _defaultMinStart);
+
+  bool _isTooSoon(DateTime d) => _dateOnly(d).isBefore(_effectiveMinStart);
+
   @override
   void initState() {
     super.initState();
@@ -39,27 +52,42 @@ class _FilterGuideSheetState extends State<FilterGuideSheet> {
   }
 
   Future<void> _selectDateRange() async {
-    final now = DateTime.now();
     final picked = await showDateRangePicker(
       context: context,
-      firstDate: now.subtract(const Duration(days: 1)),
-      lastDate: now.add(const Duration(days: 365)),
+      firstDate: _effectiveMinStart,
+      lastDate: _effectiveMinStart.add(const Duration(days: 365 * 2)),
       initialDateRange: (startDate != null && endDate != null)
           ? DateTimeRange(start: startDate!, end: endDate!)
           : null,
+      locale: const Locale('vi', 'VN'),
     );
 
-    if (picked != null) {
-      setState(() {
-        startDate = picked.start;
-        endDate = picked.end;
-      });
+    if (picked == null) return;
+
+    if (_isTooSoon(picked.start)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(
+                'Vui lòng chọn từ ${DateFormat('dd/MM/yyyy').format(_effectiveMinStart)} trở đi.')),
+      );
+      return;
     }
+
+    setState(() {
+      startDate = picked.start;
+      endDate = picked.end;
+    });
   }
 
   void _applyFilter() {
-    final name = _nameController.text.trim();
-    debugPrint("🔍 Đang lọc với tên: $name");
+    if (startDate != null && _isTooSoon(startDate!)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(
+                'Khoảng ngày quá sát. Chọn từ ${DateFormat('dd/MM/yyyy').format(_effectiveMinStart)} trở đi.')),
+      );
+      return;
+    }
 
     final filter = TourGuideFilterModel(
       userName: _nameController.text.trim().isEmpty
@@ -488,35 +516,51 @@ class _FilterGuideSheetState extends State<FilterGuideSheet> {
   }
 
   Widget _datePicker(Color mainColor) {
-    return InkWell(
-      onTap: _selectDateRange,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.2.h),
-        decoration: BoxDecoration(
+    final hasRange = (startDate != null && endDate != null);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: _selectDateRange,
           borderRadius: BorderRadius.circular(12),
-          color: Colors.grey.shade100,
-        ),
-        child: Row(
-          children: [
-            Icon(FontAwesomeIcons.calendar, color: mainColor),
-            SizedBox(width: 2.w),
-            Expanded(
-              child: Text(
-                (startDate != null && endDate != null)
-                    ? "${DateFormat('dd/MM/yyyy').format(startDate!)} → ${DateFormat('dd/MM/yyyy').format(endDate!)}"
-                    : "Chọn khoảng ngày...",
-                style: TextStyle(
-                  color: Colors.black87,
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.2.h),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              color: Colors.grey.shade100,
             ),
-            Icon(Icons.arrow_drop_down, color: Colors.black45),
-          ],
+            child: Row(
+              children: [
+                Icon(FontAwesomeIcons.calendar, color: mainColor),
+                SizedBox(width: 2.w),
+                Expanded(
+                  child: Text(
+                    hasRange
+                        ? "${DateFormat('dd/MM/yyyy').format(startDate!)} → ${DateFormat('dd/MM/yyyy').format(endDate!)}"
+                        : "Chọn khoảng ngày...",
+                    style: TextStyle(
+                      color: Colors.black87,
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const Icon(Icons.arrow_drop_down, color: Colors.black45),
+              ],
+            ),
+          ),
         ),
-      ),
+        SizedBox(height: 6),
+        Text(
+          'Chỉ đặt từ ${DateFormat('dd/MM/yyyy').format(_effectiveMinStart)} trở đi.',
+          style: TextStyle(
+            fontSize: 10.5.sp,
+            color: Colors.grey.shade600,
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+      ],
     );
   }
 

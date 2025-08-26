@@ -45,16 +45,15 @@ class _TourGuideScreenState extends State<TourGuideScreen> {
     if (AppSync.instance.refreshGuides) {
       if (_startDate != null || _endDate != null) {
         context.read<TourGuideBloc>().add(
-          FilterTourGuideEvent(
-            TourGuideFilterModel(startDate: _startDate, endDate: _endDate),
-          ),
-        );
+              FilterTourGuideEvent(
+                TourGuideFilterModel(startDate: _startDate, endDate: _endDate),
+              ),
+            );
       } else {
         context.read<TourGuideBloc>().add(const GetAllTourGuidesEvent());
       }
       AppSync.instance.refreshGuides = false; // reset cờ
     } else {
-    
       context.read<TourGuideBloc>().add(const GetAllTourGuidesEvent());
     }
   }
@@ -62,13 +61,21 @@ class _TourGuideScreenState extends State<TourGuideScreen> {
   Future<void> _reloadGuides() async {
     if (_startDate != null || _endDate != null) {
       context.read<TourGuideBloc>().add(
-        FilterTourGuideEvent(
-          TourGuideFilterModel(startDate: _startDate, endDate: _endDate),
-        ),
-      );
+            FilterTourGuideEvent(
+              TourGuideFilterModel(startDate: _startDate, endDate: _endDate),
+            ),
+          );
     } else {
       context.read<TourGuideBloc>().add(const GetAllTourGuidesEvent());
     }
+  }
+
+  bool _isTooSoon(DateTime d) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final minStart = today.add(const Duration(days: 2));
+    final onlyDate = DateTime(d.year, d.month, d.day);
+    return onlyDate.isBefore(minStart);
   }
 
   void _openFilterSheet() {
@@ -81,7 +88,18 @@ class _TourGuideScreenState extends State<TourGuideScreen> {
       builder: (_) => FilterGuideSheet(
         initialStartDate: _startDate,
         initialEndDate: _endDate,
-        onApplyFilter: (TourGuideFilterModel filter) {
+        minStart: DateTime(
+                DateTime.now().year, DateTime.now().month, DateTime.now().day)
+            .add(const Duration(days: 2)),
+        onApplyFilter: (filter) {
+          if (filter.startDate != null && _isTooSoon(filter.startDate!)) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                  content: Text(
+                      'Vui lòng chọn ngày bắt đầu cách hôm nay ít nhất 2 ngày.')),
+            );
+            return;
+          }
           setState(() {
             _startDate = filter.startDate;
             _endDate = filter.endDate;
@@ -94,16 +112,29 @@ class _TourGuideScreenState extends State<TourGuideScreen> {
 
   Future<void> _pickRange() async {
     final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final minStart = today.add(const Duration(days: 2));
+
     final picked = await showDateRangePicker(
       context: context,
-      firstDate: now,
+      firstDate: minStart,
       lastDate: DateTime(now.year + 2),
       locale: const Locale('vi', 'VN'),
       initialDateRange: (_startDate != null && _endDate != null)
           ? DateTimeRange(start: _startDate!, end: _endDate!)
           : null,
     );
+
     if (picked == null) return;
+
+    if (_isTooSoon(picked.start)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text(
+                'Vui lòng chọn ngày bắt đầu cách hôm nay ít nhất 2 ngày.')),
+      );
+      return;
+    }
 
     setState(() {
       _startDate = picked.start;
@@ -111,13 +142,13 @@ class _TourGuideScreenState extends State<TourGuideScreen> {
     });
 
     context.read<TourGuideBloc>().add(
-      FilterTourGuideEvent(
-        TourGuideFilterModel(
-          startDate: _startDate,
-          endDate: _endDate,
-        ),
-      ),
-    );
+          FilterTourGuideEvent(
+            TourGuideFilterModel(
+              startDate: _startDate,
+              endDate: _endDate,
+            ),
+          ),
+        );
   }
 
   void _clearRange() {
@@ -132,6 +163,17 @@ class _TourGuideScreenState extends State<TourGuideScreen> {
     if (_startDate == null || _endDate == null) {
       await _pickRange();
       if (_startDate == null || _endDate == null) return;
+    }
+
+    if (_isTooSoon(_startDate!)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content:
+                Text('Khoảng ngày quá sát. Vui lòng chọn từ ngày kia trở đi.')),
+      );
+      await _pickRange();
+      if (_startDate == null || _endDate == null || _isTooSoon(_startDate!))
+        return;
     }
 
     final guideKey = guide.id ?? guide.id ?? '';
@@ -182,10 +224,11 @@ class _TourGuideScreenState extends State<TourGuideScreen> {
         onSeeAvailableGuides: () {
           Navigator.pop(context);
           context.read<TourGuideBloc>().add(
-            FilterTourGuideEvent(
-              TourGuideFilterModel(startDate: _startDate, endDate: _endDate),
-            ),
-          );
+                FilterTourGuideEvent(
+                  TourGuideFilterModel(
+                      startDate: _startDate, endDate: _endDate),
+                ),
+              );
         },
         onPickAnotherDate: () async {
           Navigator.pop(context);
@@ -253,27 +296,27 @@ class _TourGuideScreenState extends State<TourGuideScreen> {
               SizedBox(height: 3.h),
               const MotivationBanner(),
               SizedBox(height: 2.h),
-              const TitleWithCustoneUnderline(text: "Các hướng dẫn ", text2: "viên"),
+              const TitleWithCustoneUnderline(
+                  text: "Các hướng dẫn ", text2: "viên"),
               SizedBox(height: 1.2.h),
               GuideTopBar(
                 onOpenFilter: _openFilterSheet,
                 onPickDateRange: _pickRange,
-                onClearDate: (_startDate != null && _endDate != null) ? _clearRange : null,
+                onClearDate: (_startDate != null && _endDate != null)
+                    ? _clearRange
+                    : null,
                 startDate: _startDate,
                 endDate: _endDate,
                 color: ColorPalette.primaryColor,
               ),
-
               Expanded(
                 child: BlocBuilder<TourGuideBloc, TourGuideState>(
                   builder: (context, state) {
-                 
                     return RefreshIndicator.adaptive(
                       color: ColorPalette.primaryColor,
                       onRefresh: _reloadGuides,
                       child: () {
                         if (state is TourGuideLoading) {
-                    
                           return ListView(
                             physics: const AlwaysScrollableScrollPhysics(
                               parent: BouncingScrollPhysics(),
@@ -289,7 +332,6 @@ class _TourGuideScreenState extends State<TourGuideScreen> {
                         if (state is TourGuideLoaded) {
                           final guides = state.guides;
                           if (guides.isEmpty) {
-                         
                             return ListView(
                               physics: const AlwaysScrollableScrollPhysics(
                                 parent: BouncingScrollPhysics(),
@@ -328,7 +370,6 @@ class _TourGuideScreenState extends State<TourGuideScreen> {
                         }
 
                         if (state is TourGuideError) {
-                         
                           return ListView(
                             physics: const AlwaysScrollableScrollPhysics(
                               parent: BouncingScrollPhysics(),
@@ -349,7 +390,6 @@ class _TourGuideScreenState extends State<TourGuideScreen> {
                           );
                         }
 
-                        
                         return ListView(
                           physics: const AlwaysScrollableScrollPhysics(
                             parent: BouncingScrollPhysics(),
@@ -418,7 +458,8 @@ class _GuideBusySheet extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('HDV bận trong khoảng đã chọn',
-                          style: text.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                          style: text.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w700)),
                       const SizedBox(height: 2),
                       Text(
                         '${_fmtShort(currentRange.start)} → ${_fmtShort(currentRange.end)}',
@@ -442,12 +483,14 @@ class _GuideBusySheet extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.calendar_month_rounded, size: 18, color: cs.primary),
+                  Icon(Icons.calendar_month_rounded,
+                      size: 18, color: cs.primary),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       _rangeLabel(currentRange),
-                      style: text.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                      style: text.bodyMedium
+                          ?.copyWith(fontWeight: FontWeight.w600),
                     ),
                   ),
                 ],
@@ -478,14 +521,16 @@ class _GuideBusySheet extends StatelessWidget {
             else
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
                   color: cs.surfaceVariant.withOpacity(.4),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.info_outline_rounded, size: 18, color: cs.outline),
+                    Icon(Icons.info_outline_rounded,
+                        size: 18, color: cs.outline),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -507,7 +552,8 @@ class _GuideBusySheet extends StatelessWidget {
                 onPressed: onSeeAvailableGuides,
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14)),
                 ),
                 label: const Text('Xem HDV rảnh trong khoảng này'),
               ),
@@ -522,7 +568,8 @@ class _GuideBusySheet extends StatelessWidget {
                 onPressed: onPickAnotherDate,
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14)),
                 ),
                 label: const Text('Chọn khoảng ngày khác'),
               ),

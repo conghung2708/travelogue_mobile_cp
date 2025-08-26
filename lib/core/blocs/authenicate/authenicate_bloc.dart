@@ -71,18 +71,19 @@ class AuthenicateBloc extends Bloc<AuthenicateEvent, AuthenicateState> {
     }
   }
 
-  Future<void> _onLoginWithGoogle(LoginWithSocialEvent event, Emitter emit) async {
+  Future<void> _onLoginWithGoogle(
+      LoginWithSocialEvent event, Emitter emit) async {
     showDialogLoading(event.context);
     final success = await _loginGoogle(event);
     AppBloc().initial();
-
 
     if (Navigator.of(event.context).canPop()) {
       Navigator.of(event.context).pop();
     }
 
     if (success) {
-      debugPrint('✅ Google login thành công! Redirect đến: ${event.redirectRoute}');
+      debugPrint(
+          '✅ Google login thành công! Redirect đến: ${event.redirectRoute}');
       final redirect = event.redirectRoute;
       const target = MainScreen.routeName;
 
@@ -108,7 +109,7 @@ class AuthenicateBloc extends Bloc<AuthenicateEvent, AuthenicateState> {
     UserLocal().clearUser();
 
     if (Navigator.of(event.context).canPop()) {
-      Navigator.of(event.context).pop(); 
+      Navigator.of(event.context).pop();
     }
 
     AppBloc.mainBloc.add(const OnChangeIndexEvent(indexChange: 0));
@@ -122,10 +123,11 @@ class AuthenicateBloc extends Bloc<AuthenicateEvent, AuthenicateState> {
       email: event.email,
       password: event.password,
       fullName: event.fullName,
+      sex: event.sex,
     );
 
     if (Navigator.of(event.context).canPop()) {
-      Navigator.of(event.context).pop(); 
+      Navigator.of(event.context).pop();
     }
 
     if (success) {
@@ -161,7 +163,7 @@ class AuthenicateBloc extends Bloc<AuthenicateEvent, AuthenicateState> {
     );
 
     if (Navigator.of(event.context).canPop()) {
-      Navigator.of(event.context).pop(); 
+      Navigator.of(event.context).pop();
     }
 
     if (!success) {
@@ -192,7 +194,7 @@ class AuthenicateBloc extends Bloc<AuthenicateEvent, AuthenicateState> {
     );
 
     if (Navigator.of(event.context).canPop()) {
-      Navigator.of(event.context).pop(); 
+      Navigator.of(event.context).pop();
     }
 
     if (!success) {
@@ -202,14 +204,17 @@ class AuthenicateBloc extends Bloc<AuthenicateEvent, AuthenicateState> {
       );
     } else {
       if (!event.isLogin) {
-        Navigator.popUntil(event.context, ModalRoute.withName('/edit_profile_screen'));
+        Navigator.popUntil(
+            event.context, ModalRoute.withName('/edit_profile_screen'));
       }
     }
   }
 
-  Future<void> _onSendSupport(SendContactSupportEvent event, Emitter emit) async {
+  Future<void> _onSendSupport(
+      SendContactSupportEvent event, Emitter emit) async {
     showDialogLoading(event.context);
-    final (success, message) = await AuthenicationRepository().sendContactSupport(
+    final (success, message) =
+        await AuthenicationRepository().sendContactSupport(
       email: event.email,
       message: event.message,
     );
@@ -260,7 +265,8 @@ class AuthenicateBloc extends Bloc<AuthenicateEvent, AuthenicateState> {
         idToken: googleAuth.idToken,
       );
 
-      final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+      final userCredential =
+          await FirebaseAuth.instance.signInWithCredential(credential);
       final firebaseUser = userCredential.user;
       if (firebaseUser == null) return false;
 

@@ -9,7 +9,6 @@ import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
 import 'package:travelogue_mobile/core/utils/validator_utils.dart';
 import 'package:travelogue_mobile/representation/auth/screens/forgot_password_screen.dart';
 
-
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -29,6 +28,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _confirmPasswordController =
       TextEditingController();
   final TextEditingController _fullNameController = TextEditingController();
+  int _selectedSex = 1;
   final _formKey = GlobalKey<FormState>();
 
   late String? _redirectRoute;
@@ -36,7 +36,8 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    final args =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     _redirectRoute = args != null && args['redirectRoute'] is String
         ? args['redirectRoute'] as String
         : null;
@@ -65,12 +66,12 @@ class _LoginScreenState extends State<LoginScreen> {
             );
             return;
           }
-
           AppBloc.authenicateBloc.add(
             RegisterEvent(
               email: _emailController.text.trim(),
               password: _passwordController.text.trim(),
               fullName: _fullNameController.text.trim(),
+              sex: _selectedSex,
               handleRegisterSuccess: () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Đăng ký thành công!')),
@@ -102,7 +103,6 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -199,6 +199,34 @@ class _LoginScreenState extends State<LoginScreen> {
                                                 return 'Vui lòng nhập họ và tên';
                                               }
                                               return null;
+                                            },
+                                          ),
+                                          SizedBox(height: 2.h),
+                                          DropdownButtonFormField<int>(
+                                            value: _selectedSex,
+                                            decoration: InputDecoration(
+                                              prefixIcon: const Icon(
+                                                  Iconsax.user_tag,
+                                                  color: ColorPalette
+                                                      .primaryColor),
+                                              border: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(3.w),
+                                              ),
+                                              filled: true,
+                                              fillColor:
+                                                  Colors.white.withOpacity(0.5),
+                                            ),
+                                            items: const [
+                                              DropdownMenuItem(
+                                                  value: 1, child: Text("Nam")),
+                                              DropdownMenuItem(
+                                                  value: 2, child: Text("Nữ")),
+                                            ],
+                                            onChanged: (value) {
+                                              setState(() {
+                                                _selectedSex = value ?? 1;
+                                              });
                                             },
                                           ),
                                           SizedBox(height: 2.h),
@@ -337,7 +365,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                                 activeColor:
                                                     ColorPalette.primaryColor,
                                               ),
-                                              Text("Ghi nhớ đăng nhập",
+                                              Text("Ghi nhớ mật khẩu",
                                                   style: TextStyle(
                                                       color: Colors.white,
                                                       fontSize: 14.sp)),

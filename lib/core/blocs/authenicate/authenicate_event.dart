@@ -27,6 +27,7 @@ class RegisterEvent extends AuthenicateEvent {
   final String email;
   final String password;
   final String fullName;
+  final int sex; 
   final Function() handleRegisterSuccess;
   final Function(String) handleRegisterFailed;
   final BuildContext context;
@@ -35,6 +36,7 @@ class RegisterEvent extends AuthenicateEvent {
     required this.email,
     required this.password,
     required this.fullName,
+    required this.sex, // 👈
     required this.handleRegisterSuccess,
     required this.handleRegisterFailed,
     required this.context,

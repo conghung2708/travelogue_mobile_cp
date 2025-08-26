@@ -151,7 +151,7 @@ class _MyAppState extends State<MyApp> {
               ],
               locale: const Locale('vi', 'VN'),
               routes: routes,
-              home: const OtpVerificationScreen(),
+              home: const MainScreen(),
             ),
           );
         },
