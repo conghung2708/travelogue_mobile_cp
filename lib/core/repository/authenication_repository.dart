@@ -14,7 +14,7 @@ class AuthenicationRepository {
       final data = res.data is Map ? res.data['data'] : null;
       if (data is Map<String, dynamic>) {
         final user = UserModel.fromMap(data);
-      
+
         UserLocal().saveAccount(user);
         return user;
       }
@@ -22,7 +22,6 @@ class AuthenicationRepository {
     }
     throw Exception('HTTP ${res.statusCode}');
   }
-
 
   Future<(UserModel?, String?)> login({
     required String email,
@@ -38,7 +37,6 @@ class AuthenicationRepository {
       final String token = dataJson['verificationToken'];
       final String refreshToken = dataJson['refreshTokens'];
 
-      
       UserLocal().saveAccessToken(token, refreshToken);
 
       // lấy full profile từ /get-current-user
@@ -55,11 +53,13 @@ class AuthenicationRepository {
     required String email,
     required String password,
     required String fullName,
+    required int sex,
   }) async {
     final Map<String, dynamic> body = {
       'email': email,
       'password': password,
       'fullName': fullName,
+      'sex': sex,
       'confirmPassword': password,
     };
 
@@ -90,7 +90,7 @@ class AuthenicationRepository {
       return (true, '');
     } else {
       final String message = response.data['Message'];
-      print('🛑 sendOTPEmail failed with message: $message'); // 👈
+      print('🛑 sendOTPEmail failed with message: $message'); 
       return (false, message);
     }
   }
@@ -138,7 +138,6 @@ class AuthenicationRepository {
     }
   }
 
-
   Future<(UserModel?, String?)> loginGoogle({
     required String token,
     required User user,
@@ -156,7 +155,7 @@ class AuthenicationRepository {
       UserLocal().saveAccessToken(access, refresh);
 
       final current = await fetchCurrentUser();
-      
+
       final merged =
           current.copyWith(username: current.username ?? user.displayName);
 
