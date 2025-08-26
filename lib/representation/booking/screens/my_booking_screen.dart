@@ -38,6 +38,20 @@ import 'package:travelogue_mobile/representation/tour/screens/tour_detail_screen
 import 'package:travelogue_mobile/representation/tour_guide/screens/tour_guide_detail_screen.dart';
 import 'package:travelogue_mobile/representation/trip_plan/screens/trip_detail_screen.dart';
 
+class _CardActions {
+  final bool showManage;
+  final bool showReview;
+  final bool showReviewedBadge;
+  final bool showRefundSentBadge;
+
+  const _CardActions({
+    required this.showManage,
+    required this.showReview,
+    required this.showReviewedBadge,
+    required this.showRefundSentBadge,
+  });
+}
+
 class MyBookingScreen extends StatefulWidget {
   static const String routeName = '/my-bookings';
   final List<BookingModel> bookings;
@@ -60,6 +74,22 @@ class DisplayBookingArgs {
     this.displayImageUrl,
   });
 }
+
+class _StatusStyle {
+  final Color fg;
+  final Color bg;
+  final IconData icon;
+  const _StatusStyle(this.fg, this.bg, this.icon);
+}
+
+const _statusStyles = <int, _StatusStyle>{
+  0: _StatusStyle(
+      Color(0xFFB54708), Color(0xFFFFF4E5), Icons.timer_off_rounded),
+  1: _StatusStyle(Color(0xFF027A48), Color(0xFFE9F7EF), Icons.verified_rounded),
+  2: _StatusStyle(
+      Color(0xFF05603A), Color(0xFFE6F4EA), Icons.check_circle_rounded),
+  3: _StatusStyle(Color(0xFFB42318), Color(0xFFFDECEC), Icons.cancel_rounded),
+};
 
 class _MyBookingScreenState extends State<MyBookingScreen>
     with AutomaticKeepAliveClientMixin {
@@ -101,6 +131,68 @@ class _MyBookingScreenState extends State<MyBookingScreen>
   final Map<String, String> _workshopNameById = {};
   final Map<String, String> _workshopImgById = {};
 
+  // (1) Cần _withinRefundWindow trước vì _canCancel dùng nó
+  bool _withinRefundWindow(BookingModel b) {
+    final bookingTime = _safeBookingDate(b);
+    return DateTime.now().difference(bookingTime).inHours <
+        _REFUND_WINDOW_HOURS;
+  }
+
+  // (2) Rồi tới _canCancel, _canRefund
+  bool _canCancel(BookingModel b) => b.isConfirmed && _withinRefundWindow(b);
+
+  bool _canRefund(BookingModel b) {
+    final wasPaidOnline =
+        b.paymentLinkId != null && b.paymentLinkId!.isNotEmpty;
+    return b.isCancelledPaid && wasPaidOnline;
+  }
+
+  // (3) _actionsFor cần dùng _refundRequestedIdsBE, _canCancel, _canRefund, _canReview
+  _CardActions _actionsFor(BookingModel b) {
+    final alreadyRefunded = _refundRequestedIdsBE.contains(b.id);
+    final canCancel = _canCancel(b);
+    final canRefund = _canRefund(b) && !alreadyRefunded;
+    final canReview = _canReview(b);
+
+    switch (b.tabCode) {
+      case 0: // Hết hạn
+        return const _CardActions(
+          showManage: false,
+          showReview: false,
+          showReviewedBadge: false,
+          showRefundSentBadge: false,
+        );
+      case 1: // Đã thanh toán
+        return _CardActions(
+          showManage: (canCancel || canRefund),
+          showReview: false,
+          showReviewedBadge: false,
+          showRefundSentBadge: alreadyRefunded,
+        );
+      case 2: // Đã hoàn thành
+        return _CardActions(
+          showManage: false,
+          showReview: canReview,
+          showReviewedBadge: !canReview,
+          showRefundSentBadge: false,
+        );
+      case 3: // Đã huỷ
+        return _CardActions(
+          showManage: canRefund,
+          showReview: false,
+          showReviewedBadge: false,
+          showRefundSentBadge: alreadyRefunded,
+        );
+      default:
+        return const _CardActions(
+          showManage: false,
+          showReview: false,
+          showReviewedBadge: false,
+          showRefundSentBadge: false,
+        );
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -125,13 +217,21 @@ class _MyBookingScreenState extends State<MyBookingScreen>
       _refundRequestedIdsBE
         ..clear()
         ..addAll(
-          latestByBooking.entries
-              .where((e) => e.value.status == 1 || e.value.status == 2)
-              .map((e) => e.key),
+          latestByBooking.entries.map((e) => e.key),
         );
-
       if (mounted) setState(() {});
     } catch (_) {}
+  }
+
+  int _pendingRefundCount() => _refundRequestedIdsBE.length;
+
+  Future<void> _refreshAll() async {
+    await Future.wait([
+      _loadExistingRefunds(),
+      Future(() => context.read<BookingBloc>().add(const GetMyReviewsEvent())),
+      _warmDisplayMeta(),
+    ]);
+    if (mounted) setState(() {});
   }
 
   int _asInt(dynamic v, {int fallback = 0}) {
@@ -242,33 +342,72 @@ class _MyBookingScreenState extends State<MyBookingScreen>
               fontWeight: FontWeight.bold,
               fontSize: 18.sp),
         ),
-        centerTitle: true,
+        // centerTitle: true,
         actions: [
-          CircleAvatar(
-            backgroundColor: Colors.green.shade50,
-            radius: 20,
-            child: IconButton(
-              tooltip: 'Yêu cầu hoàn tiền',
-              icon: Icon(Icons.money_off_rounded, color: Colors.green[700]),
-              onPressed: () async {
-                final bookingTitleLookup = {
-                  for (final b in _items) b.id: _displayTitle(b),
-                };
-
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => RefundListScreen(
-                      bookingTitleLookup: bookingTitleLookup,
+          Padding(
+            padding: EdgeInsets.only(right: 2.w),
+            child: Semantics(
+              label: 'Lịch sử hoàn tiền',
+              hint: 'Xem các yêu cầu hoàn tiền đã gửi',
+              button: true,
+              child: Tooltip(
+                message: 'Xem lịch sử hoàn tiền',
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    TextButton.icon(
+                      style: TextButton.styleFrom(
+                        backgroundColor: Colors.green.shade50,
+                        shape: const StadiumBorder(),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 6),
+                      ),
+                      icon: Icon(Icons.receipt_long_rounded,
+                          color: Colors.green[700]),
+                      label: const Text(
+                        'Hoàn tiền',
+                        style: TextStyle(
+                            color: Colors.black87, fontWeight: FontWeight.w700),
+                      ),
+                      onPressed: () async {
+                        final bookingTitleLookup = {
+                          for (final b in _items) b.id: _displayTitle(b)
+                        };
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => RefundListScreen(
+                                bookingTitleLookup: bookingTitleLookup),
+                          ),
+                        );
+                        await _refreshAll();
+                      },
                     ),
-                  ),
-                );
-
-                await _loadExistingRefunds();
-              },
+                    if (_pendingRefundCount() > 0)
+                      Positioned(
+                        right: -4,
+                        top: -4,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.redAccent,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            '${_pendingRefundCount()}',
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
             ),
           ),
-          SizedBox(width: 2.w),
         ],
       ),
       body: MultiBlocListener(
@@ -477,19 +616,19 @@ class _MyBookingScreenState extends State<MyBookingScreen>
     );
   }
 
-  bool _withinRefundWindow(BookingModel b) {
-    final bookingTime = _safeBookingDate(b);
-    return DateTime.now().difference(bookingTime).inHours <
-        _REFUND_WINDOW_HOURS;
-  }
+  // bool _withinRefundWindow(BookingModel b) {
+  //   final bookingTime = _safeBookingDate(b);
+  //   return DateTime.now().difference(bookingTime).inHours <
+  //       _REFUND_WINDOW_HOURS;
+  // }
 
-  bool _canCancel(BookingModel b) => b.isConfirmed && _withinRefundWindow(b);
+  // bool _canCancel(BookingModel b) => b.isConfirmed && _withinRefundWindow(b);
 
-  bool _canRefund(BookingModel b) {
-    final wasPaidOnline =
-        b.paymentLinkId != null && b.paymentLinkId!.isNotEmpty;
-    return b.isCancelledPaid && wasPaidOnline;
-  }
+  // bool _canRefund(BookingModel b) {
+  //   final wasPaidOnline =
+  //       b.paymentLinkId != null && b.paymentLinkId!.isNotEmpty;
+  //   return b.isCancelledPaid && wasPaidOnline;
+  // }
 
   Widget _buildBookingList() {
     final typeFiltered = _items.where((b) {
@@ -527,8 +666,7 @@ class _MyBookingScreenState extends State<MyBookingScreen>
     });
 
     if (filtered.isEmpty) {
-      return Center(
-          child: Text('Không có đơn nào.', style: TextStyle(fontSize: 11.sp)));
+      return _buildEmptyState();
     }
 
     return ListView.builder(
@@ -540,6 +678,8 @@ class _MyBookingScreenState extends State<MyBookingScreen>
         final title = _displayTitle(b);
 
         final coverUrl = _displayImageUrl(b);
+        final acts = _actionsFor(b);
+        final reviewedStars = _reviewed[b.id];
 
         Widget imageWidget;
         if ((coverUrl ?? '').isNotEmpty) {
@@ -593,10 +733,10 @@ class _MyBookingScreenState extends State<MyBookingScreen>
           }
         }
 
-        final canReview = _canReview(b);
-        final reviewedStars = _reviewed[b.id];
-        final isReviewed = !canReview && b.isCompleted;
-        final alreadyRefunded = _refundRequestedIdsBE.contains(b.id);
+        // final canReview = _canReview(b);
+        // final reviewedStars = _reviewed[b.id];
+        // final isReviewed = !canReview && b.isCompleted;
+        // final alreadyRefunded = _refundRequestedIdsBE.contains(b.id);
 
         return KeyedSubtree(
           key: ValueKey(b.id),
@@ -714,19 +854,41 @@ class _MyBookingScreenState extends State<MyBookingScreen>
               location: "Tây Ninh",
               price: currency.format((b.finalPrice)),
               orderDate: DateFormat('dd/MM/yyyy').format(_safeBookingDate(b)),
-              showCancelButton: _canCancel(b),
-              onCancelPressed: () => _confirmAndCancel(context, b),
-              showRefundButton: _canRefund(b) && !alreadyRefunded,
-              onRefundPressed: () => _showRefundSheet(context, b),
-              showRefundSentBadge: alreadyRefunded,
-              showReviewButton: _canReview(b),
-              onReviewPressed: () => _showReviewSheet(context, b),
+              showRefundSentBadge: acts.showRefundSentBadge,
               reviewedStars: reviewedStars,
-              showReviewedBadge: isReviewed,
+              showReviewedBadge: acts.showReviewedBadge,
+              showManageButton: acts.showManage,
+              onManagePressed: () => _showManageSheet(b),
+              showReviewButton: acts.showReview,
+              onReviewPressed: () => _showReviewSheet(context, b),
+              showCancelButton: false,
+              showRefundButton: false,
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.inbox_rounded, size: 56, color: Colors.black26),
+          const SizedBox(height: 8),
+          const Text('Chưa có đơn nào',
+              style: TextStyle(fontWeight: FontWeight.w700)),
+          const SizedBox(height: 4),
+          const Text('Khám phá hành trình phù hợp với bạn'),
+          const SizedBox(height: 12),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.explore),
+            label: const Text('Khám phá Tour'),
+            onPressed: () {},
+          ),
+        ],
+      ),
     );
   }
 
@@ -954,7 +1116,6 @@ class _MyBookingScreenState extends State<MyBookingScreen>
 
     if (allow != true) return;
 
-    // Hiển thị loading
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -964,7 +1125,7 @@ class _MyBookingScreenState extends State<MyBookingScreen>
     );
 
     final result = await BookingRepository().cancelBooking(b.id);
-    if (Navigator.of(context).canPop()) Navigator.pop(context); // tắt loading
+    if (Navigator.of(context).canPop()) Navigator.pop(context);
 
     if (!result.ok) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1067,8 +1228,9 @@ class _MyBookingScreenState extends State<MyBookingScreen>
                       const SizedBox(height: 12),
                       InputDecorator(
                         decoration: const InputDecoration(
-                            labelText: 'Số tiền (₫)',
-                            border: OutlineInputBorder()),
+                          labelText: 'Số tiền (₫)',
+                          border: OutlineInputBorder(),
+                        ),
                         child: Text(
                           NumberFormat.currency(locale: 'vi_VN', symbol: '₫')
                               .format(amount),
@@ -1148,6 +1310,106 @@ class _MyBookingScreenState extends State<MyBookingScreen>
     );
   }
 
+  Future<void> _showManageSheet(BookingModel b) async {
+    final canCancel = _canCancel(b);
+    final canRefund = _canRefund(b) && !_refundRequestedIdsBE.contains(b.id);
+    final canReview = _canReview(b);
+
+    await showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) {
+        Widget item({
+          required IconData icon,
+          required String title,
+          String? sub,
+          bool enabled = true,
+          VoidCallback? onTap,
+        }) {
+          return ListTile(
+            leading:
+                Icon(icon, color: enabled ? Colors.black87 : Colors.black26),
+            title: Text(title,
+                style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: enabled ? Colors.black87 : Colors.black38)),
+            subtitle: sub != null
+                ? Text(sub, style: const TextStyle(color: Colors.black45))
+                : null,
+            onTap: enabled
+                ? () {
+                    Navigator.pop(ctx);
+                    onTap?.call();
+                  }
+                : null,
+          );
+        }
+
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 8),
+              Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                      color: Colors.black12,
+                      borderRadius: BorderRadius.circular(2))),
+              const SizedBox(height: 8),
+              item(
+                icon: Icons.receipt_long,
+                title: 'Xem chi tiết đơn',
+                onTap: () {
+                  final args = DisplayBookingArgs(
+                    booking: b,
+                    displayTitle: _displayTitle(b),
+                    displayImageUrl: _displayImageUrl(b),
+                  );
+                  Navigator.pushNamed(context, BookingDetailScreen.routeName,
+                      arguments: args);
+                },
+              ),
+              const Divider(height: 1),
+              item(
+                icon: Icons.cancel_schedule_send_outlined,
+                title: 'Huỷ đơn',
+                sub: !canCancel
+                    ? 'Chỉ huỷ trong ${_REFUND_WINDOW_HOURS}h sau khi xác nhận'
+                    : null,
+                enabled: canCancel,
+                onTap: () => _confirmAndCancel(context, b),
+              ),
+              item(
+                icon: Icons.undo_rounded,
+                title: 'Yêu cầu hoàn tiền',
+                sub: !canRefund
+                    ? (b.isCancelledAny
+                        ? 'Chỉ hỗ trợ khi thanh toán online'
+                        : 'Chỉ hiện khi đơn đã huỷ')
+                    : null,
+                enabled: canRefund,
+                onTap: () => _showRefundSheet(context, b),
+              ),
+              item(
+                icon: Icons.star_rate_rounded,
+                title: 'Đánh giá trải nghiệm',
+                sub: !canReview
+                    ? 'Chỉ khi đã hoàn thành và chưa từng đánh giá'
+                    : null,
+                enabled: canReview,
+                onTap: () => _showReviewSheet(context, b),
+              ),
+              const SizedBox(height: 6),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildBookingCard({
     required Widget image,
     required String title,
@@ -1165,37 +1427,15 @@ class _MyBookingScreenState extends State<MyBookingScreen>
     VoidCallback? onReviewPressed,
     int? reviewedStars,
     bool showReviewedBadge = false,
+    VoidCallback? onManagePressed,
+    bool showManageButton = true,
   }) {
-    late Color fg;
-    late Color bg;
-    late IconData icon;
+    final style = _statusStyles[statusCode] ??
+        const _StatusStyle(Colors.teal, Color(0xFFE0F2F1), Icons.info_rounded);
 
-    switch (statusCode) {
-      case 0:
-        fg = const Color(0xFFB46900);
-        bg = const Color(0xFFFFEDD5);
-        icon = Icons.timer_off_rounded;
-        break;
-      case 1:
-        fg = Colors.greenAccent;
-        bg = Colors.green.withOpacity(0.18);
-        icon = Icons.verified_rounded;
-        break;
-      case 2:
-        fg = Colors.green.shade800;
-        bg = Colors.green.shade100;
-        icon = Icons.check_circle_rounded;
-        break;
-      case 3:
-        fg = Colors.red.shade600;
-        bg = Colors.redAccent.withOpacity(0.16);
-        icon = Icons.cancel_rounded;
-        break;
-      default:
-        fg = Colors.teal.shade700;
-        bg = Colors.teal.withOpacity(0.14);
-        icon = Icons.info_rounded;
-    }
+    final fg = style.fg;
+    final bg = style.bg;
+    final icon = style.icon;
 
     final theme = Theme.of(context);
 
@@ -1352,68 +1592,56 @@ class _MyBookingScreenState extends State<MyBookingScreen>
                             color: Colors.grey[700], fontSize: 11.8.sp),
                       ),
                     ),
-                    if (showCancelButton) ...[
+                    if (showRefundSentBadge) ...[
                       SizedBox(width: 2.w),
-                      Tooltip(
-                        message: 'Huỷ đơn',
-                        child: TextButton.icon(
-                          onPressed: onCancelPressed,
-                          icon: Icon(Icons.cancel_schedule_send_outlined,
-                              size: 13.sp, color: Colors.white),
-                          label: Text('Huỷ đơn',
-                              style: TextStyle(
-                                  fontSize: 13.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white)),
-                          style: TextButton.styleFrom(
-                            backgroundColor:
-                                Colors.orangeAccent.withOpacity(0.92),
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 3.2.w, vertical: 0.8.h),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(28)),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            visualDensity: VisualDensity.compact,
-                          ),
-                        ),
+                      GestureDetector(
+                        onTap: () async {
+                          final bookingTitleLookup = {
+                            for (final x in _items) x.id: _displayTitle(x)
+                          };
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => RefundListScreen(
+                                    bookingTitleLookup: bookingTitleLookup)),
+                          );
+                          await _refreshAll();
+                        },
+                        child: const _RefundSentBadge(),
                       ),
                     ],
-                    if (showRefundButton) ...[
+                    if (showReviewedBadge) ...[
                       SizedBox(width: 2.w),
-                      Tooltip(
-                        message: 'Yêu cầu hoàn tiền',
-                        child: TextButton.icon(
-                          onPressed: onRefundPressed,
-                          icon: Icon(Icons.undo_rounded,
-                              size: 13.sp, color: Colors.white),
-                          label: Text('Hoàn tiền',
-                              style: TextStyle(
-                                  fontSize: 10.8.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white)),
-                          style: TextButton.styleFrom(
-                            backgroundColor: Colors.redAccent.withOpacity(0.92),
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 3.2.w, vertical: 0.8.h),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(28)),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            visualDensity: VisualDensity.compact,
-                          ),
-                        ),
-                      ),
-                    ] else if (showRefundSentBadge) ...[
-                      SizedBox(width: 2.w),
-                      const _RefundSentBadge(),
+                      _ReviewedThanksBadge(stars: reviewedStars),
                     ],
                     if (showReviewButton) ...[
                       SizedBox(width: 2.w),
                       Tooltip(
                           message: 'Đánh giá đơn này',
                           child: ReviewPillButton(onPressed: onReviewPressed)),
-                    ] else if (showReviewedBadge) ...[
+                    ] else if (showManageButton) ...[
                       SizedBox(width: 2.w),
-                      _ReviewedThanksBadge(stars: reviewedStars),
+                      Tooltip(
+                        message: 'Quản lý đơn này',
+                        child: TextButton.icon(
+                          onPressed: onManagePressed,
+                          icon: const Icon(Icons.manage_accounts_rounded,
+                              size: 14, color: Colors.white),
+                          label: const Text('Quản lý',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700)),
+                          style: TextButton.styleFrom(
+                            backgroundColor: ColorPalette.primaryColor,
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 3.2.w, vertical: 0.8.h),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(28)),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ),
+                      ),
                     ],
                   ],
                 ),

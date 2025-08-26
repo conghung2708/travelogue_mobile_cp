@@ -31,21 +31,19 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
   DateTime? _startDate;
   DateTime? _endDate;
 
-
   final ImagePicker _picker = ImagePicker();
-  File? _selectedFile; 
-  String? _coverUrl; 
+  File? _selectedFile;
+  String? _coverUrl;
   bool _isUploadingImage = false;
 
   bool _loadingShown = false;
 
   ImageProvider<Object> _buildHeaderImage() {
     if (_selectedFile != null) {
-      return FileImage(_selectedFile!); 
+      return FileImage(_selectedFile!);
     }
     return const AssetImage(AssetHelper.img_ex_ba_den_5);
   }
-
 
   void _showLoading() {
     if (_loadingShown) return;
@@ -66,7 +64,6 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
 
   DateTime _atStartOfDay(DateTime d) => DateTime(d.year, d.month, d.day);
 
-
   Future<void> _pickImageAndUpload() async {
     final x = await _picker.pickImage(
       imageQuality: 90,
@@ -79,50 +76,25 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
       _isUploadingImage = true;
     });
 
-
     context.read<MediaBloc>().add(UploadMultipleImagesEvent([_selectedFile!]));
   }
-
 
   Future<void> _handleNext() async {
     final name = _nameController.text.trim();
     final description = _descController.text.trim();
 
-    if (name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Hãy nhập tên hành trình của bạn.')),
-      );
-      return;
-    }
-    if (description.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Hãy nhập mô tả hành trình.')),
-      );
-      return;
-    }
-
-    // (Tùy chọn) bắt buộc có ảnh bìa:
-    // if (_coverUrl == null) {
-    //   ScaffoldMessenger.of(context).showSnackBar(
-    //     const SnackBar(content: Text('Hãy chọn 1 ảnh bìa.')),
-    //   );
-    //   return;
-    // }
-
-    if (_isUploadingImage) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Đang tải ảnh lên, vui lòng đợi...')),
-      );
-      return;
-    }
-
     final now = DateTime.now();
+    final minStart = _atStartOfDay(now.add(const Duration(days: 2)));
+
     final picked = await showDateRangePicker(
       context: context,
-      firstDate: _atStartOfDay(now),
+      firstDate: minStart,
       lastDate: DateTime(now.year + 2),
       initialDateRange: (_startDate != null && _endDate != null)
-          ? DateTimeRange(start: _startDate!, end: _endDate!)
+          ? DateTimeRange(
+              start: _startDate!.isBefore(minStart) ? minStart : _startDate!,
+              end: _endDate!.isBefore(minStart) ? minStart : _endDate!,
+            )
           : null,
       locale: const Locale('vi', 'VN'),
     );
@@ -132,17 +104,27 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
     final normalizedStart = _atStartOfDay(picked.start);
     final normalizedEnd = _atStartOfDay(picked.end);
 
+    if (normalizedStart.isBefore(minStart)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(
+                'Chỉ được chọn từ ${DateFormat('dd/MM/yyyy').format(minStart)} trở đi.')),
+      );
+      return;
+    }
+
     setState(() {
       _startDate = normalizedStart;
       _endDate = normalizedEnd;
     });
+
     context.read<TripPlanBloc>().add(
           CreateTripPlanEvent(
             name: name,
             description: description,
             startDate: normalizedStart,
             endDate: normalizedEnd,
-            imageUrl: _coverUrl, // ✅
+            imageUrl: _coverUrl,
           ),
         );
   }
@@ -158,7 +140,6 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
   Widget build(BuildContext context) {
     return MultiBlocListener(
       listeners: [
-  
         BlocListener<TripPlanBloc, TripPlanState>(
           listener: (context, state) async {
             if (state is TripPlanLoading) {
@@ -184,8 +165,6 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
             }
           },
         ),
-
- 
         BlocListener<MediaBloc, MediaState>(
           listener: (context, state) {
             if (state is MediaUploading) {
@@ -218,7 +197,6 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
         ),
         body: Column(
           children: [
-
             ClipRRect(
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(6.w),
@@ -297,7 +275,6 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                     
                       Text(
                         "🖼️ Ảnh bìa",
                         style: TextStyle(
@@ -363,9 +340,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                           ],
                         ),
                       ),
-
                       SizedBox(height: 2.8.h),
-
                       Row(
                         children: [
                           const Icon(Icons.edit_location_alt_rounded,
@@ -399,7 +374,6 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                         stopPauseOnTap: true,
                       ),
                       SizedBox(height: 2.5.h),
-
                       Focus(
                         onFocusChange: (hasFocus) =>
                             setState(() => _isFocused = hasFocus),
@@ -435,9 +409,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                           ),
                         ),
                       ),
-
                       SizedBox(height: 2.h),
-
                       Row(
                         children: [
                           const Icon(Icons.notes_rounded,
@@ -485,9 +457,18 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                           ),
                         ),
                       ),
-
                       SizedBox(height: 3.h),
-
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Text(
+                          'Chỉ đặt từ ${DateFormat('dd/MM/yyyy').format(_atStartOfDay(DateTime.now().add(const Duration(days: 2))))} trở đi.',
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            color: Colors.grey.shade600,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ),
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
@@ -511,7 +492,6 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
                           ),
                         ),
                       ),
-
                       if (_startDate != null && _endDate != null)
                         Padding(
                           padding: EdgeInsets.only(top: 2.h),
