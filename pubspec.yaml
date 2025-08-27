@@ -85,9 +85,12 @@ dependencies:
   vn_provinces: ^0.0.2
   address_picker_vn: ^0.3.2
   flutter_dotenv: ^6.0.0
+  signalr_core: ^1.1.2
 
   # Caching
   hive: ^2.2.3
+
+ 
 
   path_provider:
     ^2.1.5
@@ -121,6 +124,10 @@ dev_dependencies:
   flutter_launcher_icons: ^0.14.3
   flutter_test:
     sdk: flutter
+
+dependency_overrides:
+  web: ^1.0.0
+  web_socket_channel: ^3.0.1
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

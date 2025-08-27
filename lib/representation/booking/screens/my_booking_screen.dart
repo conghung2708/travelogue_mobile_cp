@@ -258,6 +258,144 @@ class _MyBookingScreenState extends State<MyBookingScreen>
     if (mounted) setState(() {});
   }
 
+  Future<void> _openServiceDetail(BookingModel b) async {
+    final bt = _bookingTypeOf(b);
+
+    if (bt == 1 && b.tourId != null) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(child: CircularProgressIndicator()),
+      );
+      final TourModel? tour = await TourRepository().getTourById(b.tourId!);
+      if (mounted) Navigator.pop(context);
+      if (tour != null) {
+        final idx = _items.indexWhere((bk) => bk.id == b.id);
+        if (idx != -1) _items[idx] = _items[idx].copyWith(tour: tour);
+        if (mounted) setState(() {});
+        final coverImage = tour.medias.isNotEmpty
+            ? (tour.medias.first.mediaUrl ?? AssetHelper.img_tay_ninh_login)
+            : AssetHelper.img_tay_ninh_login;
+        if (!mounted) return;
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => TourDetailScreen(
+              tour: tour,
+              image: coverImage,
+              startTime: b.bookingDate,
+              isBooked: true,
+            ),
+          ),
+        );
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Không tìm thấy thông tin tour.")),
+          );
+        }
+      }
+      return;
+    }
+
+    if (bt == 3 && _isPersonalGuide(b) && b.tripPlanId != null) {
+      Navigator.pushNamed(
+        context,
+        TripDetailScreen.routeName,
+        arguments: b.tripPlanId.toString(),
+      );
+      return;
+    }
+
+    if (bt == 3 && b.tourGuideId != null) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(child: CircularProgressIndicator()),
+      );
+      final TourGuideModel? guide =
+          await TourGuideRepository().getTourGuideById(b.tourGuideId!);
+      if (mounted) Navigator.pop(context);
+      if (guide != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => TourGuideDetailScreen(guide: guide)),
+        );
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text("Không tìm thấy thông tin hướng dẫn viên.")),
+          );
+        }
+      }
+      return;
+    }
+
+    final args = DisplayBookingArgs(
+      booking: b,
+      displayTitle: _displayTitle(b),
+      displayImageUrl: _displayImageUrl(b),
+    );
+    Navigator.pushNamed(context, BookingDetailScreen.routeName,
+        arguments: args);
+  }
+
+  Future<void> _showPaidChoiceSheet(BookingModel b) async {
+    await showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 8),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                    color: Colors.black12,
+                    borderRadius: BorderRadius.circular(2)),
+              ),
+              ListTile(
+                leading: const Icon(Icons.explore_rounded),
+                title: const Text('Xem chi tiết lịch trình',
+                    style: TextStyle(fontWeight: FontWeight.w700)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _openServiceDetail(b);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.receipt_long_rounded),
+                title: const Text('Xem chi tiết đơn hàng',
+                    style: TextStyle(fontWeight: FontWeight.w700)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  final args = DisplayBookingArgs(
+                    booking: b,
+                    displayTitle: _displayTitle(b),
+                    displayImageUrl: _displayImageUrl(b),
+                  );
+                  Navigator.pushNamed(
+                    context,
+                    BookingDetailScreen.routeName,
+                    arguments: args,
+                  );
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   DateTime _safeBookingDate(BookingModel b) {
     try {
       return b.bookingDate;
@@ -742,109 +880,29 @@ class _MyBookingScreenState extends State<MyBookingScreen>
           key: ValueKey(b.id),
           child: GestureDetector(
             onTap: () async {
+              if (b.isConfirmed) {
+                await _showPaidChoiceSheet(b);
+                return;
+              }
+
+              if (b.isCancelledAny) {
+                final args = DisplayBookingArgs(
+                  booking: b,
+                  displayTitle: _displayTitle(b),
+                  displayImageUrl: _displayImageUrl(b),
+                );
+                Navigator.pushNamed(context, BookingDetailScreen.routeName,
+                    arguments: args);
+                return;
+              }
+
               final args = DisplayBookingArgs(
                 booking: b,
                 displayTitle: _displayTitle(b),
                 displayImageUrl: _displayImageUrl(b),
               );
-
-              if (b.isCancelledAny) {
-                Navigator.pushNamed(
-                  context,
-                  BookingDetailScreen.routeName,
-                  arguments: args,
-                );
-                return;
-              }
-
-              if (b.isConfirmed) {
-                if (bt == 1 && b.tourId != null) {
-                  showDialog(
-                    context: context,
-                    barrierDismissible: false,
-                    builder: (_) =>
-                        const Center(child: CircularProgressIndicator()),
-                  );
-                  final TourModel? tour =
-                      await TourRepository().getTourById(b.tourId!);
-                  if (mounted) Navigator.pop(context);
-                  if (tour != null) {
-                    final idx = _items.indexWhere((bk) => bk.id == b.id);
-                    if (idx != -1) {
-                      _items[idx] = _items[idx].copyWith(tour: tour);
-                    }
-                    if (mounted) setState(() {});
-                    final coverImage = tour.medias.isNotEmpty
-                        ? (tour.medias.first.mediaUrl ??
-                            AssetHelper.img_tay_ninh_login)
-                        : AssetHelper.img_tay_ninh_login;
-                    if (!mounted) return;
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => TourDetailScreen(
-                          tour: tour,
-                          image: coverImage,
-                          startTime: b.bookingDate,
-                          isBooked: true,
-                        ),
-                      ),
-                    );
-                  } else {
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text("Không tìm thấy thông tin tour.")),
-                      );
-                    }
-                  }
-                  return;
-                }
-
-                if (bt == 3 && _isPersonalGuide(b) && b.tripPlanId != null) {
-                  Navigator.pushNamed(
-                    context,
-                    TripDetailScreen.routeName,
-                    arguments: b.tripPlanId.toString(),
-                  );
-                  return;
-                }
-
-                if (bt == 3 && b.tourGuideId != null) {
-                  showDialog(
-                    context: context,
-                    barrierDismissible: false,
-                    builder: (_) =>
-                        const Center(child: CircularProgressIndicator()),
-                  );
-                  final TourGuideModel? guide = await TourGuideRepository()
-                      .getTourGuideById(b.tourGuideId!);
-                  if (mounted) Navigator.pop(context);
-                  if (guide != null) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => TourGuideDetailScreen(guide: guide),
-                      ),
-                    );
-                  } else {
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text(
-                                "Không tìm thấy thông tin hướng dẫn viên.")),
-                      );
-                    }
-                  }
-                  return;
-                }
-              }
-
-              Navigator.pushNamed(
-                context,
-                BookingDetailScreen.routeName,
-                arguments: args,
-              );
+              Navigator.pushNamed(context, BookingDetailScreen.routeName,
+                  arguments: args);
             },
             child: _buildBookingCard(
               image: imageWidget,

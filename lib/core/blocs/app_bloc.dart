@@ -9,6 +9,8 @@ import 'package:travelogue_mobile/core/blocs/main/main_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/media/media_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/nearest_data/nearest_data_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/news/news_bloc.dart';
+import 'package:travelogue_mobile/core/blocs/notification/notification_bloc.dart';
+import 'package:travelogue_mobile/core/blocs/notification/notification_event.dart';
 import 'package:travelogue_mobile/core/blocs/report/report_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/request_refund/request_refund_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/search/search_bloc.dart';
@@ -22,12 +24,14 @@ import 'package:travelogue_mobile/core/repository/bank_account_repository.dart';
 import 'package:travelogue_mobile/core/repository/bank_lookup_repository.dart';
 import 'package:travelogue_mobile/core/repository/booking_repository.dart';
 import 'package:travelogue_mobile/core/repository/nearest_data_repository.dart';
+import 'package:travelogue_mobile/core/repository/notification_repository.dart';
 import 'package:travelogue_mobile/core/repository/refund_request_repository.dart';
 import 'package:travelogue_mobile/core/repository/report_repository.dart';
 import 'package:travelogue_mobile/core/repository/tour_guide_repository.dart';
 import 'package:travelogue_mobile/core/repository/user_repository.dart';
 import 'package:travelogue_mobile/core/repository/wallet_repository.dart';
 import 'package:travelogue_mobile/core/repository/workshop_repository.dart';
+import 'package:travelogue_mobile/core/services/notification_hub_service.dart';
 import 'package:travelogue_mobile/data/data_local/user_local.dart';
 
 class AppBloc {
@@ -56,6 +60,10 @@ class AppBloc {
       WalletBloc(walletRepository: WalletRepository());
 
   static final ReportBloc reportBloc = ReportBloc(ReportRepository());
+
+// singletons
+  static final NotificationBloc notificationBloc =
+      NotificationBloc(NotificationRepository(), NotificationHubService());
 
   List<BlocProvider> providers = [
     BlocProvider<MainBloc>(
@@ -105,16 +113,34 @@ class AppBloc {
     BlocProvider<ReportBloc>(
       create: (context) => reportBloc,
     ),
+    BlocProvider<NotificationBloc>(create: (context) => notificationBloc),
   ];
 
   void initial() {
     final token = UserLocal().getAccessToken;
-    print('AccessToken tại AppBloc.initial: $token');
+    final userId = UserLocal().getUserId;
+    print('🔑 AccessToken tại AppBloc.initial: $token');
+    print('👤 UserId tại AppBloc.initial: $userId');
 
     authenicateBloc.add(OnCheckAccountEvent());
 
     if (token.isNotEmpty) {
       initialLoggedin();
+      if (userId.isNotEmpty) {
+        print('▶️ Gửi event ConnectNotificationHub');
+        notificationBloc.add(
+          ConnectNotificationHub(
+            hubUrl: 'https://travelogue.homes/notificationHub',
+            accessToken: token,
+            userId: userId,
+          ),
+        );
+      } else {
+        print(
+            '⚠️ Không có userId, bỏ qua connect SignalR và load notifications.');
+      }
+    } else {
+      print('⚠️ Không có token, user chưa login.');
     }
 
     homeBloc.add(const GetLocationTypeEvent());
@@ -122,6 +148,8 @@ class AppBloc {
     homeBloc.add(const GetEventHomeEvent());
     newsBloc.add(GetAllNewsEvent());
     festivalBloc.add(GetAllFestivalEvent());
+
+    print('✅ AppBloc.initial hoàn tất.');
   }
 
   void initialLoggedin() {
@@ -155,8 +183,9 @@ class AppBloc {
     bankLookupCubit.close();
     walletBloc.close();
     reportBloc.close();
-  }
 
+    notificationBloc.close();
+  }
 
   static final AppBloc instance = AppBloc._internal();
 
