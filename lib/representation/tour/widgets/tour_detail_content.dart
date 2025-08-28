@@ -39,9 +39,8 @@ class TourDetailContent extends StatelessWidget {
     this.readOnly,
     this.startTime,
     this.isBooked,
-      this.showGuideTab = true, 
+    this.showGuideTab = true,
   });
-
 
   String _currentUserIdSafe() {
     try {
@@ -136,8 +135,6 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
     );
   }
 
-
-
   Widget _buildDetailTab(BuildContext context) {
     return SingleChildScrollView(
       padding: EdgeInsets.symmetric(vertical: 1.h),
@@ -156,6 +153,10 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
     );
   }
 
+  String _formatTime(DateTime time) {
+    return "${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}";
+  }
+
   Widget _buildTimeline() {
     final List<TourDayModel> days = tour.days ?? [];
 
@@ -166,6 +167,10 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
       itemBuilder: (context, index) {
         final day = days[index];
         final activities = day.activities ?? [];
+        final startTime =
+            activities.isNotEmpty ? activities.first.startTimeFormatted : null;
+        final endTime =
+            activities.isNotEmpty ? activities.last.endTimeFormatted : null;
 
         return Card(
           margin: EdgeInsets.symmetric(vertical: 1.h, horizontal: 4.w),
@@ -177,7 +182,8 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
             tilePadding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
             childrenPadding: EdgeInsets.only(bottom: 2.h),
             title: Text(
-              'Ngày ${day.dayNumber ?? index + 1}',
+              'Ngày ${day.dayNumber ?? index + 1}'
+              '${(startTime != null && endTime != null) ? " (${_formatTime(startTime)} - ${_formatTime(endTime)})" : ""}',
               style: TextStyle(
                 color: Colors.blue,
                 fontWeight: FontWeight.bold,
@@ -232,8 +238,6 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
       );
     }
   }
-
-
 
   Widget _buildReviewsTab() {
     final List<TourReviewModel> reviews =
@@ -332,7 +336,7 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
                           message: 'Báo cáo đánh giá',
                           child: InkWell(
                             onTap: () => _openReportSheet(
-                              context: ctx, 
+                              context: ctx,
                               reviewId: reviewId,
                               userName: r.userName ?? 'Người dùng',
                             ),
@@ -463,7 +467,7 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
                         child: Text(
                           'Báo cáo đánh giá của “$userName”',
                           style: TextStyle(
-                            fontSize: 15.sp, 
+                            fontSize: 15.sp,
                             fontWeight: FontWeight.w800,
                             color: Colors.black87,
                             height: 1.2,
@@ -474,11 +478,10 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
                   ),
                   SizedBox(height: 2.2.h),
 
-                  
                   Text(
                     'Chọn lý do báo cáo',
                     style: TextStyle(
-                      fontSize: 13.sp, 
+                      fontSize: 13.sp,
                       fontWeight: FontWeight.w700,
                       color: Colors.black87,
                     ),
@@ -526,7 +529,7 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
                   Text(
                     'Mô tả chi tiết (tùy chọn)',
                     style: TextStyle(
-                      fontSize: 13.sp, 
+                      fontSize: 13.sp,
                       fontWeight: FontWeight.w700,
                       color: Colors.black87,
                     ),
@@ -602,11 +605,9 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
 
                                   if (selectedReason != null &&
                                       note.isNotEmpty) {
-                                    
                                     reason =
                                         'Lý do: ${selectedReason!}. Mô tả: $note';
                                   } else {
-                                   
                                     reason = (selectedReason ?? note);
                                   }
 
@@ -624,7 +625,7 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
                           label: Text(
                             'Gửi báo cáo',
                             style: TextStyle(
-                              fontSize: 13.5.sp, 
+                              fontSize: 13.5.sp,
                               fontWeight: FontWeight.w800,
                               color: Colors.white,
                               letterSpacing: 0.2,
@@ -641,7 +642,7 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
                               if (states.contains(MaterialState.disabled)) {
                                 return 0;
                               }
-                              return 3; 
+                              return 3;
                             }),
                             shape: MaterialStateProperty.all(
                               RoundedRectangleBorder(
@@ -651,9 +652,9 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
                             backgroundColor:
                                 MaterialStateProperty.resolveWith((states) {
                               if (states.contains(MaterialState.disabled)) {
-                                return Colors.red[200]; 
+                                return Colors.red[200];
                               }
-                              return Colors.red[700]; 
+                              return Colors.red[700];
                             }),
                             shadowColor:
                                 MaterialStateProperty.all(Colors.red[200]),

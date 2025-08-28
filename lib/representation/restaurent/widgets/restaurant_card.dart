@@ -47,7 +47,7 @@ class RestaurantCard extends StatelessWidget {
                 child: Image.network(
                   locationModel.imgUrlFirst,
                   width: double.infinity,
-                  height: 110, 
+                  height: 110,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) =>
                       const Icon(Icons.error, size: 110),
@@ -57,8 +57,8 @@ class RestaurantCard extends StatelessWidget {
               // Nội dung
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 6), 
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -106,15 +106,6 @@ class RestaurantCard extends StatelessWidget {
                               const Icon(Icons.star,
                                   color: Colors.amber, size: 12),
                               const SizedBox(width: 4),
-                              Text(
-                                locationModel.rating != null
-                                    ? locationModel.rating!.toStringAsFixed(1)
-                                    : "Chưa có",
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
                             ],
                           ),
                           Text(
