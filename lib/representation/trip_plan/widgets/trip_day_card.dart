@@ -14,9 +14,7 @@ class TripDayCard extends StatelessWidget {
   final DateTime day;
   final TripPlanDetailModel detail;
 
-
   final void Function(List<TripActivityModel> activities)? onUpdateActivities;
-
 
   final void Function(List<TripPlanLocationModel> locations)? onUpdateLocations;
 
@@ -110,7 +108,13 @@ class TripDayCard extends StatelessWidget {
                 final List<TripActivityModel> activities =
                     currentDayData?.activities ?? [];
 
-                final otherSelected = allDays
+                TimeOfDay? startTime;
+                if (activities.isNotEmpty) {
+                  final t = activities.first.startTime;
+                  startTime = TimeOfDay(hour: t.hour, minute: t.minute);
+                }
+
+                final otherSelected = allDays 
                     .where((d) => _ymd(d.date) != _ymd(day))
                     .expand((d) => d.activities)
                     .toList();
@@ -123,6 +127,8 @@ class TripDayCard extends StatelessWidget {
                     'day': day,
                     'selected': activities,
                     'allSelectedOtherDays': otherSelected,
+                    'startTime':
+                        startTime ?? const TimeOfDay(hour: 6, minute: 0),
                   },
                 );
 

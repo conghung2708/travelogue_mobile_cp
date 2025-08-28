@@ -9,8 +9,9 @@ class PlaceCard extends StatelessWidget {
   final bool blocked;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
-
   final String? distanceText;
+
+  final String? metaText;
 
   const PlaceCard({
     super.key,
@@ -22,6 +23,7 @@ class PlaceCard extends StatelessWidget {
     this.onTap,
     this.onLongPress,
     this.distanceText,
+    this.metaText,
   });
 
   @override
@@ -86,34 +88,72 @@ class PlaceCard extends StatelessWidget {
             left: 2.w,
             right: 2.w,
             bottom: 2.h,
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: EdgeInsets.all(1.h),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.4),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(icon, size: 12.sp, color: Colors.white),
+                Row(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(1.h),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.4),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(icon, size: 12.sp, color: Colors.white),
+                    ),
+                    SizedBox(width: 2.w),
+                    Expanded(
+                      child: Text(
+                        name,
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          shadows: const [
+                            Shadow(
+                              color: Colors.black54,
+                              offset: Offset(0, 1),
+                              blurRadius: 2,
+                            ),
+                          ],
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
-                SizedBox(width: 2.w),
-                Expanded(
-                  child: Text(
-                    name,
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      shadows: const [
-                        Shadow(
-                            color: Colors.black54,
-                            offset: Offset(0, 1),
-                            blurRadius: 2),
+                if (metaText != null && metaText!.isNotEmpty) ...[
+                  SizedBox(height: 0.7.h),
+                  Container(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 2.w, vertical: 0.5.h),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.40),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.schedule,
+                            size: 14, color: Colors.white),
+                        SizedBox(width: 1.w),
+                        ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: 36.w),
+                          child: Text(
+                            metaText!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 10.sp,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
-                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
+                ],
               ],
             ),
           ),

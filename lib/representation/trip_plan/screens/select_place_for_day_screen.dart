@@ -21,6 +21,12 @@ import 'package:travelogue_mobile/representation/trip_plan/widgets/place_card.da
 import 'package:travelogue_mobile/representation/trip_plan/widgets/route_dialogs.dart';
 import 'package:travelogue_mobile/representation/trip_plan/widgets/selected_list_sheet.dart';
 
+class _VisitAdjust {
+  final DateTime arrival;
+  final int stayMinutes;
+  const _VisitAdjust(this.arrival, this.stayMinutes);
+}
+
 class SelectPlaceForDayScreen extends StatefulWidget {
   static const routeName = '/select-place-for-day';
 
@@ -32,10 +38,9 @@ class SelectPlaceForDayScreen extends StatefulWidget {
 }
 
 class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
-
-  static const _kBlue = Color(0xFF1565C0); 
-  static const _kBlueLight = Color(0xFFE3F2FD); 
-  static const _kBlueLight2 = Color(0xFFEEF6FF); 
+  static const _kBlue = Color(0xFF1565C0);
+  static const _kBlueLight = Color(0xFFE3F2FD);
+  static const _kBlueLight2 = Color(0xFFEEF6FF);
 
   ButtonStyle get _tonalBlueButton => ElevatedButton.styleFrom(
         backgroundColor: _kBlueLight,
@@ -45,12 +50,15 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       );
 
-  Widget _dialogAction(String label, {required VoidCallback onPressed, bool isPrimary = false}) {
+  Widget _dialogAction(String label,
+      {required VoidCallback onPressed, bool isPrimary = false}) {
     return ElevatedButton(
       onPressed: onPressed,
       style: _tonalBlueButton.copyWith(
-        backgroundColor: WidgetStatePropertyAll(isPrimary ? _kBlue : _kBlueLight),
-        foregroundColor: WidgetStatePropertyAll(isPrimary ? Colors.white : _kBlue),
+        backgroundColor:
+            WidgetStatePropertyAll(isPrimary ? _kBlue : _kBlueLight),
+        foregroundColor:
+            WidgetStatePropertyAll(isPrimary ? Colors.white : _kBlue),
       ),
       child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
     );
@@ -61,7 +69,8 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
     return Theme(
       data: base.copyWith(
         dialogTheme: DialogTheme(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
           backgroundColor: Colors.white,
           surfaceTintColor: Colors.white,
           titleTextStyle: const TextStyle(
@@ -80,7 +89,8 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
     );
   }
 
-  Future<bool> _showConfirmDialog({required String title, required Widget content}) async {
+  Future<bool> _showConfirmDialog(
+      {required String title, required Widget content}) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => _wrapDialog(
@@ -94,32 +104,40 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
           ),
           contentPadding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
           titlePadding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          insetPadding:
+              const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: _kBlue)),
+              Text(title,
+                  style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: _kBlue)),
               const SizedBox(height: 8),
               DecoratedBox(
                 decoration: BoxDecoration(
                   color: _kBlueLight2,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Padding(padding: const EdgeInsets.all(12), child: content),
+                child:
+                    Padding(padding: const EdgeInsets.all(12), child: content),
               ),
             ],
           ),
           actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
           actions: [
             _dialogAction('Hủy', onPressed: () => Navigator.pop(ctx, false)),
-            _dialogAction('Tiếp tục', isPrimary: true, onPressed: () => Navigator.pop(ctx, true)),
+            _dialogAction('Tiếp tục',
+                isPrimary: true, onPressed: () => Navigator.pop(ctx, true)),
           ],
         ),
       ),
     );
     return ok == true;
   }
+
 
   Future<bool> _showInputDialog({
     required String title,
@@ -131,24 +149,34 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
       context: context,
       builder: (ctx) => _wrapDialog(
         AlertDialog(
-          title: const Row(children: [Icon(Icons.tune, color: _kBlue), SizedBox(width: 8), Text('Thiết lập')]),
+          title: const Row(children: [
+            Icon(Icons.tune, color: _kBlue),
+            SizedBox(width: 8),
+            Text('Thiết lập')
+          ]),
           contentPadding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.w700, color: _kBlue)),
+              Text(title,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w700, color: _kBlue)),
               const SizedBox(height: 10),
               DecoratedBox(
-                decoration: BoxDecoration(color: _kBlueLight2, borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(
+                    color: _kBlueLight2,
+                    borderRadius: BorderRadius.circular(12)),
                 child: Padding(padding: const EdgeInsets.all(12), child: input),
               ),
             ],
           ),
           actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
           actions: [
-            _dialogAction(cancelText, onPressed: () => Navigator.pop(ctx, false)),
-            _dialogAction(okText, isPrimary: true, onPressed: () => Navigator.pop(ctx, true)),
+            _dialogAction(cancelText,
+                onPressed: () => Navigator.pop(ctx, false)),
+            _dialogAction(okText,
+                isPrimary: true, onPressed: () => Navigator.pop(ctx, true)),
           ],
         ),
       ),
@@ -174,6 +202,8 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
 
   static const int minHour = 6;
   static const int maxHour = 23;
+
+  bool _userPickedStart = false;
 
   late TimeOfDay _dayStart;
   late DateTime _dayDate;
@@ -213,7 +243,6 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
           travelMeters = route.distanceMeters;
           travelSeconds = route.durationSeconds;
         } catch (e) {
-     
           debugPrint('[RECOMPUTE][WARN] Lỗi khi tính route A→C: $e');
         }
       }
@@ -291,8 +320,10 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
   }
 
   Future<void> _handleRemoveAt(int idx) async {
-    final removedAct = _selectedActivities[idx];
+    final beforeFirstId =
+        _itinerary.isNotEmpty ? _itinerary.first.place.id : null;
 
+    final removedAct = _selectedActivities[idx];
     setState(() {
       _selectedActivities.removeAt(idx);
       _itinerary.removeAt(idx);
@@ -301,9 +332,13 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
 
     await _recomputeLinkAndTimesAfterRemove(idx);
 
-    if (_anchorPlace != null) {
-      _unawaited(_refreshMatrixFor(_allLocations));
+    final afterFirstId =
+        _itinerary.isNotEmpty ? _itinerary.first.place.id : null;
+    if (beforeFirstId != afterFirstId) {
+      await _syncStartWithFirstStop();
     }
+
+    if (_anchorPlace != null) _unawaited(_refreshMatrixFor(_allLocations));
   }
 
   @override
@@ -332,6 +367,15 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
 
     final initialSelected =
         (args['selected'] as List?)?.cast<TripActivityModel>() ?? const [];
+    _dayStart = args['startTime'] is TimeOfDay
+        ? args['startTime'] as TimeOfDay
+        : const TimeOfDay(hour: minHour, minute: 0);
+
+    if (initialSelected.isNotEmpty) {
+      final t0 = initialSelected.first.startTime;
+      _dayStart = TimeOfDay(hour: t0.hour, minute: t0.minute);
+    }
+
     _selectedActivities
       ..clear()
       ..addAll(initialSelected);
@@ -369,6 +413,56 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
           otherSelected.map((e) => e.locationId).where((e) => e.isNotEmpty));
   }
 
+  Future<void> _ensureLegRoutes() async {
+    if (_itinerary.length <= 1) return;
+
+    for (int i = 1; i < _itinerary.length; i++) {
+      final prev = _itinerary[i - 1].place;
+      final curr = _itinerary[i].place;
+
+      final fLat = prev.safeLat, fLng = prev.safeLng;
+      final tLat = curr.safeLat, tLng = curr.safeLng;
+      if (fLat == null || fLng == null || tLat == null || tLng == null)
+        continue;
+
+      if (_itinerary[i].travelSeconds > 0 && _itinerary[i].travelMeters > 0) {
+        continue;
+      }
+
+      try {
+        final route = await _vietmap.routeMotorcycle(
+          fromLat: fLat,
+          fromLng: fLng,
+          toLat: tLat,
+          toLng: tLng,
+        );
+
+        final old = _itinerary[i];
+        _itinerary[i] = ItineraryStop(
+          place: old.place,
+          arrival: old.arrival,
+          depart: old.depart,
+          stayMinutes: old.stayMinutes,
+          travelMeters: route.distanceMeters,
+          travelSeconds: route.durationSeconds,
+        );
+      } catch (_) {}
+    }
+  }
+
+  String? _openCloseText(LocationModel loc) {
+  final open = _parseOpenTime(itemOpenTime: loc.openTime);
+  final close = _parseCloseTime(itemCloseTime: loc.closeTime);
+
+  if (open == null && close == null) return null;
+
+  final parts = <String>[];
+  if (open != null) parts.add('Mở: ${_fmtTOD(open)}');
+  if (close != null) parts.add('Đóng: ${_fmtTOD(close)}');
+  return parts.join(' · ');
+}
+
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider<HomeBloc>(
@@ -383,11 +477,14 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
             if (!_didHydrateCoords &&
                 _allLocations.isNotEmpty &&
                 _itinerary.isNotEmpty) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
+              WidgetsBinding.instance.addPostFrameCallback((_) async {
                 if (!mounted) return;
                 setState(() {
                   _hydrateSelectedFromCatalog();
                 });
+                await _ensureLegRoutes();
+                await _syncStartWithFirstStop(showPrompt: false);
+                _recalcTimesForSelected();
                 _unawaited(_refreshMatrixFor(_allLocations));
               });
             }
@@ -430,19 +527,64 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
                                 context: context,
                                 initialTime: _dayStart,
                               );
-                              if (picked != null) {
-                                if (picked.hour < minHour ||
-                                    picked.hour > maxHour) {
-                                  _snack(
-                                      'Chỉ cho phép từ $minHour:00 tới $maxHour:00');
+                              if (picked == null) return;
+
+                              if (picked.hour < minHour ||
+                                  picked.hour > maxHour) {
+                                _snack(
+                                    'Chỉ cho phép từ $minHour:00 tới $maxHour:00');
+                                return;
+                              }
+
+                              final oldStart = _dayStart;
+
+                              setState(() {
+                                _userPickedStart = true;
+                                _dayStart = picked;
+                              });
+
+                              if (_itinerary.isNotEmpty) {
+                                final first = _itinerary.first;
+                                final firstStay = first.stayMinutes;
+                                DateTime arrival0 =
+                                    TimeUtils.combine(_dayDate, _dayStart);
+
+                                final adjust = await _respectOpenClose(
+                                    first.place, arrival0, firstStay);
+                                if (adjust == null) {
+                                  setState(() {
+                                    _dayStart = oldStart;
+                                  }); // revert
                                   return;
                                 }
-                                setState(() {
-                                  _dayStart = picked;
-                                  _roadKmCache.clear();
-                                  _recalcTimesForSelected();
-                                });
+
+                                final newArr = adjust.arrival;
+                                final newStay = adjust.stayMinutes;
+                                final newDep =
+                                    newArr.add(Duration(minutes: newStay));
+
+                                _selectedActivities[0] =
+                                    _selectedActivities[0].copyWith(
+                                  startTime: newArr,
+                                  endTime: newDep,
+                                  startTimeFormatted:
+                                      DateFormat('HH:mm').format(newArr),
+                                  endTimeFormatted:
+                                      DateFormat('HH:mm').format(newDep),
+                                  duration: '$newStay phút',
+                                );
+                                _itinerary[0] = ItineraryStop(
+                                  place: first.place,
+                                  arrival: newArr,
+                                  depart: newDep,
+                                  stayMinutes: newStay,
+                                  travelMeters: first.travelMeters,
+                                  travelSeconds: first.travelSeconds,
+                                );
                               }
+
+                              _roadKmCache.clear();
+                              _recalcTimesForSelected();
                             },
                             child: const Text('Đổi giờ'),
                           ),
@@ -527,6 +669,7 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
                                     }
                                   }
                                 }
+                                final openClose = _openCloseText(loc);
 
                                 return PlaceCard(
                                   imageUrl: loc.imgUrlFirst,
@@ -543,6 +686,7 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
                                     arguments: loc,
                                   ),
                                   distanceText: distanceText,
+                                  metaText: openClose,
                                 );
                               },
                             );
@@ -564,6 +708,41 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
         ),
       ),
     );
+  }
+
+  Future<TimeOfDay?> _ensureStartNotBeforeOpen(TimeOfDay? openTod) async {
+    if (openTod == null) return _dayStart;
+
+    final planned = _dayStart;
+    final earliest = const TimeOfDay(hour: minHour, minute: 0);
+
+    TimeOfDay effective = (planned.hour < earliest.hour ||
+            (planned.hour == earliest.hour && planned.minute < earliest.minute))
+        ? earliest
+        : planned;
+
+    final isTooEarly = (openTod.hour > effective.hour) ||
+        (openTod.hour == effective.hour && openTod.minute > effective.minute);
+
+    if (!isTooEarly) return effective;
+
+    final ok = await _showConfirmDialog(
+      title: 'Điểm mở cửa lúc ${_fmtTOD(openTod)}',
+      content: Text(
+        'Giờ bạn chọn là ${_fmtTOD(effective)}, nhưng điểm này mở cửa lúc '
+        '${_fmtTOD(openTod)}. Bạn có muốn lùi “Bắt đầu từ” về ${_fmtTOD(openTod)} không?',
+      ),
+    );
+
+    if (ok) {
+      setState(() {
+        _dayStart = openTod;
+        _userPickedStart = false;
+      });
+      return openTod;
+    } else {
+      return null;
+    }
   }
 
   PreferredSizeWidget _buildIconOnlyAppBar(BuildContext context) {
@@ -636,8 +815,10 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
                   Icon(Icons.motorcycle, color: _kBlue),
                   SizedBox(width: 8),
                   Text('Giới hạn khoảng cách',
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: _kBlue)),
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: _kBlue)),
                 ],
               ),
               const SizedBox(height: 12),
@@ -658,7 +839,8 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
               Row(
                 children: [
                   Text('Hiện tại: ${_maxDistanceKm.toStringAsFixed(0)} km',
-                      style: const TextStyle(fontWeight: FontWeight.w700, color: _kBlue)),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w700, color: _kBlue)),
                   const Spacer(),
                   ElevatedButton.icon(
                     style: _tonalBlueButton,
@@ -691,7 +873,10 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
       if (fLat != null && fLng != null && tLat != null && tLng != null) {
         try {
           final route = await _vietmap.routeMotorcycle(
-            fromLat: fLat, fromLng: fLng, toLat: tLat, toLng: tLng,
+            fromLat: fLat,
+            fromLng: fLng,
+            toLat: tLat,
+            toLng: tLng,
           );
           final distanceKm = route.distanceMeters / 1000.0;
           if (distanceKm > _maxDistanceKm) {
@@ -703,7 +888,7 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
                 children: [
                   _placePills(from.name ?? 'Điểm trước', to.name ?? 'Điểm sau'),
                   const SizedBox(height: 12),
-                  Text('Sau khi xóa, khoảng cách sẽ là ' 
+                  Text('Sau khi xóa, khoảng cách sẽ là '
                       '${distanceKm.toStringAsFixed(1)} km (>${_maxDistanceKm.toStringAsFixed(0)} km).'),
                 ],
               ),
@@ -723,8 +908,8 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
       input: TextField(
         controller: controller,
         keyboardType: TextInputType.number,
-        decoration:
-            const InputDecoration(hintText: 'Ví dụ: 15', suffixText: 'km', border: InputBorder.none),
+        decoration: const InputDecoration(
+            hintText: 'Ví dụ: 15', suffixText: 'km', border: InputBorder.none),
       ),
       okText: 'Lưu',
       cancelText: 'Hủy',
@@ -752,17 +937,18 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
       builder: (_) {
         return StatefulBuilder(
           builder: (context, setModalState) {
-           final places = _selectedActivities
-    .map((a) => LocationModel(
-          id: a.locationId,
-          name: a.name,
-          description: a.description,
-          address: a.address,
-          medias: (a.imageUrl != null && a.imageUrl!.trim().isNotEmpty)
-              ? [MediaModel(mediaUrl: a.imageUrl!.trim())]
-              : const <MediaModel>[],
-        ))
-    .toList();
+            final places = _selectedActivities
+                .map((a) => LocationModel(
+                      id: a.locationId,
+                      name: a.name,
+                      description: a.description,
+                      address: a.address,
+                      medias:
+                          (a.imageUrl != null && a.imageUrl!.trim().isNotEmpty)
+                              ? [MediaModel(mediaUrl: a.imageUrl!.trim())]
+                              : const <MediaModel>[],
+                    ))
+                .toList();
             final itin = List<ItineraryStop>.from(_itinerary);
 
             return SelectedListSheet(
@@ -800,9 +986,11 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              _placePills(from.name ?? 'Điểm trước', to.name ?? 'Điểm sau'),
+                              _placePills(from.name ?? 'Điểm trước',
+                                  to.name ?? 'Điểm sau'),
                               const SizedBox(height: 12),
-                              Text('Sau khi xóa “${removedAct.name}”, khoảng cách sẽ là ' 
+                              Text(
+                                  'Sau khi xóa “${removedAct.name}”, khoảng cách sẽ là '
                                   '${distanceKm.toStringAsFixed(1)} km (>${_maxDistanceKm.toStringAsFixed(0)} km).'),
                             ],
                           ),
@@ -833,49 +1021,49 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
     );
   }
 
-Widget _placePills(String a, String b) {
-  Widget chip(String text, IconData icon) {
-    final maxW = MediaQuery.of(context).size.width * 0.55;
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxWidth: maxW),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: _kBlueLight,
-          borderRadius: BorderRadius.circular(999),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 16, color: _kBlue),
-            const SizedBox(width: 6),
-            Flexible( 
-              child: Text(
-                text,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                softWrap: false,
-                style: const TextStyle(color: _kBlue, fontWeight: FontWeight.w600),
+  Widget _placePills(String a, String b) {
+    Widget chip(String text, IconData icon) {
+      final maxW = MediaQuery.of(context).size.width * 0.55;
+      return ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: maxW),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: _kBlueLight,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 16, color: _kBlue),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  text,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: false,
+                  style: const TextStyle(
+                      color: _kBlue, fontWeight: FontWeight.w600),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
+      );
+    }
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        chip(a, Icons.place),
+        const Icon(Icons.arrow_forward, color: _kBlue, size: 18),
+        chip(b, Icons.flag),
+      ],
     );
   }
-
-  return Wrap(
-    spacing: 8,
-    runSpacing: 8,
-    crossAxisAlignment: WrapCrossAlignment.center,
-    children: [
-      chip(a, Icons.place),
-      const Icon(Icons.arrow_forward, color: _kBlue, size: 18),
-      chip(b, Icons.flag),
-    ],
-  );
-}
-
 
   Widget _buildCompleteButton({bool alwaysEnabled = false}) {
     final hasAny = _selectedActivities.isNotEmpty;
@@ -942,15 +1130,45 @@ Widget _placePills(String a, String b) {
     );
   }
 
+  Future<void> _syncStartWithFirstStop({bool showPrompt = true}) async {
+    if (_selectedActivities.isEmpty || _itinerary.isEmpty) return;
+
+    final firstPlace = _itinerary.first.place;
+    final openTod = _parseOpenTime(itemOpenTime: firstPlace.openTime);
+    if (openTod == null) return;
+
+    final start = _dayStart;
+    final startEarlier = (start.hour < openTod.hour) ||
+        (start.hour == openTod.hour && start.minute < openTod.minute);
+
+    if (!startEarlier) return;
+
+    if (_userPickedStart && showPrompt) {
+      final ok = await _showConfirmDialog(
+        title: 'Điểm mở cửa lúc ${_fmtTOD(openTod)}',
+        content: Text(
+          'Bạn đang bắt đầu lúc ${_fmtTOD(start)}, sớm hơn giờ mở cửa của '
+          '“${firstPlace.name ?? 'điểm đầu tiên'}” (${_fmtTOD(openTod)}). '
+          'Bạn có muốn lùi “Bắt đầu từ” về ${_fmtTOD(openTod)} không?',
+        ),
+      );
+      if (!ok) return;
+    }
+
+    setState(() {
+      _dayStart = openTod;
+      _userPickedStart = false;
+      _recalcTimesForSelected();
+    });
+  }
+
   Future<void> _onPlaceTap(LocationModel loc) async {
     final id = loc.id ?? (loc.name ?? '');
     final isSelected = _selectedActivities.any((a) => a.locationId == id);
 
     if (isSelected) {
       final idx = _selectedActivities.indexWhere((a) => a.locationId == id);
-      if (!await _confirmDistanceAfterRemoval(idx)) {
-        return;
-      }
+      if (!await _confirmDistanceAfterRemoval(idx)) return;
       await _handleRemoveAt(idx);
       return;
     }
@@ -961,35 +1179,30 @@ Widget _placePills(String a, String b) {
     }
 
     final stay = await RouteDialogs.askStayMinutes(context);
-    if (stay == null || stay <= 0) {
-      return;
-    }
+    if (stay == null || stay <= 0) return;
 
     if (_selectedActivities.isEmpty) {
       if (loc.safeLat == null || loc.safeLng == null) {
-        _snack('“${loc.name ?? 'Điểm này'}” thiếu tọa độ. Không thể làm điểm xuất phát.');
+        _snack(
+            '“${loc.name ?? 'Điểm này'}” thiếu tọa độ. Không thể làm điểm xuất phát.');
         return;
       }
 
-      final parsedOpen = _parseOpenTime(itemOpenTime: loc.openTime);
-      if (parsedOpen != null) {
-        if (parsedOpen.hour > maxHour ||
-            (parsedOpen.hour == maxHour && parsedOpen.minute > 0)) {
-          _snack('Giờ mở cửa (${_fmtTOD(parsedOpen)}) vượt quá $maxHour:00.');
-          return;
-        }
-        final adjusted = TimeOfDay(
-          hour: parsedOpen.hour < minHour ? minHour : parsedOpen.hour,
-          minute: parsedOpen.minute,
-        );
-        setState(() => _dayStart = adjusted);
-      }
+      final openTod = _parseOpenTime(itemOpenTime: loc.openTime);
+      final confirmedStart = await _ensureStartNotBeforeOpen(openTod);
+      if (confirmedStart == null) return;
 
-      final start = TimeUtils.combine(_dayDate, _dayStart);
-      final earliest = TimeUtils.combine(
+      DateTime arrival = TimeUtils.combine(_dayDate, _dayStart);
+      final minDt = TimeUtils.combine(
           _dayDate, const TimeOfDay(hour: minHour, minute: 0));
-      final arrival = start.isBefore(earliest) ? earliest : start;
-      final depart = arrival.add(Duration(minutes: stay));
+      if (arrival.isBefore(minDt)) arrival = minDt;
+
+      final adjust = await _respectOpenClose(loc, arrival, stay);
+      if (adjust == null) return;
+
+      arrival = adjust.arrival;
+      final int finalStay = adjust.stayMinutes;
+      final depart = arrival.add(Duration(minutes: finalStay));
 
       if (!TimeUtils.withinDay(arrival, _dayDate, minHour, maxHour) ||
           !TimeUtils.withinDay(depart, _dayDate, minHour, maxHour)) {
@@ -1002,11 +1215,9 @@ Widget _placePills(String a, String b) {
         placeName: loc.name ?? 'Điểm mới',
         arrival: arrival,
         depart: depart,
-        stayMinutes: stay,
+        stayMinutes: finalStay,
       );
-      if (!ok) {
-        return;
-      }
+      if (!ok) return;
 
       final act = _makeActivityFromLocation(
         loc: loc,
@@ -1017,16 +1228,14 @@ Widget _placePills(String a, String b) {
 
       setState(() {
         _selectedActivities.add(act);
-        _itinerary.add(
-          ItineraryStop(
-            place: loc,
-            arrival: arrival,
-            depart: depart,
-            stayMinutes: stay,
-            travelMeters: 0,
-            travelSeconds: 0,
-          ),
-        );
+        _itinerary.add(ItineraryStop(
+          place: loc,
+          arrival: arrival,
+          depart: depart,
+          stayMinutes: finalStay,
+          travelMeters: 0,
+          travelSeconds: 0,
+        ));
         _selectedIds.add(id);
         _anchorPlace = loc;
         _roadKmCache.clear();
@@ -1041,11 +1250,13 @@ Widget _placePills(String a, String b) {
     final toLat = loc.safeLat, toLng = loc.safeLng;
 
     if (fromLat == null || fromLng == null) {
-      _snack('“${lastStop.place.name ?? 'Điểm trước'}” thiếu tọa độ. Không thể tính lộ trình.');
+      _snack(
+          '“${lastStop.place.name ?? 'Điểm trước'}” thiếu tọa độ. Không thể tính lộ trình.');
       return;
     }
     if (toLat == null || toLng == null) {
-      _snack('“${loc.name ?? 'Điểm mới'}” thiếu tọa độ. Không thể tính lộ trình.');
+      _snack(
+          '“${loc.name ?? 'Điểm mới'}” thiếu tọa độ. Không thể tính lộ trình.');
       return;
     }
 
@@ -1065,22 +1276,26 @@ Widget _placePills(String a, String b) {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              _placePills(lastStop.place.name ?? 'Điểm trước', loc.name ?? 'Điểm mới'),
+              _placePills(
+                  lastStop.place.name ?? 'Điểm trước', loc.name ?? 'Điểm mới'),
               const SizedBox(height: 12),
-              Text('Điểm này cách điểm trước khoảng ' 
+              Text('Điểm này cách điểm trước khoảng '
                   '${distanceKm.toStringAsFixed(1)} km, vượt giới hạn khuyến nghị là ${_maxDistanceKm.toStringAsFixed(0)} km.'),
             ],
           ),
         );
-
-        if (confirm != true) {
-          return;
-        }
+        if (confirm != true) return;
       }
 
-      final arrival =
+      var arrival =
           lastStop.depart.add(Duration(seconds: route.durationSeconds));
-      final depart = arrival.add(Duration(minutes: stay));
+
+      final adjust = await _respectOpenClose(loc, arrival, stay);
+      if (adjust == null) return;
+
+      arrival = adjust.arrival;
+      final int finalStay = adjust.stayMinutes;
+      final depart = arrival.add(Duration(minutes: finalStay));
 
       if (!TimeUtils.withinDay(arrival, _dayDate, minHour, maxHour) ||
           !TimeUtils.withinDay(depart, _dayDate, minHour, maxHour)) {
@@ -1096,9 +1311,7 @@ Widget _placePills(String a, String b) {
         arrival: arrival,
         depart: depart,
       );
-      if (!ok) {
-        return;
-      }
+      if (!ok) return;
 
       final act = _makeActivityFromLocation(
         loc: loc,
@@ -1109,23 +1322,20 @@ Widget _placePills(String a, String b) {
 
       setState(() {
         _selectedActivities.add(act);
-        _itinerary.add(
-          ItineraryStop(
-            place: loc,
-            arrival: arrival,
-            depart: depart,
-            stayMinutes: stay,
-            travelMeters: route.distanceMeters,
-            travelSeconds: route.durationSeconds,
-          ),
-        );
+        _itinerary.add(ItineraryStop(
+          place: loc,
+          arrival: arrival,
+          depart: depart,
+          stayMinutes: finalStay,
+          travelMeters: route.distanceMeters,
+          travelSeconds: route.durationSeconds,
+        ));
         _selectedIds.add(id);
         _anchorPlace = loc;
         _roadKmCache.clear();
       });
 
       _unawaited(_refreshMatrixFor(_allLocations));
-    // ignore: nullable_type_in_catch_clause
     } on dynamic catch (e, st) {
       try {
         final status = (e as dynamic).response?.statusCode;
@@ -1141,30 +1351,31 @@ Widget _placePills(String a, String b) {
   }
 
   void _recalcTimesForSelected({int startFromIndex = 0}) {
-    if (_selectedActivities.isEmpty) {
-      return;
-    }
+    if (_selectedActivities.isEmpty) return;
 
     DateTime cursor = TimeUtils.combine(_dayDate, _dayStart);
     final earliest =
         TimeUtils.combine(_dayDate, const TimeOfDay(hour: minHour, minute: 0));
-    if (cursor.isBefore(earliest)) {
-      cursor = earliest;
-    }
+    if (cursor.isBefore(earliest)) cursor = earliest;
 
     for (int i = 0; i < _selectedActivities.length; i++) {
-      if (i < startFromIndex && i != 0) {
-        continue;
-      }
+      if (i < startFromIndex && i != 0) continue;
 
       final oldAct = _selectedActivities[i];
       final oldStop = _itinerary[i];
+
       final stayMinutes = oldAct.endTime
           .difference(oldAct.startTime)
           .inMinutes
           .clamp(5, 24 * 60);
 
-      final arrival = (i == 0) ? cursor : _selectedActivities[i - 1].endTime;
+      if (i == 0) {
+      } else {
+        final legTravelSecs = _itinerary[i].travelSeconds;
+        cursor = _itinerary[i - 1].depart.add(Duration(seconds: legTravelSecs));
+      }
+
+      final arrival = cursor;
       final depart = arrival.add(Duration(minutes: stayMinutes));
 
       _selectedActivities[i] = oldAct.copyWith(
@@ -1186,6 +1397,11 @@ Widget _placePills(String a, String b) {
       );
 
       cursor = depart;
+    }
+    final tooLate = !TimeUtils.withinDay(
+        _selectedActivities.last.endTime, _dayDate, minHour, maxHour);
+    if (tooLate) {
+      _snack('Lịch vượt khung giờ $minHour:00–$maxHour:00 sau khi đổi giờ.');
     }
   }
 
@@ -1320,6 +1536,75 @@ Widget _placePills(String a, String b) {
       return null;
     }
     return TimeOfDay(hour: h, minute: mm);
+  }
+
+  TimeOfDay? _parseCloseTime({String? itemCloseTime}) {
+    final s = itemCloseTime?.trim();
+    if (s == null || s.isEmpty) return null;
+    final m = RegExp(r'(\d{1,2})(?:[:hHgG]?(\d{2}))?').firstMatch(s);
+    if (m == null) return null;
+    final h = int.tryParse(m.group(1) ?? '');
+    final mm = int.tryParse(m.group(2) ?? '0') ?? 0;
+    if (h == null || h < 0 || h > 23) return null;
+    if (mm < 0 || mm > 59) return null;
+    return TimeOfDay(hour: h, minute: mm);
+  }
+
+  Future<_VisitAdjust?> _respectOpenClose(
+    LocationModel loc,
+    DateTime rawArrival,
+    int stayMinutes,
+  ) async {
+    DateTime arrival = rawArrival;
+    int stay = stayMinutes;
+
+    final openTod = _parseOpenTime(itemOpenTime: loc.openTime);
+    final closeTod = _parseCloseTime(itemCloseTime: loc.closeTime);
+
+    if (openTod != null) {
+      final openDt = TimeUtils.combine(_dayDate, openTod);
+      if (arrival.isBefore(openDt)) {
+        final ok = await _showConfirmDialog(
+          title: 'Chưa mở cửa',
+          content: Text(
+            '“${loc.name ?? 'Địa điểm'}” mở lúc ${_fmtTOD(openTod)}. '
+            'Bạn có muốn chờ đến ${_fmtTOD(openTod)} không?',
+          ),
+        );
+        if (!ok) return null;
+        arrival = openDt;
+      }
+    }
+
+    if (closeTod != null) {
+      final closeDt = TimeUtils.combine(_dayDate, closeTod);
+
+      if (!arrival.isBefore(closeDt)) {
+        _snack(
+            '“${loc.name ?? 'Địa điểm'}” đóng lúc ${_fmtTOD(closeTod)}. Không thể ghé vào giờ này.');
+        return null;
+      }
+      final proposedDepart = arrival.add(Duration(minutes: stay));
+      if (proposedDepart.isAfter(closeDt)) {
+        final left = closeDt.difference(arrival).inMinutes;
+        if (left < 5) {
+          _snack(
+              'Chỉ còn $left phút trước giờ đóng cửa — thời lượng quá ngắn.');
+          return null;
+        }
+        final ok = await _showConfirmDialog(
+          title: 'Sắp đến giờ đóng cửa',
+          content: Text(
+            '“${loc.name ?? 'Địa điểm'}” đóng lúc ${_fmtTOD(closeTod)}.\n'
+            'Chỉ còn $left phút. Bạn có muốn rút ngắn thời gian dừng xuống $left phút không?',
+          ),
+        );
+        if (!ok) return null;
+        stay = left;
+      }
+    }
+
+    return _VisitAdjust(arrival, stay);
   }
 
   String _fmtTOD(TimeOfDay t) {

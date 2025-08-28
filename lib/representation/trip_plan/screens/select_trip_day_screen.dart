@@ -486,117 +486,118 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
       return index;
     }
 
-    return BlocConsumer<TripPlanBloc, TripPlanState>(
-      listener: (context, state) {
-        if (!mounted || _leavingScreen) return;
-        if (!_leavingScreen) {
-          if (state is TripPlanLoading) {
-            _showLoading();
-          } else {
-            _hideLoading();
-          }
-        }
-        if (_leavingScreen) return;
+   return BlocConsumer<TripPlanBloc, TripPlanState>(
+  listener: (context, state) {
+    if (!mounted || _leavingScreen) return;
 
-        if (state is GetTripPlanDetailSuccess) {
-          final prevIndex = _selectedTabIndex;
-          if (!mounted) return;
+    final isScreenOpLoading =
+        state is GetTripPlanDetailLoading ||
+        state is UpdateTripPlanLoading ||
+        state is UpdateTripPlanLocationsLoading;
 
-          var det = state.tripPlanDetail;
-          final missingServerImg =
-              det.imageUrl == null || det.imageUrl!.isEmpty;
-          final hasArgImg =
-              _initialImageUrl != null && _initialImageUrl!.isNotEmpty;
-          if (missingServerImg && hasArgImg) {
-            det = TripPlanDetailModel(
-              id: det.id,
-              name: det.name,
-              description: det.description,
-              startDate: det.startDate,
-              endDate: det.endDate,
-              totalDays: det.totalDays,
-              status: det.status,
-              statusText: det.statusText,
-              days: det.days,
-              imageUrl: _initialImageUrl, // fallback từ Card
-            );
-          }
+    if (isScreenOpLoading) {
+      _showLoading();
+    } else {
+      _hideLoading();
+    }
 
-          setState(() {
-            _detail = det;
-            _nameController.text = _detail!.name;
-            _rebuildDaysFromDetail(_detail!);
-            _selectedTabIndex =
-                _days.isNotEmpty ? prevIndex.clamp(0, _days.length - 1) : 0;
+  
+    if (state is GetTripPlanDetailSuccess) {
+      final prevIndex = _selectedTabIndex;
 
-            final trip = _detail;
-            if (trip != null) {
-              print(
-                  "📝 [SelectTripDayScreen] TripPlanDetail = ${trip.toJson()}");
-              print(
-                  "🖼  imageUrl(detail)=${trip.imageUrl} | fallback(arg)=$_initialImageUrl");
-            }
-          });
-        } else if (state is UpdateTripPlanLocationsSuccess) {
-          final hasPendingShorten =
-              (_pendingShortenStart != null) || (_pendingShortenEnd != null);
-
-          if (hasPendingShorten && _detail != null) {
-            final newStart = _pendingShortenStart ?? _detail!.startDate;
-            final newEnd = _pendingShortenEnd ?? _detail!.endDate;
-
-            _pendingShortenStart = null;
-            _pendingShortenEnd = null;
-
-            context.read<TripPlanBloc>().add(UpdateTripPlanEvent(
-                  id: _detail!.id,
-                  name: _detail!.name,
-                  description: _detail!.description,
-                  startDate: newStart,
-                  endDate: newEnd,
-                  imageUrl: _detail!.imageUrl ?? _initialImageUrl,
-                ));
-            return;
-          }
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Đã lưu danh sách hoạt động')),
-          );
-          final id = _detail?.id;
-          if (id != null) {
-            context.read<TripPlanBloc>().add(GetTripPlanDetailEvent(id));
-          }
-        } else if (state is UpdateTripPlanSuccess) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Đã cập nhật ngày hành trình')),
-          );
-          final id = (state.tripPlanDetail.id.isNotEmpty)
-              ? state.tripPlanDetail.id
-              : _detail?.id;
-          if (id != null) {
-            context.read<TripPlanBloc>().add(GetTripPlanDetailEvent(id));
-          }
-        } else if (state is TripPlanError ||
-            state is UpdateTripPlanLocationsError) {
-          _pendingShortenStart = null;
-          _pendingShortenEnd = null;
-          final msg = (state as dynamic).message;
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text(msg)));
-        }
-      },
-      builder: (context, state) {
-        if (_detail == null) {
-          return const Scaffold(
-            backgroundColor: Color(0xFFF1F7FF),
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-        return Scaffold(
-          backgroundColor: const Color(0xFFF1F7FF),
-          body: _buildBody(context),
+      var det = state.tripPlanDetail;
+      final missingServerImg = det.imageUrl == null || det.imageUrl!.isEmpty;
+      final hasArgImg = _initialImageUrl != null && _initialImageUrl!.isNotEmpty;
+      if (missingServerImg && hasArgImg) {
+        det = TripPlanDetailModel(
+          id: det.id,
+          name: det.name,
+          description: det.description,
+          startDate: det.startDate,
+          endDate: det.endDate,
+          totalDays: det.totalDays,
+          status: det.status,
+          statusText: det.statusText,
+          days: det.days,
+          imageUrl: _initialImageUrl,
         );
-      },
+      }
+
+      setState(() {
+        _detail = det;
+        _nameController.text = _detail!.name;
+        _rebuildDaysFromDetail(_detail!);
+        _selectedTabIndex = _days.isNotEmpty ? prevIndex.clamp(0, _days.length - 1) : 0;
+      });
+    }
+
+
+    else if (state is UpdateTripPlanLocationsSuccess) {
+      final hasPendingShorten = (_pendingShortenStart != null) || (_pendingShortenEnd != null);
+      if (hasPendingShorten && _detail != null) {
+        final newStart = _pendingShortenStart ?? _detail!.startDate;
+        final newEnd = _pendingShortenEnd ?? _detail!.endDate;
+        _pendingShortenStart = null;
+        _pendingShortenEnd = null;
+
+        context.read<TripPlanBloc>().add(UpdateTripPlanEvent(
+          id: _detail!.id,
+          name: _detail!.name,
+          description: _detail!.description,
+          startDate: newStart,
+          endDate: newEnd,
+          imageUrl: _detail!.imageUrl ?? _initialImageUrl,
+        ));
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Đã lưu danh sách hoạt động')),
+      );
+      final id = _detail?.id;
+      if (id != null) {
+        context.read<TripPlanBloc>().add(GetTripPlanDetailEvent(id));
+      }
+    }
+
+
+    else if (state is UpdateTripPlanSuccess) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Đã cập nhật ngày hành trình')),
+      );
+      final id = state.tripPlanDetail.id.isNotEmpty
+          ? state.tripPlanDetail.id
+          : _detail?.id;
+      if (id != null) {
+        context.read<TripPlanBloc>().add(GetTripPlanDetailEvent(id));
+      }
+    }
+
+
+    else if (state is GetTripPlanDetailError ||
+             state is UpdateTripPlanError ||
+             state is UpdateTripPlanLocationsError) {
+      _pendingShortenStart = null;
+      _pendingShortenEnd = null;
+      final msg = (state as dynamic).message;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    }
+  },
+  builder: (context, state) {
+    if (_detail == null) {
+
+      return const Scaffold(
+        backgroundColor: Color(0xFFF1F7FF),
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+    return Scaffold(
+      backgroundColor: const Color(0xFFF1F7FF),
+      body: _buildBody(context),
     );
+  },
+);
+
   }
 
   Widget _buildBody(BuildContext context) {
