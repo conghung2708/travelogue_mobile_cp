@@ -40,7 +40,6 @@ class HotelCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-           
               ClipRRect(
                 borderRadius:
                     const BorderRadius.vertical(top: Radius.circular(12)),
@@ -53,8 +52,6 @@ class HotelCard extends StatelessWidget {
                       const Icon(Icons.error, size: 110),
                 ),
               ),
-
-           
               Expanded(
                 child: Padding(
                   padding:
@@ -62,7 +59,6 @@ class HotelCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                     
                       Text(
                         locationModel.name ?? 'Không rõ tên',
                         style: const TextStyle(
@@ -73,8 +69,6 @@ class HotelCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
-
-                      
                       if (locationModel.address != null)
                         Row(
                           children: [
@@ -94,10 +88,7 @@ class HotelCard extends StatelessWidget {
                             ),
                           ],
                         ),
-
                       const Spacer(),
-
-            
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -106,15 +97,6 @@ class HotelCard extends StatelessWidget {
                               const Icon(Icons.star,
                                   color: Colors.amber, size: 12),
                               const SizedBox(width: 4),
-                              Text(
-                                locationModel.rating != null
-                                    ? locationModel.rating!.toStringAsFixed(1)
-                                    : 'Chưa có',
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
                             ],
                           ),
                           Text(

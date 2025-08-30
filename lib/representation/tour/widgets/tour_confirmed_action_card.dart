@@ -9,7 +9,11 @@ class TourConfirmedActionCard extends StatelessWidget {
   final TourModel tour;
   final NumberFormat currencyFormat;
   final DateTime? startTime;
-  final double price;
+
+  /// Nếu muốn ghi đè giá từ ngoài; nếu null sẽ dùng tour.adultPrice / tour.childrenPrice
+  final double? adultPriceOverride;
+  final double? childPriceOverride;
+
   final VoidCallback? onConfirmed;
   final bool? readOnly;
   final bool? isBooked;
@@ -18,8 +22,9 @@ class TourConfirmedActionCard extends StatelessWidget {
     super.key,
     required this.tour,
     required this.currencyFormat,
-    required this.price,
     this.startTime,
+    this.adultPriceOverride,
+    this.childPriceOverride,
     this.onConfirmed,
     this.readOnly = false,
     this.isBooked = false,
@@ -27,10 +32,14 @@ class TourConfirmedActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String tripDate = startTime != null
-        ? DateFormat('dd/MM/yyyy').format(startTime!)
-        : 'Chưa chọn ngày';
-    final String formattedPrice = currencyFormat.format(price);
+    final String tripDate =
+        startTime != null ? DateFormat('dd/MM/yyyy').format(startTime!) : 'Chưa chọn ngày';
+
+    // Lấy giá từ override hoặc từ tour
+    final double? adultPrice =
+        adultPriceOverride ?? (tour.adultPrice is num ? tour.adultPrice!.toDouble() : null);
+    final double? childPrice =
+        childPriceOverride ?? (tour.childrenPrice is num ? tour.childrenPrice!.toDouble() : null);
 
     final bool isViewingOnly = readOnly == true;
     final bool hasBeenBooked = isBooked == true;
@@ -50,43 +59,48 @@ class TourConfirmedActionCard extends StatelessWidget {
             children: [
               Icon(Icons.check_circle, color: Colors.green, size: 18.sp),
               SizedBox(width: 2.w),
-              Text(
-                hasBeenBooked
-                    ? "Tour đã được đặt"
-                    : "Tour đã sẵn sàng để đặt",
-                style: TextStyle(
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blueGrey[800],
+              Expanded(
+                child: Text(
+                  hasBeenBooked ? "Tour đã được đặt" : "Tour đã sẵn sàng để đặt",
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blueGrey[800],
+                  ),
                 ),
               ),
             ],
           ),
           SizedBox(height: 1.5.h),
 
-          // Date & Price
+          // Date
           Row(
             children: [
               Icon(Icons.event_note, size: 14.sp, color: Colors.blueGrey),
               SizedBox(width: 1.w),
-              Text(
-                'Khởi hành: $tripDate',
-                style: TextStyle(fontSize: 13.sp, color: Colors.blueGrey),
+              Expanded(
+                child: Text(
+                  'Khởi hành: $tripDate',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 13.sp, color: Colors.blueGrey),
+                ),
               ),
             ],
           ),
-          SizedBox(height: 1.2.h),
-          Text(
-            "💵 Giá tour: $formattedPrice",
-            style: TextStyle(
-              fontSize: 14.sp,
-              color: Colors.deepOrange,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          SizedBox(height: 2.h),
+          SizedBox(height: 1.6.h),
 
-          if (!isViewingOnly && !hasBeenBooked)
+          // ===== HỮU ÍCH: Chỉ hiện GIÁ + CTA khi có thể đặt
+          if (!isViewingOnly && !hasBeenBooked) ...[
+            _priceSection(
+              adultPrice: adultPrice,
+              childPrice: childPrice,
+              fmt: currencyFormat,
+            ),
+            SizedBox(height: 2.h),
+
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -113,16 +127,180 @@ class TourConfirmedActionCard extends StatelessWidget {
                   ),
                 ),
               ),
-            )
-
-   
-          else
+            ),
+          ] else
             _buildBookedMessage(context, hasBeenBooked),
         ],
       ),
     );
   }
 
+  // ==================== SUB-WIDGETS ====================
+
+  /// Chip giá: tệp màu với container ngoài của _priceSection
+  Widget _priceChip({
+    required String value,
+    required String label,
+    required bool isAdult,
+  }) {
+    const Color baseBg = Color(0xFFF7FAFF);
+    const Color baseBorder = Color(0xFFE3F0FF);
+    const Color brand = Color(0xFF1E6BFF);
+
+    final Color textMain = isAdult ? brand : Colors.blueGrey.shade800;
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 3.2.w, vertical: 0.9.h),
+      decoration: BoxDecoration(
+        color: baseBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: isAdult ? brand.withOpacity(.28) : baseBorder),
+        boxShadow: const [
+          BoxShadow(color: Color(0x08000000), blurRadius: 6, offset: Offset(0, 2)),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(isAdult ? Icons.person : Icons.child_care, size: 12.5.sp, color: textMain),
+          SizedBox(width: 1.4.w),
+          Text(
+            value,
+            style: TextStyle(
+              color: textMain,
+              fontWeight: FontWeight.w800,
+              fontSize: 13.2.sp,
+              letterSpacing: .1,
+            ),
+          ),
+          Text(
+            '  / $label',
+            style: TextStyle(
+              color: Colors.blueGrey.shade700,
+              fontWeight: FontWeight.w600,
+              fontSize: 11.6.sp,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Price section: accent bar + tiêu đề + chip giá + ghi chú
+  Widget _priceSection({
+    required double? adultPrice,
+    required double? childPrice,
+    required NumberFormat fmt,
+  }) {
+    final hasAdult = adultPrice != null && adultPrice > 0;
+    final hasChild = childPrice != null && childPrice > 0;
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 3.5.w, vertical: 1.6.h),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7FAFF),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE3F0FF)),
+        boxShadow: const [
+          BoxShadow(color: Color(0x0A000000), blurRadius: 8, offset: Offset(0, 3)),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Accent bar
+          Container(
+            width: 4,
+            height: hasChild ? 5.0.h : 3.2.h,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(2),
+              gradient: const LinearGradient(
+                colors: [Color(0xFF6EA8FE), Color(0xFF1E6BFF)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+          ),
+          SizedBox(width: 3.w),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Tiêu đề rõ ràng: GIÁ TOUR
+                Row(
+                  children: [
+                    Icon(Icons.price_change_rounded, size: 14.sp, color: const Color(0xFF1E6BFF)),
+                    SizedBox(width: 1.6.w),
+                    Text(
+                      'Giá tour',
+                      style: TextStyle(
+                        fontSize: 13.5.sp,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.blueGrey.shade900,
+                      ),
+                    ),
+                  ],
+                ),
+
+                SizedBox(height: 0.8.h),
+
+                // Chip giá
+                Wrap(
+                  spacing: 2.w,
+                  runSpacing: 1.h,
+                  children: [
+                    if (hasAdult)
+                      _priceChip(
+                        value: fmt.format(adultPrice),
+                        label: 'người lớn',
+                        isAdult: true,
+                      ),
+                    if (hasChild)
+                      _priceChip(
+                        value: fmt.format(childPrice),
+                        label: 'trẻ em',
+                        isAdult: false,
+                      ),
+                    if (!hasAdult && !hasChild)
+                      Text(
+                        'Giá sẽ cập nhật khi có lịch khởi hành',
+                        style: TextStyle(
+                          fontSize: 12.2.sp,
+                          color: Colors.blueGrey.shade600,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                  ],
+                ),
+
+                // Ghi chú ngắn gọn
+                if (hasAdult || hasChild) ...[
+                  SizedBox(height: 0.6.h),
+                  Row(
+                    children: [
+                      Icon(Icons.info_outline, size: 11.5.sp, color: Colors.blueGrey.shade500),
+                      SizedBox(width: 1.w),
+                      Expanded(
+                        child: Text(
+                          'Mức giá áp dụng trên mỗi hành khách.',
+                          style: TextStyle(
+                            fontSize: 10.8.sp,
+                            color: Colors.blueGrey.shade600,
+                            height: 1.3,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildConfirmDialog(BuildContext context) {
     return Dialog(
@@ -135,13 +313,12 @@ class TourConfirmedActionCard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
+              decoration: const BoxDecoration(
+                color: Color(0xFFEAF3FF),
                 shape: BoxShape.circle,
               ),
               padding: EdgeInsets.all(3.w),
-              child: Icon(Icons.rocket_launch_rounded,
-                  size: 28.sp, color: Colors.blueAccent),
+              child: Icon(Icons.rocket_launch_rounded, size: 28.sp, color: Colors.blueAccent),
             ),
             SizedBox(height: 2.h),
             Text(
@@ -218,7 +395,6 @@ class TourConfirmedActionCard extends StatelessWidget {
     );
   }
 
-
   Widget _buildBookedMessage(BuildContext context, bool hasBeenBooked) {
     return Container(
       margin: EdgeInsets.only(top: 2.h),
@@ -286,8 +462,7 @@ class TourConfirmedActionCard extends StatelessWidget {
                     elevation: 0,
                     shadowColor: Colors.transparent,
                     backgroundColor: Colors.transparent,
-                    padding: EdgeInsets.symmetric(
-                        horizontal: 6.w, vertical: 1.5.h),
+                    padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 1.5.h),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),

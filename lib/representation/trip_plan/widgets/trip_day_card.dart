@@ -14,10 +14,7 @@ class TripDayCard extends StatelessWidget {
   final DateTime day;
   final TripPlanDetailModel detail;
 
-
   final void Function(List<TripActivityModel> activities)? onUpdateActivities;
-
-
   final void Function(List<TripPlanLocationModel> locations)? onUpdateLocations;
 
   const TripDayCard({
@@ -96,8 +93,10 @@ class TripDayCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(dayName,
-                style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.bold)),
+            Text(
+              dayName,
+              style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.bold),
+            ),
             SizedBox(height: 1.h),
             Text("📍 Các điểm đến trong ngày hôm nay",
                 style: TextStyle(fontSize: 13.sp)),
@@ -109,6 +108,12 @@ class TripDayCard extends StatelessWidget {
                 final TripDayModel? currentDayData = _findDayData(detail, day);
                 final List<TripActivityModel> activities =
                     currentDayData?.activities ?? [];
+
+                TimeOfDay? startTime;
+                if (activities.isNotEmpty) {
+                  final t = activities.first.startTime;
+                  startTime = TimeOfDay(hour: t.hour, minute: t.minute);
+                }
 
                 final otherSelected = allDays
                     .where((d) => _ymd(d.date) != _ymd(day))
@@ -123,6 +128,8 @@ class TripDayCard extends StatelessWidget {
                     'day': day,
                     'selected': activities,
                     'allSelectedOtherDays': otherSelected,
+                    'startTime':
+                        startTime ?? const TimeOfDay(hour: 6, minute: 0),
                   },
                 );
 
@@ -161,8 +168,6 @@ class TripDayCard extends StatelessWidget {
                 }
 
                 if (result is List<TripActivityModel> && result.isNotEmpty) {
-                  print(
-                      'TripDayCard: got List<TripActivityModel>=${result.length} -> REPLACE');
                   onUpdateActivities
                       ?.call(List<TripActivityModel>.from(result));
                   WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -173,8 +178,6 @@ class TripDayCard extends StatelessWidget {
 
                 if (result is List<TripPlanLocationModel> &&
                     result.isNotEmpty) {
-                  print(
-                      'TripDayCard: got List<TripPlanLocationModel>=${result.length} -> ask parent PUT');
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     onUpdateLocations?.call(const []);
                   });
@@ -203,14 +206,14 @@ class TripDayCard extends StatelessWidget {
                   final endF = act.endTimeFormatted ??
                       DateFormat('HH:mm').format(act.endTime);
                   final duration = act.duration ?? '';
-
-                  final subtitle = [
+                  final infoLine = [
                     typeText,
                     '$startF–$endF',
                     if (duration.isNotEmpty) '($duration)',
                   ].join(' • ');
 
                   final img = act.imageUrl?.trim();
+                  final address = (act.address ?? '').trim();
 
                   return Card(
                     shape: RoundedRectangleBorder(
@@ -220,13 +223,43 @@ class TripDayCard extends StatelessWidget {
                       leading: ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: (img?.isNotEmpty == true)
-                            ? Image.network(img!,
-                                width: 48, height: 48, fit: BoxFit.cover)
+                            ? Image.network(
+                                img!,
+                                width: 48,
+                                height: 48,
+                                fit: BoxFit.cover,
+                              )
                             : const Icon(Icons.image_not_supported, size: 32),
                       ),
                       title: Text(title, style: TextStyle(fontSize: 13.sp)),
-                      subtitle:
-                          Text(subtitle, style: TextStyle(fontSize: 11.5.sp)),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(infoLine, style: TextStyle(fontSize: 11.5.sp)),
+                          if (address.isNotEmpty) ...[
+                            SizedBox(height: 0.3.h),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Icon(Icons.place,
+                                    size: 16, color: Colors.grey),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    address,
+                                    style: TextStyle(
+                                        fontSize: 11.sp,
+                                        color: Colors.black87),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ],
+                      ),
                       trailing: null,
                     ),
                   );

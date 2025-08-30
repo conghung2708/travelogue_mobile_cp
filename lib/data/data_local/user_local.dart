@@ -44,6 +44,11 @@
       }
     }
 
+    String get getUserId {
+    final user = getUser();
+    return user.id ?? ''; 
+  }
+
     void saveUser(UserModel user, {bool skipSave = false}) {
       saveAccount(user, skipSaveAccount: skipSave);
     }

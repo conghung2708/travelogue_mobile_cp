@@ -15,7 +15,7 @@ class TourDetailScreen extends StatefulWidget {
   final TourModel tour;
   final String image;
   final bool readOnly;
-  final DateTime? startTime; // thời điểm user chọn (nếu có)
+  final DateTime? startTime;
   final bool? isBooked;
   final bool showGuideTab;
 
@@ -37,10 +37,9 @@ class _TourDetailScreenState extends State<TourDetailScreen>
     with SingleTickerProviderStateMixin {
   late Future<TourModel?> _futureDetail;
 
-  // xoay liên tục cho FAB (chỉ hộp xoay, icon đứng yên)
+
   late final AnimationController _spinCtrl;
 
-  // số hỗ trợ; nếu lấy được số guide thì mình sẽ cập nhật
   String _supportPhone = '0336626193';
 
   @override
@@ -51,7 +50,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
     _spinCtrl = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 3),
-    )..repeat(); // xoay liên tục
+    )..repeat();
   }
 
   @override
@@ -60,7 +59,6 @@ class _TourDetailScreenState extends State<TourDetailScreen>
     super.dispose();
   }
 
-  // ===== Helper chọn schedule/guide =====
 
   bool _isSameDate(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
@@ -103,7 +101,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
     return sch?.tourGuide;
   }
 
-  // Dialog support đẹp
+
   Future<bool> _confirmSupportDialog(BuildContext context) async {
     return (await showDialog<bool>(
           context: context,
@@ -115,7 +113,6 @@ class _TourDetailScreenState extends State<TourDetailScreen>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Header gradient
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(
@@ -349,7 +346,6 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                       )
                     ],
                   ),
-                  // icon KHÔNG xoay (chỉ hộp xoay)
                   child: const Center(
                     child: Icon(Icons.support_agent,
                         color: Colors.white, size: 28),

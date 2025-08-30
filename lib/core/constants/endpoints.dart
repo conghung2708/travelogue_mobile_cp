@@ -123,5 +123,8 @@ class Endpoints {
 
   static const String refundRequest = '/api/refund-request';
 
-  static const String myWithdrawalRequestsFilter = '/api/wallet/my-withdrawal-requests/filter'; 
+  static const String myWithdrawalRequestsFilter =
+      '/api/wallet/my-withdrawal-requests/filter';
+
+  static const String getNotifications = '/api/notifications';
 }

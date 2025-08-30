@@ -26,22 +26,22 @@ class TourOverviewHeader extends StatelessWidget {
 
   String _transportLabel(String? raw) {
     final s = (raw ?? '').trim();
-    return s.isEmpty ? 'Xe máy' : s; 
+    return s.isEmpty ? 'Xe máy' : s;
   }
 
   IconData _transportIcon(String? raw) {
-  final s = (raw ?? '').toLowerCase().trim();
-  if (s.isEmpty) return Icons.two_wheeler_rounded; 
-  if (s.contains('bus')) return Icons.directions_bus_filled_rounded;
-  if (s.contains('tàu') || s.contains('thuyền')) {
-    return Icons.directions_boat_filled_rounded;
+    final s = (raw ?? '').toLowerCase().trim();
+    if (s.isEmpty) return Icons.two_wheeler_rounded;
+    if (s.contains('bus')) return Icons.directions_bus_filled_rounded;
+    if (s.contains('tàu') || s.contains('thuyền')) {
+      return Icons.directions_boat_filled_rounded;
+    }
+    if (s.contains('hơi') || s.contains('ô tô') || s.contains('oto')) {
+      return Icons.directions_car_rounded;
+    }
+    if (s.contains('máy')) return Icons.two_wheeler_rounded;
+    return Icons.route_rounded;
   }
-  if (s.contains('hơi') || s.contains('ô tô') || s.contains('oto')) {
-    return Icons.directions_car_rounded;
-  }
-  if (s.contains('máy')) return Icons.two_wheeler_rounded; 
-  return Icons.route_rounded;
-}
 
   @override
   Widget build(BuildContext context) {
@@ -134,14 +134,12 @@ class TourOverviewHeader extends StatelessWidget {
         SizedBox(height: 2.h),
 
         TourConfirmedActionCard(
-          startTime: startTime,
-          isBooked: isBooked,
           tour: tour,
           currencyFormat: currencyFormatter,
-          price: tourPrice,
+          startTime: startTime,
+          isBooked: isBooked,
           readOnly: readOnly,
           onConfirmed: () async {
-            
             final schedules = tour.schedules;
             if (schedules.isEmpty) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -159,7 +157,7 @@ class TourOverviewHeader extends StatelessWidget {
               ),
             );
           },
-        ),
+        )
       ],
     );
   }

@@ -10,7 +10,6 @@ class LocationModel {
   final String? content;
   final double? latitude;
   final double? longitude;
-  final int? rating;
   final String? openTime;
   final String? closeTime;
   final String? category;
@@ -27,7 +26,6 @@ class LocationModel {
     this.content,
     this.latitude,
     this.longitude,
-    this.rating,
     this.openTime,
     this.closeTime,
     this.category,
@@ -45,7 +43,6 @@ class LocationModel {
     String? content,
     double? latitude,
     double? longitude,
-    int? rating,
     String? openTime,
     String? closeTime,
     String? category,
@@ -62,7 +59,6 @@ class LocationModel {
       content: content ?? this.content,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
-      rating: rating ?? this.rating,
       openTime: openTime ?? this.openTime,
       closeTime: closeTime ?? this.closeTime,
       category: category ?? this.category,
@@ -84,7 +80,6 @@ class LocationModel {
     content: map['content']?.toString(),
     latitude: _toDouble(map['latitude']),
     longitude: _toDouble(map['longitude']),
-    rating: int.tryParse(map['rating']?.toString() ?? ''),
     openTime: map['openTime']?.toString(),
     closeTime: map['closeTime']?.toString(),
     category: map['category']?.toString(),
@@ -105,10 +100,9 @@ class LocationModel {
       'content': content,
       'latitude': latitude,
       'longitude': longitude,
-      'rating': rating,
       'openTime': openTime,
       'closeTime': closeTime,
-      'category': category, // ✅
+      'category': category, 
       'districtId': districtId,
       'districtName': districtName,
       'medias': medias?.map((e) => e.toMap()).toList(),
@@ -136,7 +130,6 @@ class LocationModel {
             other.content == content &&
             other.latitude == latitude &&
             other.longitude == longitude &&
-            other.rating == rating &&
             other.openTime == openTime &&
             other.closeTime == closeTime &&
             other.category == category &&
@@ -155,7 +148,6 @@ class LocationModel {
         content.hashCode ^
         latitude.hashCode ^
         longitude.hashCode ^
-        rating.hashCode ^
         openTime.hashCode ^
         closeTime.hashCode ^
         category.hashCode ^

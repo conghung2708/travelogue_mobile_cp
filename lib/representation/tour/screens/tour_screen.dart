@@ -12,6 +12,7 @@ import 'package:travelogue_mobile/representation/tour/widgets/tour_mansory_grid.
 import 'package:travelogue_mobile/representation/tour/widgets/tour_search_delegate.dart';
 import 'package:travelogue_mobile/representation/tour/widgets/tour_search_field.dart';
 import 'package:travelogue_mobile/representation/tour/widgets/trip_plan_banner.dart';
+import 'package:travelogue_mobile/representation/tour_guide/widgets/motivation_banner.dart';
 
 class TourScreen extends StatefulWidget {
   const TourScreen({super.key});
@@ -28,8 +29,11 @@ class _TourScreenState extends State<TourScreen> {
       delegate: TourSearchDelegate(tours),
     );
     if (picked != null) {
-      final cover = (picked.medias.isNotEmpty ? (picked.medias.first.mediaUrl ?? '') : '').trim();
-      final heroImage = cover.isNotEmpty ? cover : AssetHelper.img_tay_ninh_login;
+      final cover =
+          (picked.medias.isNotEmpty ? (picked.medias.first.mediaUrl ?? '') : '')
+              .trim();
+      final heroImage =
+          cover.isNotEmpty ? cover : AssetHelper.img_tay_ninh_login;
       if (!mounted) return;
       Navigator.push(
         context,
@@ -66,7 +70,8 @@ class _TourScreenState extends State<TourScreen> {
               BlocBuilder<TourBloc, TourState>(
                 buildWhen: (p, c) => c is GetToursSuccess || c is TourLoading,
                 builder: (context, state) {
-                  final enabled = state is GetToursSuccess && state.tours.isNotEmpty;
+                  final enabled =
+                      state is GetToursSuccess && state.tours.isNotEmpty;
                   return GestureDetector(
                     onTap: enabled ? () => _openSearch(state.tours) : null,
                     child: AbsorbPointer(
@@ -76,11 +81,10 @@ class _TourScreenState extends State<TourScreen> {
                 },
               ),
               SizedBox(height: 3.h),
-              const TitleWithCustoneUnderline(text: "Chuyến đi ", text2: "cá nhân"),
-              SizedBox(height: 2.h),
-              const TripPlanBanner(),
+              const MotivationBanner(),
               SizedBox(height: 3.h),
-              const TitleWithCustoneUnderline(text: "Tour tại ", text2: "Tây Ninh"),
+              const TitleWithCustoneUnderline(
+                  text: "Tour tại ", text2: "Tây Ninh"),
               SizedBox(height: 2.h),
               Expanded(
                 child: BlocBuilder<TourBloc, TourState>(

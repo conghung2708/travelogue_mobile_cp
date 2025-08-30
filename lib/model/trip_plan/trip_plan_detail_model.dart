@@ -11,7 +11,9 @@ class TripPlanDetailModel {
   final int status;
   final String statusText;
   final List<TripDayModel> days;
-  final String? imageUrl; 
+  final String? imageUrl;
+  final String? pickupName;     
+  final String? pickupAddress;  
 
   TripPlanDetailModel({
     required this.id,
@@ -23,8 +25,40 @@ class TripPlanDetailModel {
     required this.status,
     required this.statusText,
     required this.days,
-    this.imageUrl, 
+    this.imageUrl,
+    this.pickupName,
+    this.pickupAddress,
   });
+
+  TripPlanDetailModel copyWith({
+    String? id,
+    String? name,
+    String? description,
+    DateTime? startDate,
+    DateTime? endDate,
+    int? totalDays,
+    int? status,
+    String? statusText,
+    List<TripDayModel>? days,
+    String? imageUrl,
+    String? pickupName,
+    String? pickupAddress,
+  }) {
+    return TripPlanDetailModel(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      startDate: startDate ?? this.startDate,
+      endDate: endDate ?? this.endDate,
+      totalDays: totalDays ?? this.totalDays,
+      status: status ?? this.status,
+      statusText: statusText ?? this.statusText,
+      days: days ?? this.days,
+      imageUrl: imageUrl ?? this.imageUrl,
+      pickupName: pickupName ?? this.pickupName,
+      pickupAddress: pickupAddress ?? this.pickupAddress,
+    );
+  }
 
   static int _asInt(dynamic v, {int fallback = 0}) {
     if (v is int) return v;
@@ -43,10 +77,14 @@ class TripPlanDetailModel {
 
   static String _statusToText(int status) {
     switch (status) {
-      case 0: return 'Draft';
-      case 1: return 'Sketch';
-      case 2: return 'Booked';
-      default: return 'Draft';
+      case 0:
+        return 'Draft';
+      case 1:
+        return 'Sketch';
+      case 2:
+        return 'Booked';
+      default:
+        return 'Draft';
     }
   }
 
@@ -65,6 +103,10 @@ class TripPlanDetailModel {
     final rawImage = (json['imageUrl'] as String?)?.trim();
     final safeImage = (rawImage == null || rawImage.isEmpty) ? null : rawImage;
 
+    final pickupName = (json['pickupName'] as String?)?.trim();
+    final pickupAddress =
+        ((json['pickupAddress'] ?? json['pickupPoint']) as String?)?.trim();
+
     return TripPlanDetailModel(
       id: (json['id'] ?? '').toString(),
       name: (json['name'] ?? '').toString(),
@@ -77,43 +119,49 @@ class TripPlanDetailModel {
       days: daysJson
           .map((e) => TripDayModel.fromJson(e as Map<String, dynamic>))
           .toList(),
-      imageUrl: safeImage, 
+      imageUrl: safeImage,
+      pickupName: pickupName?.isEmpty == true ? null : pickupName,
+      pickupAddress: pickupAddress?.isEmpty == true ? null : pickupAddress,
     );
   }
 
   TripStatus get statusEnum {
     switch (status) {
-      case 0: return TripStatus.draft;
-      case 1: return TripStatus.sketch;
-      case 2: return TripStatus.booked;
-      default: return TripStatus.draft;
+      case 0:
+        return TripStatus.draft;
+      case 1:
+        return TripStatus.sketch;
+      case 2:
+        return TripStatus.booked;
+      default:
+        return TripStatus.draft;
     }
   }
 
   List<DateTime> getDays() {
     return List.generate(
       totalDays,
-      (i) => DateTime(startDate.year, startDate.month, startDate.day).add(Duration(days: i)),
+      (i) => DateTime(startDate.year, startDate.month, startDate.day)
+          .add(Duration(days: i)),
     );
   }
 
-
   String get displayImageUrl =>
-      imageUrl ?? 'https://your.cdn.com/placeholder.png'; 
-      Map<String, dynamic> toJson() {
-  return {
-    'id': id,
-    'name': name,
-    'description': description,
-    'startDate': startDate.toIso8601String(),
-    'endDate': endDate.toIso8601String(),
-    'totalDays': totalDays,
-    'status': status,
-    'statusText': statusText,
-    'imageUrl': imageUrl,
-  };
+      imageUrl ?? 'https://your.cdn.com/placeholder.png';
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'description': description,
+      'startDate': startDate.toIso8601String(),
+      'endDate': endDate.toIso8601String(),
+      'totalDays': totalDays,
+      'status': status,
+      'statusText': statusText,
+      'imageUrl': imageUrl,
+      'pickupName': pickupName,
+      'pickupAddress': pickupAddress,
+    };
+  }
 }
-
-}
-
-

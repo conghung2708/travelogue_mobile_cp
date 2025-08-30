@@ -12,6 +12,7 @@ import 'package:travelogue_mobile/core/constants/color_constants.dart';
 import 'package:travelogue_mobile/model/tour_guide/tour_guide_filter_model.dart';
 import 'package:travelogue_mobile/model/tour_guide/tour_guide_model.dart';
 import 'package:travelogue_mobile/representation/home/widgets/title_widget.dart';
+import 'package:travelogue_mobile/representation/tour/widgets/trip_plan_banner.dart';
 import 'package:travelogue_mobile/representation/tour_guide/screens/guide_team_selector_screen.dart';
 import 'package:travelogue_mobile/representation/tour_guide/widgets/confirm_booking_dialog.dart';
 import 'package:travelogue_mobile/representation/tour_guide/widgets/tour_guide_card.dart';
@@ -294,8 +295,11 @@ class _TourGuideScreenState extends State<TourGuideScreen> {
             children: [
               const GuideGreetingHeader(),
               SizedBox(height: 3.h),
-              const MotivationBanner(),
-              SizedBox(height: 2.h),
+              const TitleWithCustoneUnderline(
+                  text: "Chuyến đi ", text2: "cá nhân"),
+              SizedBox(height: 1.5.h),
+              TripPlanBanner(redirectRoute: TourGuideScreen.routeName),
+              SizedBox(height: 2.5.h),
               const TitleWithCustoneUnderline(
                   text: "Các hướng dẫn ", text2: "viên"),
               SizedBox(height: 1.2.h),

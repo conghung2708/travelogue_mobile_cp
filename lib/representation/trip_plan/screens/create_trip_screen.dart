@@ -142,7 +142,7 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
       listeners: [
         BlocListener<TripPlanBloc, TripPlanState>(
           listener: (context, state) async {
-            if (state is TripPlanLoading) {
+            if (state is CreateTripPlanLoading) {
               _showLoading();
             } else {
               _hideLoading();
@@ -152,13 +152,17 @@ class _CreateTripScreenState extends State<CreateTripScreen> {
               final detail = state.tripPlanDetail;
               if (!mounted) return;
 
+              _hideLoading();
               Navigator.pushReplacementNamed(
                 context,
                 SelectTripDayScreen.routeName,
                 arguments: {'detail': detail},
               );
-            } else if (state is TripPlanError) {
+            }
+
+            if (state is CreateTripPlanError) {
               if (!mounted) return;
+              _hideLoading();
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text(state.message)),
               );

@@ -3,11 +3,13 @@ import 'package:sizer/sizer.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
 import 'package:travelogue_mobile/core/helpers/auth_helper.dart';
 import 'package:travelogue_mobile/representation/auth/screens/login_screen.dart';
+import 'package:travelogue_mobile/representation/tour_guide/screens/tour_guide_screen.dart';
 import 'package:travelogue_mobile/representation/trip_plan/screens/my_trip_plan_screen.dart';
 import 'package:travelogue_mobile/representation/tour/screens/tour_screen.dart';
 
 class TripPlanBanner extends StatefulWidget {
-  const TripPlanBanner({super.key});
+  const TripPlanBanner({super.key, this.redirectRoute});
+  final String? redirectRoute;
 
   @override
   State<TripPlanBanner> createState() => _TripPlanBannerState();
@@ -129,7 +131,8 @@ class _TripPlanBannerState extends State<TripPlanBanner>
                               context,
                               LoginScreen.routeName,
                               arguments: {
-                                'redirectRoute': TourScreen.routeName
+                                'redirectRoute': widget.redirectRoute ??
+                                    TourGuideScreen.routeName,
                               },
                             );
                             return;
