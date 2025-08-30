@@ -14,6 +14,7 @@ import 'package:travelogue_mobile/representation/auth/screens/login_screen.dart'
 import 'package:travelogue_mobile/representation/booking/screens/booking_detail_screen.dart';
 import 'package:travelogue_mobile/representation/booking/screens/my_booking_screen.dart';
 import 'package:travelogue_mobile/representation/booking/screens/refund_detail_screen.dart';
+import 'package:travelogue_mobile/representation/chatbox/screens/chat_screen.dart';
 import 'package:travelogue_mobile/representation/craft_village/screens/craft_village_detail_screen.dart';
 import 'package:travelogue_mobile/representation/event/screens/event_detail.dart';
 import 'package:travelogue_mobile/representation/event/screens/event_screen.dart';
@@ -341,4 +342,6 @@ final Map<String, WidgetBuilder> routes = {
   MyReportsScreen.routeName: (_) => const MyReportsScreen(),
 
   RefundDetailScreen.routeName: (_) => const RefundDetailScreen(),
+
+    ChatScreen.routeName: (_) => const ChatScreen(),
 };

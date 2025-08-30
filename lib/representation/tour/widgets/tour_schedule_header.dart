@@ -10,29 +10,41 @@ class TourScheduleHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        GestureDetector(
+        InkWell(
           onTap: onBack,
+          borderRadius: BorderRadius.circular(100),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.7),
+              color: Colors.white.withOpacity(0.75),
               shape: BoxShape.circle,
             ),
-            padding: EdgeInsets.all(1.5.w),
-            child: Icon(Icons.arrow_back_ios_new_rounded,
-                size: 18.sp, color: Colors.black),
+            padding: EdgeInsets.all(1.8.w),
+            child: Icon(
+              Icons.arrow_back_ios_new_rounded,
+              size: 18.sp,
+              color: Colors.black,
+            ),
           ),
         ),
-        const Spacer(), 
-        Text(
-          'Chọn ngày khởi hành',
-          style: TextStyle(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
+
+        Expanded(
+          child: Center(
+            child: Text(
+              'Chọn ngày khởi hành',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+                letterSpacing: .2,
+              ),
+            ),
           ),
         ),
-        const Spacer(),
-        SizedBox(width: 10.w),
+
+
+        SizedBox(width: 5.5.w),
       ],
     );
   }

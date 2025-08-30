@@ -937,14 +937,7 @@ class _MyBookingScreenState extends State<MyBookingScreen>
           const SizedBox(height: 8),
           const Text('Chưa có đơn nào',
               style: TextStyle(fontWeight: FontWeight.w700)),
-          const SizedBox(height: 4),
-          const Text('Khám phá hành trình phù hợp với bạn'),
-          const SizedBox(height: 12),
-          ElevatedButton.icon(
-            icon: const Icon(Icons.explore),
-            label: const Text('Khám phá Tour'),
-            onPressed: () {},
-          ),
+        
         ],
       ),
     );

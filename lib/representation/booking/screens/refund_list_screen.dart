@@ -644,29 +644,6 @@ class _EmptyView extends StatelessWidget {
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w900,
                     color: _AppColors.textStrong)),
-            SizedBox(height: 1.0.h),
-            Text(
-              'Tạo yêu cầu hoàn tiền cho booking của bạn để hiển thị tại đây.',
-              style: TextStyle(fontSize: 12.sp, color: _AppColors.text),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 2.2.h),
-            ElevatedButton.icon(
-              onPressed: onCreate,
-              icon: const Icon(Icons.add_circle_outline, color: Colors.white),
-              label: Text('Tạo yêu cầu',
-                  style: TextStyle(
-                      fontSize: 12.2.sp,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _AppColors.primary,
-                padding: EdgeInsets.symmetric(vertical: 1.4.h, horizontal: 6.w),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(1.6.h)),
-                elevation: 0,
-              ),
-            ),
           ],
         ),
       ),

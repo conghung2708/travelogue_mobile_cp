@@ -61,7 +61,7 @@ class MotivationBanner extends StatelessWidget {
                 ),
               ),
               Text(
-                "Hãy chọn người đồng hành phù hợp với bạn!",
+                "Hãy chọn chuyến du lịch phù hợp với bạn!",
                 style: TextStyle(
                     fontSize: 13.sp,
                     color: Colors.white.withOpacity(0.85),
