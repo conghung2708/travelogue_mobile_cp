@@ -312,7 +312,7 @@ class _MyBookingScreenState extends State<MyBookingScreen>
     final canReview = _canReview(b);
 
     switch (b.tabCode) {
-      case 0: // Hết hạn
+      case 0:
         return const _CardActions(
           showManage: false,
           showReview: false,
@@ -932,7 +932,6 @@ class _MyBookingScreenState extends State<MyBookingScreen>
   //   return b.isCancelledPaid && wasPaidOnline;
   // }
   Widget _buildBookingList() {
-    // Giữ nguyên filter + sort như bạn đang làm:
     final typeFiltered = _items.where((b) {
       if (selectedType == 0) return true;
       final bt = _bookingTypeOf(b);
@@ -2065,7 +2064,6 @@ class _StatusChip extends StatelessWidget {
           Icon(icon, size: 14, color: fg),
           const SizedBox(width: 4),
           Flexible(
-            // <- tránh tràn
             child: Text(
               text,
               overflow: TextOverflow.ellipsis,

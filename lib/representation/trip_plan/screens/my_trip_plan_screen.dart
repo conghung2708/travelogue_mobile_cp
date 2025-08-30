@@ -33,7 +33,7 @@ class _MyTripPlansScreenState extends State<MyTripPlansScreen> {
   }
 
   void _goToTourScreen() {
-    AppBloc.mainBloc.add(const OnChangeIndexEvent(indexChange: 2));
+    AppBloc.mainBloc.add(const OnChangeIndexEvent(indexChange: 1));
     Navigator.of(context).pushNamedAndRemoveUntil(
       MainScreen.routeName,
       (route) => false,
@@ -199,7 +199,7 @@ class _MyTripPlansScreenState extends State<MyTripPlansScreen> {
                   Center(
                     child: Column(
                       children: [
-                        const Icon(Icons.airplanemode_inactive,
+                        const Icon(Icons.car_crash,
                             size: 36, color: Colors.grey),
                         SizedBox(height: 1.h),
                         Text(

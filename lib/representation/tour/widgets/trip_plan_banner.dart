@@ -3,6 +3,7 @@ import 'package:sizer/sizer.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
 import 'package:travelogue_mobile/core/helpers/auth_helper.dart';
 import 'package:travelogue_mobile/representation/auth/screens/login_screen.dart';
+import 'package:travelogue_mobile/representation/tour_guide/screens/tour_guide_screen.dart';
 import 'package:travelogue_mobile/representation/trip_plan/screens/my_trip_plan_screen.dart';
 import 'package:travelogue_mobile/representation/tour/screens/tour_screen.dart';
 
@@ -131,7 +132,7 @@ class _TripPlanBannerState extends State<TripPlanBanner>
                               LoginScreen.routeName,
                               arguments: {
                                 'redirectRoute': widget.redirectRoute ??
-                                    TourScreen.routeName,
+                                    TourGuideScreen.routeName,
                               },
                             );
                             return;
