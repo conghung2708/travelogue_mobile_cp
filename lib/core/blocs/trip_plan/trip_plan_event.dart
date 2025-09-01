@@ -47,21 +47,18 @@ class UpdateTripPlanEvent extends TripPlanEvent {
   final String description;
   final DateTime startDate;
   final DateTime endDate;
+  final String? pickupAddress;
   final String? imageUrl;
-
   const UpdateTripPlanEvent({
     required this.id,
     required this.name,
     required this.description,
     required this.startDate,
     required this.endDate,
+    this.pickupAddress,
     this.imageUrl,
   });
-
-  @override
-  List<Object?> get props => [id, name, description, startDate, endDate, imageUrl];
 }
-
 class UpdateTripPlanLocationsEvent extends TripPlanEvent {
   final String tripPlanId;
   final List<TripPlanLocationModel> locations;

@@ -12,13 +12,14 @@ import 'package:travelogue_mobile/representation/tour/screens/tour_team_selector
 
 import 'package:travelogue_mobile/representation/tour/widgets/guide_info_card.dart';
 
-// đổi từ Stateless -> Stateful
 class ScheduleConfirmDialog extends StatefulWidget {
   final TourModel tour;
   final TourScheduleModel schedule;
   final bool isGroupTour;
   final String media;
   final NumberFormat formatter;
+
+  final String? pickupAddress;
 
   const ScheduleConfirmDialog({
     super.key,
@@ -27,6 +28,7 @@ class ScheduleConfirmDialog extends StatefulWidget {
     required this.isGroupTour,
     required this.media,
     required this.formatter,
+    this.pickupAddress,
   });
 
   static Future<void> show(
@@ -36,6 +38,7 @@ class ScheduleConfirmDialog extends StatefulWidget {
     required bool isGroupTour,
     required String media,
     required NumberFormat formatter,
+    String? pickupAddress,
   }) {
     return showDialog(
       context: context,
@@ -50,6 +53,7 @@ class ScheduleConfirmDialog extends StatefulWidget {
           isGroupTour: isGroupTour,
           media: media,
           formatter: formatter,
+          pickupAddress: pickupAddress,
         ),
       ),
     );
@@ -84,36 +88,50 @@ class _ScheduleConfirmDialogState extends State<ScheduleConfirmDialog> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.event_available, size: 28.sp, color: ColorPalette.primaryColor),
+          Icon(Icons.event_available,
+              size: 28.sp, color: ColorPalette.primaryColor),
           SizedBox(height: 2.h),
           Text("Xác nhận ngày khởi hành",
-              style: TextStyle(fontSize: 17.sp, fontWeight: FontWeight.bold, color: ColorPalette.primaryColor)),
+              style: TextStyle(
+                  fontSize: 17.sp,
+                  fontWeight: FontWeight.bold,
+                  color: ColorPalette.primaryColor)),
           SizedBox(height: 2.h),
-          _Row(icon: Icons.calendar_today, label: 'Ngày đi:', value: DateFormat('dd/MM/yyyy').format(departure)),
+          _Row(
+              icon: Icons.calendar_today,
+              label: 'Ngày đi:',
+              value: DateFormat('dd/MM/yyyy').format(departure)),
           SizedBox(height: 1.h),
-          _Row(icon: Icons.monetization_on, label: 'Giá:', value: '${widget.formatter.format(schedule.adultPrice?.round() ?? 0)}đ'),
+          _Row(
+              icon: Icons.monetization_on,
+              label: 'Giá:',
+              value:
+                  '${widget.formatter.format(schedule.adultPrice?.round() ?? 0)}đ'),
           SizedBox(height: 1.h),
-          _Row(icon: Icons.people_outline, label: 'Còn lại:', value: '$availableSlot chỗ'),
+          _Row(
+              icon: Icons.people_outline,
+              label: 'Còn lại:',
+              value: '$availableSlot chỗ'),
           SizedBox(height: 3.h),
-
-
           if (schedule.tourGuide != null) ...[
             const Divider(),
             SizedBox(height: 1.h),
             const _SectionTitle(title: 'Hướng dẫn viên'),
             SizedBox(height: 1.h),
-
             if (_futureGuide != null)
               FutureBuilder<TourGuideModel?>(
                 future: _futureGuide,
                 builder: (context, snap) {
                   final guide = snap.data ?? schedule.tourGuide!;
-   
+
                   print('Guide in dialog -> ${guide.toJsonString()}');
 
                   if (snap.connectionState == ConnectionState.waiting) {
                     return Row(children: const [
-                      SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                      SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2)),
                       SizedBox(width: 8),
                       Text('Đang tải hướng dẫn viên...')
                     ]);
@@ -123,11 +141,8 @@ class _ScheduleConfirmDialogState extends State<ScheduleConfirmDialog> {
               )
             else
               GuideInfoCard(guide: schedule.tourGuide!),
-
             SizedBox(height: 2.h),
           ],
-
-  
           Row(
             children: [
               Expanded(
@@ -149,6 +164,7 @@ class _ScheduleConfirmDialogState extends State<ScheduleConfirmDialog> {
                             tour: widget.tour,
                             schedule: schedule,
                             media: widget.media,
+                            pickupAddress: widget.pickupAddress,
                           ),
                         ),
                       );
@@ -163,6 +179,7 @@ class _ScheduleConfirmDialogState extends State<ScheduleConfirmDialog> {
                           'startTime': schedule.startTime!,
                           'adults': 1,
                           'children': 0,
+                          'contactAddress': widget.pickupAddress,
                         },
                       );
                     }
@@ -175,7 +192,8 @@ class _ScheduleConfirmDialogState extends State<ScheduleConfirmDialog> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Text("Chọn ngày này",
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        style: TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.bold)),
                   ),
                 ),
               ),

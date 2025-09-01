@@ -1,3 +1,4 @@
+// lib/core/repository/location_repository.dart
 import 'package:dio/dio.dart';
 import 'package:travelogue_mobile/core/constants/endpoints.dart';
 import 'package:travelogue_mobile/core/constants/status_code.dart';
@@ -12,9 +13,22 @@ class LocationRepository {
 
     if (response.statusCode == StatusCode.ok) {
       final List listData = response.data['data'] as List;
-      return listData.map((value) => LocationModel.fromMap(value)).toList();
+      return listData.map((e) => LocationModel.fromMap(e)).toList();
     }
-
     return [];
+  }
+
+  /// NEW: GET /api/location/{id}
+  Future<LocationModel?> getLocationById(String id) async {
+    final Response response =
+        await BaseRepository().getRoute('${Endpoints.location}/$id');
+
+    if (response.statusCode == StatusCode.ok) {
+      final data = response.data['data'];
+      if (data is Map<String, dynamic>) {
+        return LocationModel.fromMap(data);
+      }
+    }
+    return null;
   }
 }

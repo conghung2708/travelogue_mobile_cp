@@ -37,6 +37,10 @@ class TripDayCard extends StatelessWidget {
     return null;
   }
 
+  String _money(num v) =>
+      NumberFormat.currency(locale: 'vi_VN', symbol: '₫', decimalDigits: 0)
+          .format(v);
+
   List<T> _castList<T>(dynamic v) {
     if (v is List) {
       try {
@@ -198,6 +202,19 @@ class TripDayCard extends StatelessWidget {
               Column(
                 children: activities.asMap().entries.map((entry) {
                   final act = entry.value;
+                  final int? pMin = act.minPrice;
+                  final int? pMax = act.maxPrice;
+
+                  String? priceText;
+                  if (pMin != null && pMax != null) {
+                    priceText = (pMin == pMax)
+                        ? _money(pMin)
+                        : '${_money(pMin)} – ${_money(pMax)}';
+                  } else if (pMin != null) {
+                    priceText = 'từ ${_money(pMin)}';
+                  } else if (pMax != null) {
+                    priceText = 'đến ${_money(pMax)}';
+                  }
 
                   final title = act.name ?? 'Hoạt động';
                   final typeText = act.type ?? 'Hoạt động';
@@ -237,6 +254,27 @@ class TripDayCard extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(infoLine, style: TextStyle(fontSize: 11.5.sp)),
+                          if (priceText != null) ...[
+                            SizedBox(height: 0.3.h),
+                            Row(
+                              children: [
+                                const Icon(Icons.payments_outlined,
+                                    size: 16, color: Colors.grey),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    'Phí tham quan: $priceText',
+                                    style: TextStyle(
+                                        fontSize: 11.sp,
+                                        color: Colors.black87,
+                                        fontWeight: FontWeight.w600),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                           if (address.isNotEmpty) ...[
                             SizedBox(height: 0.3.h),
                             Row(
@@ -249,8 +287,7 @@ class TripDayCard extends StatelessWidget {
                                   child: Text(
                                     address,
                                     style: TextStyle(
-                                        fontSize: 11.sp,
-                                        color: Colors.black87),
+                                        fontSize: 11.sp, color: Colors.black87),
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
                                   ),

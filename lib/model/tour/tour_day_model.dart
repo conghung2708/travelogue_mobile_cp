@@ -1,16 +1,21 @@
+// lib/model/tour/tour_day_model.dart
 import 'package:travelogue_mobile/model/tour/tour_activity_model.dart';
 
 class TourDayModel {
   final int? dayNumber;
   final List<TourActivityModel>? activities;
 
-  TourDayModel({this.dayNumber, this.activities});
+  const TourDayModel({
+    this.dayNumber,
+    this.activities,
+  });
 
   factory TourDayModel.fromJson(Map<String, dynamic> json) {
     return TourDayModel(
-      dayNumber: json['dayNumber'],
+      dayNumber: json['dayNumber'] as int?,
       activities: (json['activities'] as List?)
-          ?.map((e) => TourActivityModel.fromJson(e))
+          ?.whereType<Map<String, dynamic>>()
+          .map((e) => TourActivityModel.fromJson(e))
           .toList(),
     );
   }
@@ -20,4 +25,3 @@ class TourDayModel {
         'activities': activities?.map((e) => e.toJson()).toList(),
       };
 }
-

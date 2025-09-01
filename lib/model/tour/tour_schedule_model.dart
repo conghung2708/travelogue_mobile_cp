@@ -1,6 +1,5 @@
 // lib/model/tour/tour_schedule_model.dart
 import 'dart:convert';
-
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
 import 'package:travelogue_mobile/model/tour_guide/tour_guide_model.dart';
 
@@ -32,9 +31,8 @@ class TourScheduleModel {
   static DateTime? _parseDateTime(String? raw) {
     if (raw == null || raw.isEmpty) return null;
     try {
-      final iso = raw.endsWith('Z') || raw.contains('+') || raw.contains('-')
-          ? raw
-          : '${raw}Z';
+      final iso =
+          (raw.endsWith('Z') || raw.contains('+') || raw.contains('-')) ? raw : '${raw}Z';
       return DateTime.parse(iso).toLocal();
     } catch (_) {
       return null;
@@ -60,9 +58,8 @@ class TourScheduleModel {
     );
   }
 
-  factory TourScheduleModel.fromJson(Map<String, dynamic> json) {
-    return TourScheduleModel.fromMap(json);
-  }
+  factory TourScheduleModel.fromJson(Map<String, dynamic> json) =>
+      TourScheduleModel.fromMap(json);
 
   Map<String, dynamic> toMap() {
     return {
@@ -79,9 +76,7 @@ class TourScheduleModel {
     };
   }
 
-
   Map<String, dynamic> toJson() => toMap();
-
 
   String toJsonString() => json.encode(toMap());
 }

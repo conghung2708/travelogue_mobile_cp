@@ -29,6 +29,7 @@ class TourPaymentConfirmationScreen extends StatefulWidget {
   final int children;
   final String? bookingId;
   final List<BookingParticipantModel>? participants;
+   final String? contactAddress;
 
   const TourPaymentConfirmationScreen({
     super.key,
@@ -40,6 +41,7 @@ class TourPaymentConfirmationScreen extends StatefulWidget {
     this.children = 0,
     this.bookingId,
     this.participants,
+     this.contactAddress,
   });
 
   @override
@@ -68,23 +70,40 @@ class _TourPaymentConfirmationScreenState
   }
 
   Future<void> _prefillCurrentUser() async {
-    try {
-      final user = await AuthenicationRepository().fetchCurrentUser();
-      _nameCtl.text = user.fullName ?? user.username ?? '';
-      _emailCtl.text = user.email ?? '';
-      _phoneCtl.text = user.phoneNumber ?? '';
-      _addrCtl.text = user.address ?? '';
-      setState(() {
-        _loadingUser = false;
-        _loadError = null;
-      });
-    } catch (e) {
-      setState(() {
-        _loadingUser = false;
-        _loadError = e.toString();
-      });
+  try {
+    final user = await AuthenicationRepository().fetchCurrentUser();
+
+    _nameCtl.text  = user.fullName ?? user.username ?? '';
+    _emailCtl.text = user.email ?? '';
+    _phoneCtl.text = user.phoneNumber ?? '';
+
+    
+    String? passedAddr = widget.contactAddress?.trim();
+
+
+    if ((passedAddr == null || passedAddr.isEmpty)) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is Map && args['contactAddress'] is String) {
+        final a = (args['contactAddress'] as String).trim();
+        if (a.isNotEmpty) passedAddr = a;
+      }
     }
+
+    _addrCtl.text = (passedAddr?.isNotEmpty == true)
+        ? passedAddr!
+        : (user.address ?? '');
+
+    setState(() {
+      _loadingUser = false;
+      _loadError = null;
+    });
+  } catch (e) {
+    setState(() {
+      _loadingUser = false;
+      _loadError = e.toString();
+    });
   }
+}
 
   @override
   void dispose() {

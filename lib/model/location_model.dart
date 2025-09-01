@@ -1,7 +1,8 @@
+// lib/model/location_model.dart
 import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
 import 'package:travelogue_mobile/model/media_model.dart';
+import 'package:travelogue_mobile/model/craft_village/craft_village_model.dart';
 
 class LocationModel {
   final String? id;
@@ -19,6 +20,18 @@ class LocationModel {
   final bool isLiked;
   final String? address;
 
+  final double? minPrice;
+  final double? maxPrice;
+  final DateTime? createdTime;
+  final DateTime? lastUpdatedTime;
+  final String? createdBy;
+  final String? createdByName;
+  final String? lastUpdatedBy;
+  final String? lastUpdatedByName;
+
+  final CraftVillageModel? craftVillage;
+  final double? rating;
+
   LocationModel({
     this.id,
     this.name,
@@ -34,6 +47,16 @@ class LocationModel {
     this.medias,
     this.isLiked = false,
     this.address,
+    this.minPrice,
+    this.maxPrice,
+    this.createdTime,
+    this.lastUpdatedTime,
+    this.createdBy,
+    this.createdByName,
+    this.lastUpdatedBy,
+    this.lastUpdatedByName,
+    this.craftVillage,
+    this.rating,
   });
 
   LocationModel copyWith({
@@ -51,6 +74,16 @@ class LocationModel {
     List<MediaModel>? medias,
     bool? isLiked,
     String? address,
+    double? minPrice,
+    double? maxPrice,
+    DateTime? createdTime,
+    DateTime? lastUpdatedTime,
+    String? createdBy,
+    String? createdByName,
+    String? lastUpdatedBy,
+    String? lastUpdatedByName,
+    CraftVillageModel? craftVillage,
+    double? rating,
   }) {
     return LocationModel(
       id: id ?? this.id,
@@ -67,98 +100,103 @@ class LocationModel {
       medias: medias ?? this.medias,
       isLiked: isLiked ?? this.isLiked,
       address: address ?? this.address,
+      minPrice: minPrice ?? this.minPrice,
+      maxPrice: maxPrice ?? this.maxPrice,
+      createdTime: createdTime ?? this.createdTime,
+      lastUpdatedTime: lastUpdatedTime ?? this.lastUpdatedTime,
+      createdBy: createdBy ?? this.createdBy,
+      createdByName: createdByName ?? this.createdByName,
+      lastUpdatedBy: lastUpdatedBy ?? this.lastUpdatedBy,
+      lastUpdatedByName: lastUpdatedByName ?? this.lastUpdatedByName,
+      craftVillage: craftVillage ?? this.craftVillage,
+      rating: rating ?? this.rating,
     );
   }
 
- factory LocationModel.fromMap(Map<String, dynamic> map) {
-  double? _toDouble(dynamic v) => v == null ? null : double.tryParse(v.toString());
-
-  return LocationModel(
-    id: map['id']?.toString(),
-    name: map['name']?.toString(),
-    description: map['description']?.toString(),
-    content: map['content']?.toString(),
-    latitude: _toDouble(map['latitude']),
-    longitude: _toDouble(map['longitude']),
-    openTime: map['openTime']?.toString(),
-    closeTime: map['closeTime']?.toString(),
-    category: map['category']?.toString(),
-    districtId: map['districtId']?.toString(),
-    districtName: map['districtName']?.toString(),
-    medias: (map['medias'] is List)
-        ? (map['medias'] as List).map((e) => MediaModel.fromMap(e)).toList()
-        : [],
-    address: map['address']?.toString(),
-  );
-}
-
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'name': name,
-      'description': description,
-      'content': content,
-      'latitude': latitude,
-      'longitude': longitude,
-      'openTime': openTime,
-      'closeTime': closeTime,
-      'category': category, 
-      'districtId': districtId,
-      'districtName': districtName,
-      'medias': medias?.map((e) => e.toMap()).toList(),
-      'address': address,
-    };
+  static double? _toDouble(dynamic v) =>
+      v == null ? null : double.tryParse(v.toString());
+  static DateTime? _toDate(dynamic v) {
+    if (v == null) return null;
+    if (v is DateTime) return v;
+    if (v is String && v.trim().isNotEmpty) {
+      try {
+        return DateTime.parse(v);
+      } catch (_) {}
+    }
+    return null;
   }
 
-  String toJson() => json.encode(toMap());
+  factory LocationModel.fromMap(Map<String, dynamic> map) {
+    final rawMedias =
+        (map['medias'] is List) ? (map['medias'] as List) : const [];
+    final craftVillage = (map['craftVillage'] is Map)
+        ? CraftVillageModel.fromMap(map['craftVillage'])
+        : null;
 
+    return LocationModel(
+      id: map['id']?.toString(),
+      name: map['name']?.toString(),
+      description: map['description']?.toString(),
+      content: map['content']?.toString(),
+      latitude: _toDouble(map['latitude']),
+      longitude: _toDouble(map['longitude']),
+      openTime: map['openTime']?.toString(),
+      closeTime: map['closeTime']?.toString(),
+      category: map['category']?.toString(),
+      districtId: map['districtId']?.toString(),
+      districtName: map['districtName']?.toString(),
+      medias: rawMedias
+          .whereType<Map<String, dynamic>>()
+          .map((e) => MediaModel.fromMap(e))
+          .toList(),
+      address: map['address']?.toString(),
+      minPrice: _toDouble(map['minPrice']),
+      maxPrice: _toDouble(map['maxPrice']),
+      createdTime: _toDate(map['createdTime']),
+      lastUpdatedTime: _toDate(map['lastUpdatedTime']),
+      createdBy: map['createdBy']?.toString(),
+      createdByName: map['createdByName']?.toString(),
+      lastUpdatedBy: map['lastUpdatedBy']?.toString(),
+      lastUpdatedByName: map['lastUpdatedByName']?.toString(),
+      craftVillage: map['craftVillage'] is Map<String, dynamic>
+          ? CraftVillageModel.fromMap(map['craftVillage'])
+          : null,
+      rating: _toDouble(map['rating']),
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+        'id': id,
+        'name': name,
+        'description': description,
+        'content': content,
+        'latitude': latitude,
+        'longitude': longitude,
+        'openTime': openTime,
+        'closeTime': closeTime,
+        'category': category,
+        'districtId': districtId,
+        'districtName': districtName,
+        'medias': medias?.map((e) => e.toMap()).toList(),
+        'address': address,
+        'minPrice': minPrice,
+        'maxPrice': maxPrice,
+        'createdTime': createdTime?.toIso8601String(),
+        'lastUpdatedTime': lastUpdatedTime?.toIso8601String(),
+        'createdBy': createdBy,
+        'createdByName': createdByName,
+        'lastUpdatedBy': lastUpdatedBy,
+        'lastUpdatedByName': lastUpdatedByName,
+        'craftVillage': craftVillage?.toMap(),
+        'rating': rating,
+      };
+
+  String toJson() => json.encode(toMap());
   factory LocationModel.fromJson(String source) =>
       LocationModel.fromMap(json.decode(source));
 
-  @override
-  String toString() {
-    return 'LocationModel(id: $id, name: $name, category: $category, district: $districtName)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other is LocationModel &&
-            other.id == id &&
-            other.name == name &&
-            other.description == description &&
-            other.content == content &&
-            other.latitude == latitude &&
-            other.longitude == longitude &&
-            other.openTime == openTime &&
-            other.closeTime == closeTime &&
-            other.category == category &&
-            other.districtId == districtId &&
-            other.districtName == districtName &&
-            listEquals(other.medias, medias) &&
-            other.isLiked == isLiked);
-            
-  }
-
-  @override
-  int get hashCode {
-    return id.hashCode ^
-        name.hashCode ^
-        description.hashCode ^
-        content.hashCode ^
-        latitude.hashCode ^
-        longitude.hashCode ^
-        openTime.hashCode ^
-        closeTime.hashCode ^
-        category.hashCode ^
-        districtId.hashCode ^
-        districtName.hashCode ^
-        medias.hashCode ^
-        isLiked.hashCode;
-  }
-
   String get imgUrlFirst => (medias?.isNotEmpty ?? false)
-      ? (medias!.firstWhere((e) => e.mediaUrl?.isNotEmpty ?? false,
+      ? (medias!.firstWhere((e) => (e.mediaUrl?.isNotEmpty ?? false),
               orElse: () => MediaModel(mediaUrl: ''))).mediaUrl ??
           ''
       : '';

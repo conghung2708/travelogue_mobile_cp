@@ -1,10 +1,10 @@
+// lib/representation/tour/widgets/tour_card.dart
 import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import 'package:travelogue_mobile/model/tour/tour_model.dart';
 import 'package:travelogue_mobile/model/tour_guide/tour_guide_model.dart';
-import 'package:travelogue_mobile/representation/tour/widgets/discount_tag.dart';
 
 
 class TourCard extends StatelessWidget {
@@ -12,8 +12,9 @@ class TourCard extends StatelessWidget {
   final String image;
   final TourGuideModel? guide;
   final VoidCallback? onTap;
-  final bool isDiscount;
-  final double headerAspectRatio; 
+
+
+  final double headerAspectRatio;
   final VoidCallback? onFavorite;
   final bool isFavorited;
 
@@ -23,7 +24,6 @@ class TourCard extends StatelessWidget {
     required this.image,
     this.guide,
     this.onTap,
-    this.isDiscount = false,
     this.headerAspectRatio = 16 / 10,
     this.onFavorite,
     this.isFavorited = false,
@@ -40,13 +40,22 @@ class TourCard extends StatelessWidget {
     return buf.toString().split('').reversed.join();
   }
 
+  String _short(String? s, [int max = 28]) {
+    final t = (s ?? '').trim();
+    if (t.isEmpty || t.length <= max) return t;
+    return t.substring(0, max - 1) + '…';
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final hasDiscount = isDiscount || (tour.isDiscount ?? false);
     final typeText = tour.tourTypeText ?? '';
     final daysText = tour.totalDaysText ?? (tour.totalDays != null ? '${tour.totalDays} ngày' : '');
     final isAsset = image.startsWith('assets/');
+    final pickup = _short(tour.pickupAddress);
+
+final showExperienceBadge =
+    (tour.isTourWorkshop == true) || (tour.days.isNotEmpty && tour.hasWorkshop);
 
     return Semantics(
       button: true,
@@ -79,7 +88,8 @@ class TourCard extends StatelessWidget {
                                 : Image.network(
                                     image,
                                     fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => Container(color: Colors.grey.shade300),
+                                    errorBuilder: (_, __, ___) =>
+                                        Container(color: Colors.grey.shade300),
                                     loadingBuilder: (ctx, child, prog) {
                                       if (prog == null) return child;
                                       return Container(
@@ -95,7 +105,6 @@ class TourCard extends StatelessWidget {
                                   ),
                           ),
 
-               
                           Positioned.fill(
                             child: DecoratedBox(
                               decoration: BoxDecoration(
@@ -113,42 +122,31 @@ class TourCard extends StatelessWidget {
                             ),
                           ),
 
-                          if (hasDiscount)
-                            const Positioned(top: 10, left: 10, child: DiscountTag()),
-
-                      
-                          if (typeText.isNotEmpty || daysText.isNotEmpty)
+                       
+                          if (showExperienceBadge)
                             Positioned(
                               top: 10,
                               left: 10,
-                              right: 10,
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Wrap(
-                                      alignment: WrapAlignment.end,
-                                      crossAxisAlignment: WrapCrossAlignment.center,
-                                      spacing: 8,
-                                      runSpacing: 6,
-                                      children: [
-                                        if (typeText.isNotEmpty) _pill(typeText, Icons.category_outlined),
-                                        // if (daysText.isNotEmpty) _pill(daysText, Icons.calendar_month_rounded),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
+                              child: _experienceBadge(),
                             ),
 
-                          // Favorite button (top-left)
+                         
                           if (onFavorite != null)
                             Positioned(
                               top: 10,
-                              left: hasDiscount ? 86 : 10, // avoid DiscountTag
+                              right: 10,
                               child: _favoriteBtn(context),
                             ),
 
-                          // Glass info bar: title + rating
+                          
+                          // if (typeText.isNotEmpty)
+                          //   Positioned(
+                          //     top: 10,
+                          //     right: (onFavorite != null) ? 46 : 10,
+                          //     child: _pill(typeText, Icons.category_outlined),
+                          //   ),
+
+                         
                           Positioned(
                             left: 10,
                             right: 10,
@@ -203,13 +201,12 @@ class TourCard extends StatelessWidget {
                         ],
                       ),
 
-                      // ===== Body
+                      
                       Padding(
                         padding: EdgeInsets.fromLTRB(padX, padY, padX, padY + 4),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Price block
                             if ((tour.adultPrice ?? 0) > 0)
                               _priceLine(
                                 context,
@@ -226,11 +223,9 @@ class TourCard extends StatelessWidget {
                               ),
                             ],
 
-                            // Subtle divider
                             const SizedBox(height: 10),
                             Container(height: 1, color: Colors.black.withOpacity(0.05)),
 
-                            // Meta row: duration + type (as plain chips below)
                             const SizedBox(height: 10),
                             Wrap(
                               spacing: 8,
@@ -238,6 +233,7 @@ class TourCard extends StatelessWidget {
                               children: [
                                 if (daysText.isNotEmpty) _metaChip(Icons.schedule_rounded, daysText),
                                 if (typeText.isNotEmpty) _metaChip(Icons.map_rounded, typeText),
+                                // if (pickup.isNotEmpty) _metaChip(Icons.place_outlined, pickup),
                               ],
                             ),
                           ],
@@ -271,6 +267,32 @@ class TourCard extends StatelessWidget {
           base,
           Color.lerp(base, Colors.white, 0.06)!,
         ],
+      ),
+    );
+  }
+
+
+  Widget _experienceBadge() {
+    return _Glass(
+      radius: 20,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Icon(Icons.rocket_launch_rounded, size: 14, color: Colors.white),
+            SizedBox(width: 6),
+            Text(
+              'Trải nghiệm',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.2,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -356,7 +378,7 @@ class TourCard extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Text('$value', style: valueStyle),
+        Text(value, style: valueStyle),
         const SizedBox(width: 6),
         Text('/ $label', style: labelStyle),
       ],
@@ -379,6 +401,11 @@ class TourCard extends StatelessWidget {
         }),
         if ((totalReviews ?? 0) > 0) ...[
           const SizedBox(width: 6),
+          const Text(
+           
+            '',
+            style: TextStyle(fontSize: 0), 
+          ),
           Text(
             '${rating?.toStringAsFixed(1) ?? '0.0'} (${totalReviews})',
             style: const TextStyle(
@@ -394,7 +421,6 @@ class TourCard extends StatelessWidget {
   }
 }
 
-/// Reusable glass container with blur & subtle stroke
 class _Glass extends StatelessWidget {
   final Widget child;
   final double radius;

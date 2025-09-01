@@ -68,18 +68,21 @@ class TourGuideProfileCard extends StatelessWidget {
                     ),
                   ),
                 SizedBox(height: 1.h),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.star, color: Colors.orange, size: 16.sp),
-                    SizedBox(width: 1.w),
-                    Text(
-                      '${guide.averageRating?.toStringAsFixed(1) ?? "0.0"} '
-                      '(${guide.totalReviews ?? 0} đánh giá)',
-                      style: TextStyle(fontSize: 13.sp),
-                    ),
-                  ],
-                ),
+                if (guide.maxParticipants != null) ...[
+                  SizedBox(height: 1.h),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.group, color: Colors.blueGrey, size: 18),
+                      SizedBox(width: 1.w),
+                      Text(
+                        'Tối đa ${guide.maxParticipants} khách',
+                        style: TextStyle(
+                            fontSize: 13.sp, fontWeight: FontWeight.w500),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),

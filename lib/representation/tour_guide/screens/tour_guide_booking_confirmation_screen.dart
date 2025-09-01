@@ -29,7 +29,7 @@ class GuideBookingConfirmationScreen extends StatefulWidget {
   final DateTime startDate;
   final DateTime endDate;
 
-
+  final String? pickupAddress; 
   final int adults;
   final int children;
 
@@ -45,6 +45,7 @@ class GuideBookingConfirmationScreen extends StatefulWidget {
     required this.adults,
     required this.children,
     this.participants,
+      this.pickupAddress,
   });
 
   @override
@@ -85,25 +86,32 @@ class _GuideBookingConfirmationScreenState
     _endDate = widget.endDate;
     _prefillCurrentUser();
   }
+Future<void> _prefillCurrentUser() async {
+  try {
+    final user = await AuthenicationRepository().fetchCurrentUser();
+    _nameCtl.text = user.fullName ?? user.username ?? '';
+    _emailCtl.text = user.email ?? '';
+    _phoneCtl.text = user.phoneNumber ?? '';
+    _addrCtl.text = user.address ?? '';
 
-  Future<void> _prefillCurrentUser() async {
-    try {
-      final user = await AuthenicationRepository().fetchCurrentUser();
-      _nameCtl.text = user.fullName ?? user.username ?? '';
-      _emailCtl.text = user.email ?? '';
-      _phoneCtl.text = user.phoneNumber ?? '';
-      _addrCtl.text = user.address ?? '';
-      setState(() {
-        _loadingUser = false;
-        _loadError = null;
-      });
-    } catch (e) {
-      setState(() {
-        _loadingUser = false;
-        _loadError = e.toString();
-      });
+
+    final pick = widget.pickupAddress?.trim() ?? '';
+    if (pick.isNotEmpty) {
+      _addrCtl.text = pick;
     }
+
+    setState(() {
+      _loadingUser = false;
+      _loadError = null;
+    });
+  } catch (e) {
+    setState(() {
+      _loadingUser = false;
+      _loadError = e.toString();
+    });
   }
+}
+
 
   @override
   void dispose() {

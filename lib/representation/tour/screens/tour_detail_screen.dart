@@ -1,4 +1,4 @@
-// lib/representation/tour/tour_detail_screen.dart
+// lib/representation/tour/screens/tour_detail_screen.dart
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -36,17 +36,13 @@ class TourDetailScreen extends StatefulWidget {
 class _TourDetailScreenState extends State<TourDetailScreen>
     with SingleTickerProviderStateMixin {
   late Future<TourModel?> _futureDetail;
-
-
   late final AnimationController _spinCtrl;
-
   String _supportPhone = '0336626193';
 
   @override
   void initState() {
     super.initState();
     _futureDetail = TourRepository().getTourById(widget.tour.tourId!);
-
     _spinCtrl = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 3),
@@ -58,7 +54,6 @@ class _TourDetailScreenState extends State<TourDetailScreen>
     _spinCtrl.dispose();
     super.dispose();
   }
-
 
   bool _isSameDate(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
@@ -101,7 +96,6 @@ class _TourDetailScreenState extends State<TourDetailScreen>
     return sch?.tourGuide;
   }
 
-
   Future<bool> _confirmSupportDialog(BuildContext context) async {
     return (await showDialog<bool>(
           context: context,
@@ -137,7 +131,6 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                       ),
                     ),
                   ),
-
                   Padding(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 20, vertical: 18),
@@ -185,7 +178,6 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                       ],
                     ),
                   ),
-
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     child: Row(
@@ -227,9 +219,33 @@ class _TourDetailScreenState extends State<TourDetailScreen>
         false;
   }
 
+  // Widget _pickupChip(String text) {
+  //   return Container(
+  //     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+  //     decoration: BoxDecoration(
+  //       color: Colors.white.withOpacity(0.85),
+  //       borderRadius: BorderRadius.circular(30),
+  //       border: Border.all(color: Colors.black.withOpacity(0.08)),
+  //     ),
+  //     child: Row(
+  //       mainAxisSize: MainAxisSize.min,
+  //       children: [
+  //         const Icon(Icons.place_outlined, size: 16, color: Colors.black87),
+  //         const SizedBox(width: 6),
+  //         Text(
+  //           text,
+  //           style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+  //           overflow: TextOverflow.ellipsis,
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
   @override
   Widget build(BuildContext context) {
     final isAsset = widget.image.startsWith('assets/');
+    final pickup = (widget.tour.pickupAddress ?? '').trim();
 
     return Scaffold(
       body: SafeArea(
@@ -261,6 +277,15 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                     ),
                   ),
                 ),
+                // if (pickup.isNotEmpty)
+                //   Positioned(
+                //     top: 2.h,
+                //     right: 4.w,
+                //     child: ConstrainedBox(
+                //       constraints: BoxConstraints(maxWidth: 60.w),
+                //       child: _pickupChip(pickup),
+                //     ),
+                //   ),
               ],
             ),
             Expanded(
@@ -278,14 +303,12 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                   }
 
                   final tour = snapshot.data!;
-
                   final guideFromSchedules =
                       _pickGuideFromSchedules(tour.schedules, widget.startTime);
                   final guideToShow = guideFromSchedules ?? tour.tourGuide;
 
                   final phoneFromGuide = "0336626193";
-                  if (phoneFromGuide != null &&
-                      phoneFromGuide.trim().isNotEmpty) {
+                  if (phoneFromGuide.trim().isNotEmpty) {
                     _supportPhone = phoneFromGuide.trim();
                   }
 
@@ -318,8 +341,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                   } else {
                     if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('Không thể thực hiện cuộc gọi.')),
+                      const SnackBar(content: Text('Không thể thực hiện cuộc gọi.')),
                     );
                   }
                 }
@@ -347,8 +369,7 @@ class _TourDetailScreenState extends State<TourDetailScreen>
                     ],
                   ),
                   child: const Center(
-                    child: Icon(Icons.support_agent,
-                        color: Colors.white, size: 28),
+                    child: Icon(Icons.support_agent, color: Colors.white, size: 28),
                   ),
                 ),
               ),

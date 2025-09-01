@@ -20,12 +20,14 @@ class TourTeamSelectorScreen extends StatefulWidget {
   final TourModel tour;
   final TourScheduleModel schedule;
   final String media;
+  final String? pickupAddress;
 
   const TourTeamSelectorScreen({
     super.key,
     required this.tour,
     required this.schedule,
     required this.media,
+    this.pickupAddress,
   });
 
   @override
@@ -41,9 +43,9 @@ class _TourTeamSelectorScreenState extends State<TourTeamSelectorScreen> {
     super.initState();
     _rows.add(
       BookingParticipantModel(
-        type: 1,      
+        type: 1,
         fullName: '',
-        gender: 1,    
+        gender: 1,
         dateOfBirth: DateTime(1990, 1, 1),
       ),
     );
@@ -85,19 +87,19 @@ class _TourTeamSelectorScreenState extends State<TourTeamSelectorScreen> {
     DateTime firstDate, lastDate, init;
 
     if (p.type == 2) {
-  
       firstDate = DateTime(now.year - 11, now.month, now.day);
-      lastDate  = DateTime(now.year - 5,  now.month, now.day);
-      init = (p.dateOfBirth.isBefore(firstDate) || p.dateOfBirth.isAfter(lastDate))
-          ? DateTime(now.year - 8, now.month, now.day)
-          : p.dateOfBirth;
+      lastDate = DateTime(now.year - 5, now.month, now.day);
+      init =
+          (p.dateOfBirth.isBefore(firstDate) || p.dateOfBirth.isAfter(lastDate))
+              ? DateTime(now.year - 8, now.month, now.day)
+              : p.dateOfBirth;
     } else {
-  
       firstDate = DateTime(now.year - 100, 1, 1);
-      lastDate  = DateTime(now.year - 12, now.month, now.day);
-      init = (p.dateOfBirth.isAfter(lastDate) || p.dateOfBirth.isBefore(firstDate))
-          ? DateTime(now.year - 30, now.month, now.day)
-          : p.dateOfBirth;
+      lastDate = DateTime(now.year - 12, now.month, now.day);
+      init =
+          (p.dateOfBirth.isAfter(lastDate) || p.dateOfBirth.isBefore(firstDate))
+              ? DateTime(now.year - 30, now.month, now.day)
+              : p.dateOfBirth;
     }
 
     final picked = await showDatePicker(
@@ -143,7 +145,8 @@ class _TourTeamSelectorScreenState extends State<TourTeamSelectorScreen> {
   void _goNext() {
     if (_rows.isEmpty || _rows.any((p) => p.fullName.trim().isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng nhập đầy đủ họ tên hành khách.')),
+        const SnackBar(
+            content: Text('Vui lòng nhập đầy đủ họ tên hành khách.')),
       );
       return;
     }
@@ -154,18 +157,21 @@ class _TourTeamSelectorScreenState extends State<TourTeamSelectorScreen> {
 
       if (p.type == 2 && (age < 5 || age > 11)) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Hành khách ${i + 1} phải trong độ tuổi Trẻ em (5–11).')),
+          SnackBar(
+              content: Text(
+                  'Hành khách ${i + 1} phải trong độ tuổi Trẻ em (5–11).')),
         );
         return;
       }
       if (p.type == 1 && age < 12) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Hành khách ${i + 1} (Người lớn) phải từ 12 tuổi trở lên.')),
+          SnackBar(
+              content: Text(
+                  'Hành khách ${i + 1} (Người lớn) phải từ 12 tuổi trở lên.')),
         );
         return;
       }
     }
-
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -177,6 +183,7 @@ class _TourTeamSelectorScreenState extends State<TourTeamSelectorScreen> {
           children: childrenCount,
           media: widget.media,
           participants: _rows,
+          contactAddress: widget.pickupAddress,
         ),
       ),
     );
@@ -185,17 +192,17 @@ class _TourTeamSelectorScreenState extends State<TourTeamSelectorScreen> {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    final safeBottom  = MediaQuery.of(context).padding.bottom;
+    final safeBottom = MediaQuery.of(context).padding.bottom;
 
     return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(), 
+      onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         resizeToAvoidBottomInset: true,
-
         bottomNavigationBar: AnimatedPadding(
           duration: const Duration(milliseconds: 150),
           curve: Curves.easeOut,
-          padding: EdgeInsets.only(bottom: bottomInset > 0 ? bottomInset : safeBottom),
+          padding: EdgeInsets.only(
+              bottom: bottomInset > 0 ? bottomInset : safeBottom),
           child: SafeArea(
             top: false,
             child: Container(
@@ -219,17 +226,16 @@ class _TourTeamSelectorScreenState extends State<TourTeamSelectorScreen> {
             ),
           ),
         ),
-
         body: Stack(
           children: [
             const TourTeamBackground(),
             SafeArea(
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 3.h),
-
                 child: SingleChildScrollView(
-                  keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                  padding: EdgeInsets.only(bottom: 2.h + 72), 
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  padding: EdgeInsets.only(bottom: 2.h + 72),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -247,7 +253,6 @@ class _TourTeamSelectorScreenState extends State<TourTeamSelectorScreen> {
                       ),
                       SizedBox(height: 2.h),
 
-            
                       // PersonCounterRow(...),
 
                       ParticipantsEditor(

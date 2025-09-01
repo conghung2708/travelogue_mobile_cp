@@ -34,7 +34,6 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
   TripPlanDetailModel? _detail;
   List<DateTime> _days = [];
   late final TextEditingController _nameController;
-  late final TextEditingController _pickupNameController;
   late final TextEditingController _pickupPointController;
 
   bool _isSyncingControllers = false;
@@ -111,7 +110,7 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
     return n.contains('tay ninh');
   }
 
-  // -----------------------------------
+
 
   bool _sameYmd(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
@@ -543,6 +542,9 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
           description: _detail!.description,
           startDate: newStart,
           endDate: newEnd,
+          pickupAddress: _detail!.pickupAddress?.trim().isNotEmpty == true
+              ? _detail!.pickupAddress!.trim()
+              : _pickupPointController.text.trim(),
           imageUrl: _detail!.imageUrl ?? _initialImageUrl,
         ));
   }
@@ -630,7 +632,6 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
 
   @override
   void initState() {
-    _pickupNameController = TextEditingController();
     _pickupPointController = TextEditingController();
 
     super.initState();
@@ -680,7 +681,6 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
     if (detail != null) {
       _detail = detail;
       _nameController.text = _detail!.name;
-      _setCtl(_pickupNameController, _detail!.pickupName ?? '');
       _setCtl(_pickupPointController, _detail!.pickupAddress ?? '');
       _rebuildDaysFromDetail(_detail!);
     } else if (tripId != null) {
@@ -707,7 +707,6 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
   void dispose() {
     _nameController.dispose();
     _controller.dispose();
-    _pickupNameController.dispose();
     _pickupPointController.dispose();
     super.dispose();
   }
@@ -775,6 +774,9 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
             description: _detail!.description,
             startDate: isExtendedStart ? newStart : oldStart,
             endDate: isExtendedEnd ? newEnd : oldEnd,
+            pickupAddress: _detail!.pickupAddress?.trim().isNotEmpty == true
+                ? _detail!.pickupAddress!.trim()
+                : _pickupPointController.text.trim(),
             imageUrl: _detail!.imageUrl ?? _initialImageUrl,
           ));
       return;
@@ -836,6 +838,9 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
           description: _detail!.description,
           startDate: _detail!.startDate,
           endDate: _detail!.endDate,
+          pickupAddress: _detail!.pickupAddress?.trim().isNotEmpty == true
+              ? _detail!.pickupAddress!.trim()
+              : _pickupPointController.text.trim(),
           imageUrl: _detail!.imageUrl ?? _initialImageUrl,
         ));
   }
@@ -892,6 +897,191 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
         false;
   }
 
+  String _currentPickup() {
+    final fromCtl = _pickupPointController.text.trim();
+    if (fromCtl.isNotEmpty) return fromCtl;
+    final fromDetail = (_detail?.pickupAddress ?? '').trim();
+    return fromDetail;
+  }
+Future<bool> _showPickupConfirmDialog(BuildContext context, String current) {
+  return showDialog<bool>(
+    context: context,
+    barrierDismissible: false,
+    builder: (ctx) {
+      return Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+              decoration: const BoxDecoration(
+                gradient: Gradients.defaultGradientBackground,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              child: Row(
+                children: const [
+                  Icon(Icons.place_rounded, color: Colors.white),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Xác nhận điểm đón',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Body
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 16, 18, 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Sử dụng điểm đón sau cho chuyến đi:',
+                      style: TextStyle(fontSize: 14, color: Colors.black87)),
+                  const SizedBox(height: 10),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF6FAFF),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFDDE9FF)),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.location_on, color: Color(0xFF2E7CF6)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: SelectableText(
+                            current,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              height: 1.35,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const Divider(height: 1, color: ColorPalette.dividerColor),
+
+            // Actions
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx, false), // HUỶ
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: ColorPalette.primaryColor,
+                        side: const BorderSide(color: ColorPalette.primaryColor),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                      ),
+                      child: const Text('Huỷ'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      style: ElevatedButton.styleFrom(
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: EdgeInsets.zero,
+                      ),
+                      child: Ink(
+                        decoration: const BoxDecoration(
+                          gradient: Gradients.defaultGradientBackground,
+                          borderRadius: BorderRadius.all(Radius.circular(12)),
+                        ),
+                        child: Container(
+                          alignment: Alignment.center,
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Icon(Icons.check_rounded, color: Colors.white, size: 18),
+                              SizedBox(width: 8),
+                              Text(
+                                'Dùng địa chỉ này',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    },
+  ).then((v) => v ?? false); 
+}
+
+Future<bool> _ensurePickupBeforeGuide() async {
+  final current = _currentPickup();
+
+  if (current.isEmpty) {
+    final addNow = await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Thêm điểm đón?'),
+            content: const Text('Bạn chưa nhập điểm đón. Thêm ngay bây giờ?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false), 
+                child: const Text('Huỷ'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(ctx, true), 
+                child: const Text('Thêm ngay'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (!addNow) return false; 
+
+    
+    await _openPickupDialog();
+    return _currentPickup().isNotEmpty; 
+  }
+
+ 
+  final ok = await _showPickupConfirmDialog(context, current); 
+  return ok; 
+}
+
   void _putAllLocationsNow() {
     final d = _detail;
     if (d == null) return;
@@ -929,6 +1119,8 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
         );
         return;
       }
+      final okPickup = await _ensurePickupBeforeGuide();
+      if (!okPickup) return;
       final ok = await _confirmFinalizeIfHasGuide();
       if (!ok) return;
 
@@ -941,6 +1133,10 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
             endDate: d.endDate,
             unitPrice: _selectedGuide!.price ?? 0,
             tripPlanId: d.id,
+          
+            pickupAddress: (d.pickupAddress?.trim().isNotEmpty ?? false)
+                ? d.pickupAddress!.trim()
+                : _pickupPointController.text.trim(),
           ),
         ),
       );
@@ -963,7 +1159,6 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
   }
 
   Future<void> _openPickupDialog() async {
-    final tmpName = TextEditingController(text: _pickupNameController.text);
     final tmpAddr = TextEditingController(text: _pickupPointController.text);
 
     String? err;
@@ -1084,16 +1279,6 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
                             // const SizedBox(height: 10),
 
                             // Field: Tên điểm đón (optional)
-                            TextField(
-                              controller: tmpName,
-                              decoration: _dialogDeco(
-                                'Tên điểm đón (tùy chọn)',
-                                'VD: Khách sạn Victory – Phòng 1204',
-                                icon: Icons.person_pin_circle_rounded,
-                              ),
-                              textInputAction: TextInputAction.next,
-                            ),
-                            const SizedBox(height: 10),
 
                             AddressAutocompleteField(
                               controller: tmpAddr,
@@ -1230,21 +1415,28 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
 
     if (!ok) return;
 
-    final name = tmpName.text.trim();
     final addr = tmpAddr.text.trim();
 
     _isSyncingControllers = true;
-    _setCtl(_pickupNameController, name);
+
     _setCtl(_pickupPointController, addr);
     _isSyncingControllers = false;
 
     if (_detail != null) {
       setState(() {
         _detail = _detail!.copyWith(
-          pickupName: name.isNotEmpty ? name : null,
           pickupAddress: addr,
         );
       });
+      context.read<TripPlanBloc>().add(UpdateTripPlanEvent(
+            id: _detail!.id,
+            name: _detail!.name,
+            description: _detail!.description,
+            startDate: _detail!.startDate,
+            endDate: _detail!.endDate,
+            pickupAddress: addr, 
+            imageUrl: _detail!.imageUrl ?? _initialImageUrl,
+          ));
     }
   }
 
@@ -1337,10 +1529,6 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
   Widget _buildPickupTile() {
     final hasAddr = (_pickupPointController.text.trim().isNotEmpty) ||
         ((_detail?.pickupAddress ?? '').trim().isNotEmpty);
-
-    final name = _pickupNameController.text.trim().isNotEmpty
-        ? _pickupNameController.text.trim()
-        : (_detail?.pickupName ?? '');
     final addr = hasAddr
         ? (_pickupPointController.text.trim().isNotEmpty
             ? _pickupPointController.text.trim()
@@ -1382,10 +1570,6 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
                         'Nhấn để nhập: Tên điểm đón (tùy chọn) & Địa chỉ (bắt buộc)',
                         style: TextStyle(fontSize: 12, color: Colors.black45)),
                   ] else ...[
-                    if (name.isNotEmpty)
-                      Text('Tên: $name',
-                          style: const TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.w600)),
                     Text('Địa chỉ: $addr',
                         style: const TextStyle(fontSize: 13)),
                   ],
@@ -1454,7 +1638,6 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
           setState(() {
             _detail = det;
             _nameController.text = _detail!.name;
-            _setCtl(_pickupNameController, _detail!.pickupName ?? '');
             _setCtl(_pickupPointController, _detail!.pickupAddress ?? '');
             _rebuildDaysFromDetail(_detail!);
             _selectedTabIndex =
@@ -1475,6 +1658,10 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
                   description: _detail!.description,
                   startDate: newStart,
                   endDate: newEnd,
+                  pickupAddress:
+                      _detail!.pickupAddress?.trim().isNotEmpty == true
+                          ? _detail!.pickupAddress!.trim()
+                          : _pickupPointController.text.trim(),
                   imageUrl: _detail!.imageUrl ?? _initialImageUrl,
                 ));
             return;
@@ -1853,67 +2040,175 @@ class _SelectTripDayScreenState extends State<SelectTripDayScreen>
   Future<bool> _confirmFinalizeIfHasGuide() async {
     if (!_hasGuide) return true;
 
-    return await showDialog<bool>(
-          context: context,
-          barrierDismissible: false,
-          builder: (ctx) {
-            return AlertDialog(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)),
-              title: Row(
-                children: [
-                  const Icon(Icons.warning_amber_rounded, color: Colors.orange),
-                  const SizedBox(width: 8),
-                  const Text('Xác nhận hoàn tất'),
+ return await showDialog<bool>(
+  context: context,
+  barrierDismissible: false,
+  builder: (ctx) {
+    return Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+              decoration: const BoxDecoration(
+                gradient: Gradients.defaultGradientBackground,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              child: Row(
+                children: const [
+                  Icon(Icons.warning_amber_rounded, color: Colors.white),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Xác nhận hoàn tất',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ),
                 ],
               ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
+            ),
+
+            // Body
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 16, 18, 8),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Bạn đã chọn hướng dẫn viên ${_selectedGuide?.userName ?? ''}. '
                     'Khi hoàn tất, hệ thống sẽ tiến hành thanh toán và bạn sẽ không thể chỉnh sửa kế hoạch nữa.',
-                    style: const TextStyle(height: 1.35),
+                    style: const TextStyle(height: 1.35, color: Colors.black87),
                   ),
                   const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      const Icon(Icons.payments_outlined),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Tổng dự kiến: ${_money(_totalPrice)} '
-                          '(${_money(_guidePricePerDay)}/ngày × $_numDays ngày)',
-                          style: const TextStyle(fontWeight: FontWeight.w600),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF6FAFF),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFDDE9FF)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF4476F2).withOpacity(0.06),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.payments_outlined, color: Color(0xFF2E7CF6)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Tổng dự kiến: ${_money(_totalPrice)} '
+                            '(${_money(_guidePricePerDay)}/ngày × $_numDays ngày)',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              height: 1.35,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    '💡 Chi phí trên chưa bao gồm phí tham quan của từng địa điểm.',
+                    style: TextStyle(fontSize: 12.5, color: Colors.black54),
                   ),
                 ],
               ),
-              actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(ctx).pop(false),
-                  child: const Text('Hủy'),
-                ),
-                ElevatedButton.icon(
-                  onPressed: () => Navigator.of(ctx).pop(true),
-                  icon: const Icon(Icons.check_circle_outline),
-                  label: const Text('Xác nhận & thanh toán'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
+            ),
+
+            const Divider(height: 1, color: ColorPalette.dividerColor),
+
+            // Actions
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(ctx).pop(false),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: ColorPalette.primaryColor,
+                        side: const BorderSide(color: ColorPalette.primaryColor),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                      ),
+                      child: const Text('Hủy'),
+                    ),
                   ),
-                ),
-              ],
-            );
-          },
-        ) ??
-        false;
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.of(ctx).pop(true),
+                      style: ElevatedButton.styleFrom(
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: EdgeInsets.zero,
+                      ),
+                      child: Ink(
+                        decoration: const BoxDecoration(
+                          gradient: Gradients.defaultGradientBackground,
+                          borderRadius: BorderRadius.all(Radius.circular(12)),
+                        ),
+                        child: Container(
+                          alignment: Alignment.center,
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Icon(Icons.check_rounded, color: Colors.white, size: 18),
+                              SizedBox(width: 8),
+                              Text(
+                                'Xác nhận',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  },
+) ?? false;
+
   }
 }
 

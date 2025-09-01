@@ -14,7 +14,6 @@ import 'package:travelogue_mobile/representation/map/screens/viet_map_location_s
 import 'package:avatar_glow/avatar_glow.dart';
 import 'package:vietmap_flutter_gl/vietmap_flutter_gl.dart' as vietmap;
 
-// Gallery widgets (của bạn)
 import 'package:travelogue_mobile/representation/widgets/photo_gallery_viewer.dart';
 import 'package:travelogue_mobile/representation/widgets/image_grid_preview.dart';
 
@@ -31,12 +30,30 @@ class _PlaceBottomBarState extends State<PlaceBottomBar> {
   vietmap.VietmapController? _controller;
   final FlutterTts _tts = FlutterTts();
   bool _isSpeaking = false;
+  bool _cancelSpeak = false;
   final PageController _heroPager = PageController();
 
   @override
   void initState() {
     super.initState();
     _requestLocationPermission();
+    _initTts();
+  }
+
+  Future<void> _initTts() async {
+    final engines = List<String>.from(await _tts.getEngines);
+    final google = engines.firstWhere(
+      (e) => e.contains('google'),
+      orElse: () => engines.isNotEmpty ? engines.first : '',
+    );
+    if (google.isNotEmpty) {
+      await _tts.setEngine(google);
+    }
+    final hasVi = await _tts.isLanguageAvailable("vi-VN");
+    await _tts.setLanguage(hasVi == true ? "vi-VN" : "en-US");
+    await _tts.setSpeechRate(0.45);
+    await _tts.setPitch(1.0);
+    await _tts.awaitSpeakCompletion(true);
   }
 
   Future<void> _requestLocationPermission() async {
@@ -46,22 +63,53 @@ class _PlaceBottomBarState extends State<PlaceBottomBar> {
     }
   }
 
+  String _stripHtml(String html) {
+    final text = html.replaceAll(RegExp(r'<[^>]+>'), ' ');
+    return text.replaceAll(RegExp(r'\s+'), ' ').trim();
+  }
+
+  List<String> _chunk(String text, {int size = 800}) {
+    final parts = <String>[];
+    int i = 0;
+    while (i < text.length) {
+      int end = (i + size < text.length) ? i + size : text.length;
+      final cut = text.lastIndexOf(RegExp(r'[\\.?!\\s]'), end);
+      if (cut > i + 200) end = cut;
+      parts.add(text.substring(i, end).trim());
+      i = end;
+    }
+    return parts;
+  }
+
   Future<void> _toggleSpeak() async {
     if (_isSpeaking) {
+      _cancelSpeak = true;
       await _tts.stop();
       if (mounted) setState(() => _isSpeaking = false);
       return;
     }
-    if ((widget.place.content ?? '').isNotEmpty) {
-      await _tts.setLanguage('vi-VN');
-      await _tts.setSpeechRate(0.45);
-      await _tts.setPitch(1.0);
-      if (mounted) setState(() => _isSpeaking = true);
-      await _tts.speak(widget.place.content!);
-      _tts.setCompletionHandler(() {
-        if (mounted) setState(() => _isSpeaking = false);
+
+    final raw = (widget.place.content ?? '').trim();
+    if (raw.isEmpty) return;
+
+    final plain = _stripHtml(raw);
+    final parts = _chunk(plain, size: 800);
+
+    if (mounted) {
+      setState(() {
+        _isSpeaking = true;
+        _cancelSpeak = false;
       });
     }
+
+    try {
+      for (final part in parts) {
+        if (_cancelSpeak) break;
+        await _tts.speak(part);
+      }
+    } catch (_) {}
+
+    if (mounted) setState(() => _isSpeaking = false);
   }
 
   String _formatOpenRange(LocationModel p) {
@@ -75,8 +123,7 @@ class _PlaceBottomBarState extends State<PlaceBottomBar> {
 
   bool _isOpenNow(LocationModel p) {
     try {
-      if ((p.openTime ?? '').isEmpty || (p.closeTime ?? '').isEmpty)
-        return false;
+      if ((p.openTime ?? '').isEmpty || (p.closeTime ?? '').isEmpty) return false;
       final now = TimeOfDay.fromDateTime(DateTime.now());
       final ot = _parseHHmm(p.openTime!);
       final ct = _parseHHmm(p.closeTime!);
@@ -100,19 +147,28 @@ class _PlaceBottomBarState extends State<PlaceBottomBar> {
     return TimeOfDay(hour: h, minute: m);
   }
 
-  // Widget _buildStars(int? rating) {
-  //   final r = (rating ?? 0).clamp(0, 5);
-  //   return Row(
-  //     mainAxisSize: MainAxisSize.min,
-  //     children: List.generate(5, (i) {
-  //       return Icon(
-  //         i < r ? Icons.star_rounded : Icons.star_border_rounded,
-  //         size: 18,
-  //         color: Colors.amber.shade600,
-  //       );
-  //     }),
-  //   );
-  // }
+  String _money(num? v) {
+    if (v == null) return '--';
+    final s = v.toStringAsFixed(0);
+    final buf = StringBuffer();
+    for (int i = 0; i < s.length; i++) {
+      buf.write(s[s.length - 1 - i]);
+      if (i % 3 == 2 && i != s.length - 1) buf.write(' ');
+    }
+    return buf.toString().split('').reversed.join();
+  }
+
+  String? _priceRangeStr(LocationModel p) {
+    final minP = p.minPrice;
+    final maxP = p.maxPrice;
+
+    if (minP == null && maxP == null) return null;
+    if ((minP ?? 0) == 0 && (maxP ?? 0) == 0) return 'Miễn phí';
+    if (maxP == null) return 'Từ ${_money(minP)} đ';
+    if (minP == null) return 'Đến ${_money(maxP)} đ';
+    if ((minP - maxP).abs() < 0.0001) return '${_money(minP)} đ';
+    return '${_money(minP)} – ${_money(maxP)} đ';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -129,10 +185,7 @@ class _PlaceBottomBarState extends State<PlaceBottomBar> {
           decoration: const BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-            boxShadow: [
-              BoxShadow(
-                  color: Colors.black12, blurRadius: 12, offset: Offset(0, -6))
-            ],
+            boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 12, offset: Offset(0, -6))],
           ),
           child: ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
@@ -168,20 +221,14 @@ class _PlaceBottomBarState extends State<PlaceBottomBar> {
                                   if (url.isNotEmpty)
                                     Image.network(url, fit: BoxFit.cover)
                                   else
-                                    Image.asset(
-                                      AssetHelper.img_logo_tay_ninh,
-                                      fit: BoxFit.cover,
-                                    ),
+                                    Image.asset(AssetHelper.img_logo_tay_ninh, fit: BoxFit.cover),
                                   const Positioned.fill(
                                     child: DecoratedBox(
                                       decoration: BoxDecoration(
                                         gradient: LinearGradient(
                                           begin: Alignment.topCenter,
                                           end: Alignment.bottomCenter,
-                                          colors: [
-                                            Colors.transparent,
-                                            Colors.black54
-                                          ],
+                                          colors: [Colors.transparent, Colors.black54],
                                         ),
                                       ),
                                     ),
@@ -191,6 +238,25 @@ class _PlaceBottomBarState extends State<PlaceBottomBar> {
                             );
                           },
                         ),
+                        if ((p.category ?? '').isNotEmpty)
+                          Positioned(
+                            top: 12,
+                            left: 12,
+                            child: _OverlayPill(
+                              icon: Icons.category_outlined,
+                              text: p.category!,
+                            ),
+                          ),
+                        if ((p.districtName ?? '').isNotEmpty)
+                          Positioned(
+                            top: 12,
+                            right: 12,
+                            child: _OverlayPill(
+                              icon: Icons.location_city_outlined,
+                              text: p.districtName!,
+                              alignRight: true,
+                            ),
+                          ),
                         Positioned(
                           bottom: 14,
                           left: 14,
@@ -213,18 +279,13 @@ class _PlaceBottomBarState extends State<PlaceBottomBar> {
                               ),
                               const SizedBox(width: 8),
                               _RoundAction(
-                                tooltip:
-                                    _isSpeaking ? 'Dừng đọc' : 'Đọc nội dung',
+                                tooltip: _isSpeaking ? 'Dừng đọc' : 'Đọc nội dung',
                                 onTap: _toggleSpeak,
                                 child: AvatarGlow(
                                   animate: _isSpeaking,
-                                  glowColor: _isSpeaking
-                                      ? Colors.redAccent
-                                      : Colors.blueAccent,
+                                  glowColor: _isSpeaking ? Colors.redAccent : Colors.blueAccent,
                                   child: Icon(
-                                    _isSpeaking
-                                        ? Icons.stop
-                                        : Icons.volume_up_rounded,
+                                    _isSpeaking ? Icons.stop : Icons.volume_up_rounded,
                                     color: Colors.white,
                                   ),
                                 ),
@@ -236,57 +297,34 @@ class _PlaceBottomBarState extends State<PlaceBottomBar> {
                     ),
                   ),
                 ),
-
-                // ======== Body ========
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: EdgeInsets.symmetric(
-                        horizontal: 12.sp, vertical: 12.sp),
+                    padding: EdgeInsets.symmetric(horizontal: 12.sp, vertical: 12.sp),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Rating + chips
-                        Row(
-                          children: [
-                            // _buildStars(p.rating),
-                            // const SizedBox(width: 8),
-                            // Text('${p.rating ?? 0}/5',
-                            //     style: TextStyle(color: Colors.grey.shade700)),
-                            if ((p.category ?? '').isNotEmpty)
-                              _Chip(
-                                  text: p.category!,
-                                  icon: Icons.category_outlined),
-                            const Spacer(),
-
-                            if ((p.districtName ?? '').isNotEmpty) ...[
-                              const SizedBox(width: 6),
-                              _Chip(
-                                  text: p.districtName!,
-                                  icon: Icons.location_city_outlined),
+                        if (_priceRangeStr(p) != null) ...[
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: [
+                              _Chip(text: _priceRangeStr(p)!, icon: Icons.price_change_outlined),
                             ],
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-
+                          ),
+                          const SizedBox(height: 10),
+                        ],
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           decoration: BoxDecoration(
-                            color: (isOpen ? Colors.green : Colors.red)
-                                .withOpacity(0.08),
-                            border: Border.all(
-                              color: (isOpen ? Colors.green : Colors.red)
-                                  .withOpacity(0.5),
-                            ),
+                            color: (isOpen ? Colors.green : Colors.red).withOpacity(0.08),
+                            border: Border.all(color: (isOpen ? Colors.green : Colors.red).withOpacity(0.5)),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                isOpen
-                                    ? Icons.lock_open_rounded
-                                    : Icons.lock_outline_rounded,
+                                isOpen ? Icons.lock_open_rounded : Icons.lock_outline_rounded,
                                 size: 18,
                                 color: isOpen ? Colors.green : Colors.red,
                               ),
@@ -298,36 +336,26 @@ class _PlaceBottomBarState extends State<PlaceBottomBar> {
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              Text('  •  ${_formatOpenRange(p)}',
-                                  style:
-                                      TextStyle(color: Colors.grey.shade700)),
+                              Text('  •  ${_formatOpenRange(p)}', style: TextStyle(color: Colors.grey.shade700)),
                             ],
                           ),
                         ),
-
                         const SizedBox(height: 12),
-
-                        // Địa chỉ
                         if ((p.address ?? '').isNotEmpty)
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Icon(Icons.place_outlined,
-                                  size: 20, color: Colors.blueGrey),
+                              const Icon(Icons.place_outlined, size: 20, color: Colors.blueGrey),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
                                   p.address!,
-                                  style: const TextStyle(
-                                      fontSize: 14.5, height: 1.35),
+                                  style: const TextStyle(fontSize: 14.5, height: 1.35),
                                 ),
                               ),
                             ],
                           ),
-
                         const SizedBox(height: 14),
-
-                        // Nội dung (HTML) – click ảnh mở gallery
                         if ((p.content ?? '').isNotEmpty)
                           Html(
                             data: p.content!,
@@ -341,12 +369,8 @@ class _PlaceBottomBarState extends State<PlaceBottomBar> {
                                 textAlign: TextAlign.justify,
                               ),
                               "p": Style(margin: Margins.only(bottom: 10)),
-                              "h1": Style(
-                                  fontSize: FontSize(22),
-                                  fontWeight: FontWeight.w800),
-                              "h2": Style(
-                                  fontSize: FontSize(20),
-                                  fontWeight: FontWeight.w700),
+                              "h1": Style(fontSize: FontSize(22), fontWeight: FontWeight.w800),
+                              "h2": Style(fontSize: FontSize(20), fontWeight: FontWeight.w700),
                               "img": Style(margin: Margins.only(bottom: 8)),
                             },
                             extensions: [
@@ -375,34 +399,22 @@ class _PlaceBottomBarState extends State<PlaceBottomBar> {
                                     },
                                     child: ClipRRect(
                                       borderRadius: BorderRadius.circular(10),
-                                      child:
-                                          Image.network(src, fit: BoxFit.cover),
+                                      child: Image.network(src, fit: BoxFit.cover),
                                     ),
                                   );
                                 },
                               ),
                             ],
                           ),
-
-                        // Lưới ảnh (dùng widget của bạn)
                         if (images.isNotEmpty) ...[
                           const SizedBox(height: 14),
                           Text(
                             'Hình ảnh',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
-                                ?.copyWith(fontWeight: FontWeight.w700),
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
                           ),
-                          ImageGridPreview(
-                            images: images,
-                            maxImages: 6, // tuỳ chỉnh
-                          ),
+                          ImageGridPreview(images: images, maxImages: 6),
                         ],
-
                         const SizedBox(height: 18),
-
-                        // Nút hành động nhanh
                         Row(
                           children: [
                             Expanded(
@@ -424,26 +436,18 @@ class _PlaceBottomBarState extends State<PlaceBottomBar> {
                             const SizedBox(width: 10),
                             Expanded(
                               child: _SecondaryButton(
-                                icon: _isSpeaking
-                                    ? Icons.stop_circle_outlined
-                                    : Icons.volume_up_rounded,
+                                icon: _isSpeaking ? Icons.stop_circle_outlined : Icons.volume_up_rounded,
                                 label: _isSpeaking ? 'Dừng đọc' : 'Đọc',
                                 onPressed: _toggleSpeak,
                               ),
                             ),
                           ],
                         ),
-
                         const SizedBox(height: 20),
-
-                        // Gợi ý gần địa điểm
                         const Hotels(),
                         const SizedBox(height: 6),
                         const Restaurents(),
-
                         const SizedBox(height: 16),
-
-                        // Bản đồ preview (không hiển thị kinh/vĩ độ text)
                         Container(
                           width: double.infinity,
                           height: 60.sp,
@@ -461,8 +465,7 @@ class _PlaceBottomBarState extends State<PlaceBottomBar> {
                                 scrollGesturesEnabled: false,
                                 zoomGesturesEnabled: false,
                                 tiltGesturesEnabled: false,
-                                styleString:
-                                    'https://maps.vietmap.vn/api/maps/light/styles.json?apikey=${AppEnv.vietmapKey}',
+                                styleString: 'https://maps.vietmap.vn/api/maps/light/styles.json?apikey=${AppEnv.vietmapKey}',
                                 initialCameraPosition: vietmap.CameraPosition(
                                   target: vietmap.LatLng(
                                     p.latitude ?? 10.762622,
@@ -470,8 +473,7 @@ class _PlaceBottomBarState extends State<PlaceBottomBar> {
                                   ),
                                   zoom: 12,
                                 ),
-                                onMapCreated: (c) =>
-                                    setState(() => _controller = c),
+                                onMapCreated: (c) => setState(() => _controller = c),
                                 onMapClick: (pt, latlng) => Navigator.pushNamed(
                                   context,
                                   VietMapLocationScreen.routeName,
@@ -488,11 +490,7 @@ class _PlaceBottomBarState extends State<PlaceBottomBar> {
                                       alignment: Alignment.bottomCenter,
                                       height: 34,
                                       width: 34,
-                                      child: const Icon(
-                                        Icons.location_on,
-                                        color: Colors.red,
-                                        size: 34,
-                                      ),
+                                      child: const Icon(Icons.location_on, color: Colors.red, size: 34),
                                       latLng: vietmap.LatLng(
                                         p.latitude ?? 10.762622,
                                         p.longitude ?? 106.660172,
@@ -508,14 +506,10 @@ class _PlaceBottomBarState extends State<PlaceBottomBar> {
                                   decoration: BoxDecoration(
                                     color: Colors.white,
                                     borderRadius: BorderRadius.circular(10),
-                                    boxShadow: const [
-                                      BoxShadow(
-                                          color: Colors.black12, blurRadius: 6)
-                                    ],
+                                    boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 6)],
                                   ),
                                   child: IconButton(
-                                    icon:
-                                        const Icon(Icons.open_in_full_rounded),
+                                    icon: const Icon(Icons.open_in_full_rounded),
                                     tooltip: 'Mở rộng bản đồ',
                                     onPressed: () {
                                       Navigator.pushNamed(
@@ -533,7 +527,6 @@ class _PlaceBottomBarState extends State<PlaceBottomBar> {
                             ],
                           ),
                         ),
-
                         SizedBox(height: 20.sp),
                       ],
                     ),
@@ -548,7 +541,6 @@ class _PlaceBottomBarState extends State<PlaceBottomBar> {
   }
 }
 
-// ======== Small UI building blocks ========
 class _Chip extends StatelessWidget {
   final String text;
   final IconData icon;
@@ -572,6 +564,43 @@ class _Chip extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _OverlayPill extends StatelessWidget {
+  final String text;
+  final IconData icon;
+  final bool alignRight;
+  const _OverlayPill({required this.text, required this.icon, this.alignRight = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final pill = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.35),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.25)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: Colors.white),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.2,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    return alignRight ? Row(mainAxisSize: MainAxisSize.min, children: [pill]) : pill;
   }
 }
 
@@ -608,8 +637,7 @@ class _PrimaryButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onPressed;
-  const _PrimaryButton(
-      {required this.icon, required this.label, required this.onPressed});
+  const _PrimaryButton({required this.icon, required this.label, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -629,8 +657,7 @@ class _SecondaryButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onPressed;
-  const _SecondaryButton(
-      {required this.icon, required this.label, required this.onPressed});
+  const _SecondaryButton({required this.icon, required this.label, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {

@@ -1,31 +1,22 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_tts/flutter_tts.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:sizer/sizer.dart';
-import 'package:avatar_glow/avatar_glow.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:travelogue_mobile/core/config/app_env.dart';
-import 'package:travelogue_mobile/representation/craft_village/screens/village_mini_map.dart';
-import 'package:travelogue_mobile/representation/map/screens/viet_map_location_screen.dart';
-import 'package:vietmap_flutter_gl/vietmap_flutter_gl.dart' as vietmap;
+import 'package:travelogue_mobile/core/constants/color_constants.dart';
+import 'package:travelogue_mobile/core/blocs/location/location_bloc.dart';
+import 'package:travelogue_mobile/core/blocs/location/location_event.dart';
+import 'package:travelogue_mobile/core/blocs/location/location_state.dart';
 
 import 'package:travelogue_mobile/model/location_model.dart';
-import 'package:travelogue_mobile/model/review_craft_village_test.dart';
-import 'package:travelogue_mobile/representation/craft_village/widgets/masonry_item.dart';
-import 'package:travelogue_mobile/representation/home/widgets/rating_button_widget.dart';
-import 'package:travelogue_mobile/representation/home/widgets/title_widget.dart';
-import 'package:travelogue_mobile/representation/review/screens/reviews_screen.dart';
-import 'package:travelogue_mobile/representation/widgets/image_grid_preview.dart';
+import 'package:travelogue_mobile/model/craft_village/craft_village_model.dart';
 
-import 'package:travelogue_mobile/core/blocs/workshop/workshop_bloc.dart';
-import 'package:travelogue_mobile/core/blocs/workshop/workshop_state.dart';
+import 'package:travelogue_mobile/representation/craft_village/widgets/craft_village_section.dart';
+import 'package:travelogue_mobile/representation/widgets/image_grid_preview.dart';
 
 class CraftVillageDetailScreen extends StatefulWidget {
   const CraftVillageDetailScreen({super.key});
-  static const String routeName = '/craft_village_detail_screen';
+  static const routeName = '/craft_village_detail';
 
   @override
   State<CraftVillageDetailScreen> createState() =>
@@ -34,352 +25,491 @@ class CraftVillageDetailScreen extends StatefulWidget {
 
 class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
     with TickerProviderStateMixin {
-  LocationModel? village;
-  double currentRating = 4.5;
+  LocationModel? _initial;
+  String? _id;
   late final TabController _tabController;
 
-  final FlutterTts _tts = FlutterTts();
-  bool isSpeaking = false;
+  static const double _kTabBarHeight = 56.0;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _requestLocationPermission();
-  }
-
-  Future<void> _requestLocationPermission() async {
-    final status = await Permission.location.status;
-    if (!status.isGranted) {
-      await Permission.location.request();
-    }
-  }
-
-  @override
-  void dispose() {
-    try {
-      _tts.stop();
-    } catch (_) {}
-    _tabController.dispose();
-    super.dispose();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (village == null) {
-      final args = ModalRoute.of(context)?.settings.arguments;
-      if (args is LocationModel) {
-        village = args;
-      }
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is LocationModel) {
+      _initial = args;
+    } else if (args is String) {
+      _id = args;
+      context.read<LocationBloc>().add(LocationDetailRequested(_id!));
     }
-  }
-
-  Future<void> _speakContent() async {
-    if (isSpeaking) {
-      await _tts.stop();
-      if (!mounted) return;
-      setState(() => isSpeaking = false);
-      return;
-    }
-    if (village?.content?.isNotEmpty == true) {
-      await _tts.setLanguage("vi-VN");
-      await _tts.setSpeechRate(0.45);
-      await _tts.setPitch(1.0);
-      if (!mounted) return;
-      setState(() => isSpeaking = true);
-      await _tts.speak(village!.content!);
-      _tts.setCompletionHandler(() {
-        if (!mounted) return;
-        setState(() => isSpeaking = false);
-      });
-    }
-  }
-
-  Widget _buildIntroTab(ScrollController sc) => ListView(
-        controller: sc,
-        padding: EdgeInsets.symmetric(horizontal: 4.w),
-        children: [
-          SizedBox(height: 1.h),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(village!.name ?? '',
-                        style: TextStyle(
-                            fontSize: 18.sp,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Pattaya')),
-                    SizedBox(height: 1.h),
-                    Row(children: [
-                      Icon(Icons.location_on,
-                          color: Colors.redAccent, size: 18.sp),
-                      SizedBox(width: 1.w),
-                      Expanded(
-                        child: Text(
-                          '${village!.address ?? ''}${village!.districtName != null ? ', ${village!.districtName}' : ''}',
-                          style: TextStyle(
-                              fontSize: 14.sp, color: Colors.grey[800]),
-                        ),
-                      ),
-                    ]),
-                  ],
-                ),
-              ),
-              RatingButtonWidget(
-                rating: currentRating,
-                onTap: () async {
-                  final res = await Navigator.push<double>(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) =>
-                          ReviewsScreen<ReviewCraftVillageTestModel>(
-                        reviews: [],
-                        averageRating: currentRating,
-                      ),
-                    ),
-                  );
-                  if (res != null && mounted) {
-                    setState(() => currentRating = res);
-                  }
-                },
-              ),
-            ],
-          ),
-          SizedBox(height: 2.h),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              AvatarGlow(
-                animate: isSpeaking,
-                glowColor: isSpeaking ? Colors.redAccent : Colors.blueAccent,
-                child: InkWell(
-                  onTap: _speakContent,
-                  borderRadius: BorderRadius.circular(30),
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        colors: isSpeaking
-                            ? [Colors.redAccent, Colors.red]
-                            : [Colors.blueAccent, Colors.blue],
-                      ),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 4,
-                          offset: Offset(0, 2),
-                        )
-                      ],
-                    ),
-                    child: Icon(
-                      isSpeaking ? Icons.stop : Icons.volume_up,
-                      color: Colors.white,
-                      size: 20,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          if (isSpeaking)
-            const Padding(
-              padding: EdgeInsets.only(top: 4),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: Text(
-                  "Đang đọc...",
-                  style: TextStyle(
-                    color: Colors.blueAccent,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ),
-          SizedBox(height: 1.h),
-          Padding(
-            padding: EdgeInsets.only(right: 55.w),
-            child: const TitleWithCustoneUnderline(
-                text: 'Giới ', text2: 'thiệu : '),
-          ),
-          SizedBox(height: 1.h),
-          MarkdownBody(
-            data: village!.content ?? '',
-            styleSheet: MarkdownStyleSheet(
-              p: TextStyle(fontSize: 15.sp, color: Colors.black87),
-              listBullet: TextStyle(fontSize: 14.sp),
-            ),
-          ),
-          SizedBox(height: 2.5.h),
-          Padding(
-            padding: EdgeInsets.only(right: 55.w),
-            child: const TitleWithCustoneUnderline(
-              text: 'Hình ',
-              text2: 'ảnh :',
-            ),
-          ),
-          SizedBox(height: 1.h),
-          ImageGridPreview(images: village!.listImages),
-          SizedBox(height: 2.5.h),
-          Padding(
-            padding: EdgeInsets.only(right: 45.w),
-            child: TitleWithCustoneUnderline(
-                text: 'Thông tin ', text2: 'liên hệ :'),
-          ),
-          SizedBox(height: 1.h),
-          if (village!.openTime != null)
-            Text('🕒 Giờ mở cửa: ${village!.openTime}',
-                style: TextStyle(fontSize: 14.sp)),
-          if (village!.closeTime != null)
-            Text('🕒 Giờ đóng cửa: ${village!.closeTime}',
-                style: TextStyle(fontSize: 14.sp)),
-          SizedBox(height: 3.h),
-          Container(
-            width: double.infinity,
-            height: 40.h,
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: VillageMiniMap(
-              lat: village!.latitude ?? 10.762622,
-              lng: village!.longitude ?? 106.660172,
-              styleUrl:
-                  'https://maps.vietmap.vn/api/maps/light/styles.json?apikey=${AppEnv.vietmapKey}',
-              onTap: () {
-                Navigator.pushNamed(
-                  context,
-                  VietMapLocationScreen.routeName,
-                  arguments: vietmap.LatLng(
-                    village!.latitude ?? 10.762622,
-                    village!.longitude ?? 106.660172,
-                  ),
-                );
-              },
-            ),
-          ),
-          SizedBox(height: 4.h),
-        ],
-      );
-
-  Widget _buildWorkshopTab(ScrollController sc) {
-    return BlocBuilder<WorkshopBloc, WorkshopState>(
-      builder: (context, state) {
-        if (state is WorkshopLoading) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (state is WorkshopLoaded) {
-          if (state.workshops.isEmpty) {
-            return const Center(child: Text('Chưa có workshop nào.'));
-          }
-          return MasonryGridView.count(
-            controller: sc,
-            padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
-            crossAxisCount: 2,
-            mainAxisSpacing: 2.h,
-            crossAxisSpacing: 3.w,
-            itemCount: state.workshops.length,
-            itemBuilder: (_, i) => MasonryItem(workshop: state.workshops[i]),
-          );
-        } else if (state is WorkshopError) {
-          return Center(child: Text("Lỗi: ${state.message}"));
-        }
-        return const SizedBox();
-      },
-    );
   }
 
   @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  SliverAppBar _sliverHeader(LocationModel loc) {
+    final cover = loc.listImages.isNotEmpty ? loc.listImages.first : null;
+    final title = (loc.name ?? '').trim();
+
+    return SliverAppBar(
+      pinned: true,
+      stretch: true,
+      expandedHeight: 32.h,
+      elevation: 0,
+      surfaceTintColor: Colors.transparent,
+      leading: _roundIconBtn(
+        context,
+        icon: Icons.arrow_back_rounded,
+        onTap: () => Navigator.pop(context),
+      ),
+      actions: [
+        if ((loc.districtName ?? '').isNotEmpty)
+          _glassChip(
+            icon: Icons.place_outlined,
+            text: loc.districtName!,
+            dense: true,
+          ),
+        const SizedBox(width: 10),
+      ],
+      flexibleSpace: LayoutBuilder(
+        builder: (_, c) {
+          final t = ((c.biggest.height - kToolbarHeight) / (32.h - kToolbarHeight))
+              .clamp(0.0, 1.0);
+          return FlexibleSpaceBar(
+            titlePadding: const EdgeInsetsDirectional.only(start: 16, bottom: 12, end: 16),
+            title: AnimatedOpacity(
+              duration: const Duration(milliseconds: 200),
+              opacity: t < 0.35 ? 1 : 0,
+              child: Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w800),
+              ),
+            ),
+            background: Stack(
+              fit: StackFit.expand,
+              children: [
+                if (cover != null)
+                  Hero(
+                    tag: 'cover-$title',
+                    child: Image.network(cover, fit: BoxFit.cover),
+                  )
+                else
+                  Container(color: Colors.grey.shade300),
+               
+                Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Colors.transparent, Colors.black54],
+                    ),
+                  ),
+                ),
+               
+                Positioned(
+                  left: 16,
+                  right: 16,
+                  bottom: 16.0 + _kTabBarHeight,
+                  child: _glassBlock(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _glassChip(
+                          icon: Icons.category_outlined,
+                          text: (loc.category ?? 'Địa điểm'),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.w900,
+                            height: 1.1,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(_kTabBarHeight),
+        child: _fancyTabBar(_tabController),
+      ),
+    );
+  }
+
+ 
+  Widget _introTab(LocationModel loc) {
+    return CustomScrollView(
+      slivers: [
+        SliverPadding(
+          padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.6.h),
+          sliver: SliverList.list(
+            children: [
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  if (loc.minPrice != null || loc.maxPrice != null)
+                    _infoPill(Icons.price_change_outlined, _priceRange(loc)),
+                  if ((loc.openTime ?? '').isNotEmpty || (loc.closeTime ?? '').isNotEmpty)
+                    _infoPill(Icons.schedule_rounded, '${loc.openTime ?? '—'} – ${loc.closeTime ?? '—'}'),
+                  if ((loc.address ?? '').isNotEmpty)
+                    _infoPill(Icons.place_outlined, loc.address!),
+                ],
+              ),
+              SizedBox(height: 1.6.h),
+
+              if ((loc.content ?? '').isNotEmpty)
+                _sectionCard(
+                  title: 'Giới thiệu',
+                  child: MarkdownBody(
+                    data: loc.content!,
+                    styleSheet: MarkdownStyleSheet(
+                      p: TextStyle(fontSize: 11.5.sp, height: 1.45),
+                      h1: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w800),
+                      h2: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w800),
+                      strong: const TextStyle(fontWeight: FontWeight.w800),
+                      blockquote: TextStyle(color: Colors.black87.withOpacity(.8)),
+                    ),
+                  ),
+                ),
+
+              if (loc.listImages.isNotEmpty) ...[
+                _sectionHeader('Hình ảnh', icon: Icons.photo_library_outlined),
+                SizedBox(height: .8.h),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: ImageGridPreview(images: loc.listImages, maxImages: 6),
+                ),
+              ],
+
+              SizedBox(height: 3.h),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  
+  Widget _craftVillageTab(LocationModel loc) {
+    final CraftVillageModel? cv = loc.craftVillage;
+    if (cv == null) {
+      return const Center(child: Text('Không có thông tin làng nghề.'));
+    }
+    return CustomScrollView(
+      slivers: [
+        SliverPadding(
+          padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.6.h),
+          sliver: SliverList.list(
+            children: [
+              CraftVillageSection.fromCraftVillage(craftVillage: cv, padding: EdgeInsets.zero),
+              if (cv.workshop != null) ...[
+                SizedBox(height: 1.6.h),
+                _sectionHeader('Trải nghiệm làng nghề', icon: Icons.handyman_outlined),
+                SizedBox(height: .8.h),
+                WorkshopPreviewCard(workshop: cv.workshop!),
+              ],
+              SizedBox(height: 2.h),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+
+  @override
   Widget build(BuildContext context) {
-    if (village == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (_initial != null) {
+      return _ModernScaffold(
+        slivers: [
+          _sliverHeader(_initial!),
+          SliverFillRemaining(
+            child: TabBarView(
+              controller: _tabController,
+              children: [_introTab(_initial!), _craftVillageTab(_initial!)],
+            ),
+          ),
+        ],
+      );
     }
 
     return Scaffold(
-      body: Stack(children: [
-        if (village!.listImages.isNotEmpty)
-          Positioned.fill(
-            child: Image.network(
-              village!.listImages.first,
-              fit: BoxFit.cover,
-            ),
-          ),
-        Positioned(
-          top: 0,
-          left: 0,
-          child: _BackButton(),
-        ),
-        DraggableScrollableSheet(
-          initialChildSize: 0.4,
-          maxChildSize: 0.93,
-          minChildSize: 0.4,
-          builder: (context, sc) {
-            return Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-              ),
-              child: Column(
-                children: [
-                  Container(
-                    width: 12.w,
-                    height: 0.6.h,
-                    margin: EdgeInsets.only(top: 1.h),
-                    decoration: BoxDecoration(
-                      color: Colors.black45,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  TabBar(
+      backgroundColor: _bgColor(context),
+      body: BlocBuilder<LocationBloc, LocationState>(
+        builder: (context, state) {
+          if (state is LocationLoading || state is LocationInitial) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (state is LocationFailure) {
+            return Center(child: Text(state.message));
+          }
+          if (state is LocationEmpty) {
+            return const Center(child: Text('Không có dữ liệu.'));
+          }
+          if (state is LocationDetailSuccess) {
+            final loc = state.location;
+            return _ModernScaffold(
+              slivers: [
+                _sliverHeader(loc),
+                SliverFillRemaining(
+                  child: TabBarView(
                     controller: _tabController,
-                    labelColor: Colors.black,
-                    labelStyle: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    tabs: const [
-                      Tab(text: 'Giới thiệu'),
-                      Tab(text: 'Workshop'),
-                    ],
+                    children: [_introTab(loc), _craftVillageTab(loc)],
                   ),
-                  Expanded(
-                    child: TabBarView(
-                      controller: _tabController,
-                      children: [_buildIntroTab(sc), _buildWorkshopTab(sc)],
-                    ),
-                  )
-                ],
-              ),
+                ),
+              ],
             );
-          },
-        )
-      ]),
+          }
+          return const SizedBox.shrink();
+        },
+      ),
     );
   }
-}
 
-class _BackButton extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(8),
-        child: GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: Container(
+  
+  Color _bgColor(BuildContext context) =>
+      Theme.of(context).colorScheme.surface.withOpacity(.98);
+
+  Widget _sectionHeader(String text, {IconData? icon}) {
+    return Row(
+      children: [
+        if (icon != null)
+          Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.85),
-              borderRadius: BorderRadius.circular(30),
+              gradient: Gradients.defaultGradientBackground, 
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(FontAwesomeIcons.arrowLeft, size: 20),
+            child: Icon(icon, size: 18, color: Colors.white),
+          ),
+        if (icon != null) const SizedBox(width: 8),
+        Text(
+          text,
+          style: TextStyle(fontSize: 13.5.sp, fontWeight: FontWeight.w900, color: ColorPalette.text1Color),
+        ),
+      ],
+    );
+  }
+
+  Widget _sectionCard({required String title, required Widget child}) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 1.2.h),
+      padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 3.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.black12.withOpacity(.06)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(.04),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5.sp)),
+          SizedBox(height: .8.h),
+          child
+        ],
+      ),
+    );
+  }
+
+  Widget _roundIconBtn(BuildContext ctx, {required IconData icon, double size = 42, VoidCallback? onTap}) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 8),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(999),
+        onTap: onTap,
+        child: Container(
+          margin: const EdgeInsets.all(8),
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            gradient: Gradients.defaultGradientBackground, 
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(.12),
+                blurRadius: 12,
+              )
+            ],
+          ),
+          child: Container(
+            margin: const EdgeInsets.all(2), 
+            decoration: const BoxDecoration(
+              color: Colors.black26,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: Colors.white),
           ),
         ),
       ),
     );
+  }
+
+  Widget _glassBlock({required Widget child}) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: EdgeInsets.all(3.w),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(.12),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white.withOpacity(.25)),
+          ),
+          child: child,
+        ),
+      ),
+    );
+  }
+
+  Widget _glassChip({required IconData icon, required String text, bool dense = false}) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(999),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: dense ? 10 : 12, vertical: dense ? 6 : 8),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(.18),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: Colors.white.withOpacity(.32)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 16, color: Colors.white),
+              const SizedBox(width: 6),
+              Text(text, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _infoPill(IconData icon, String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(icon, size: 16, color: Colors.grey.shade800),
+        const SizedBox(width: 6),
+        Text(text, style: const TextStyle(fontWeight: FontWeight.w700)),
+      ]),
+    );
+  }
+
+  String _priceRange(LocationModel p) {
+    String money(num? v) {
+      if (v == null) return '--';
+      final s = v.toStringAsFixed(0);
+      final buf = StringBuffer();
+      for (int i = 0; i < s.length; i++) {
+        buf.write(s[s.length - 1 - i]);
+        if (i % 3 == 2 && i != s.length - 1) buf.write(' ');
+      }
+      return '${buf.toString().split('').reversed.join()} đ';
+    }
+
+    final minP = p.minPrice, maxP = p.maxPrice;
+    if (minP == null && maxP == null) return '—';
+    if ((minP ?? 0) == 0 && (maxP ?? 0) == 0) return 'Miễn phí';
+    if (minP != null && maxP != null) {
+      if ((minP - maxP).abs() < 0.0001) return money(minP);
+      return '${money(minP)} – ${money(maxP)}';
+    }
+    if (minP != null) return 'Từ ${money(minP)}';
+    return 'Đến ${money(maxP)}';
+  }
+
+
+  Widget _fancyTabBar(TabController controller) {
+    final r = BorderRadius.circular(12);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Material(
+        color: Colors.white.withOpacity(.92),
+        shape: RoundedRectangleBorder(
+          borderRadius: r,
+          side: BorderSide(color: Colors.black12.withOpacity(.06)),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: TabBar(
+          controller: controller,
+          labelPadding: const EdgeInsets.symmetric(horizontal: 12),
+          overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+          dividerColor: Colors.transparent,
+          indicator: BoxDecoration(
+            gradient: Gradients.defaultGradientBackground, 
+            borderRadius: BorderRadius.circular(8),
+          ),
+          indicatorPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+          indicatorSize: TabBarIndicatorSize.tab,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.black87,
+          tabs: const [
+            Tab(text: 'Giới thiệu'),
+            Tab(text: 'Làng nghề'),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ModernScaffold extends StatelessWidget {
+  final List<Widget> slivers;
+  const _ModernScaffold({required this.slivers});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      body: ScrollConfiguration(
+        behavior: const _NoGlowBehavior(),
+        child: CustomScrollView(slivers: slivers),
+      ),
+    );
+  }
+}
+
+class _NoGlowBehavior extends ScrollBehavior {
+  const _NoGlowBehavior();
+  @override
+  Widget buildOverscrollIndicator(
+      BuildContext context, Widget child, ScrollableDetails details) {
+    return child;
   }
 }

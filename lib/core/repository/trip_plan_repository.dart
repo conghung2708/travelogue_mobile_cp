@@ -99,6 +99,7 @@ Future<TripPlanDetailModel> updateTripPlan({
   required String description,
   required DateTime startDate,
   required DateTime endDate,
+  String? pickupAddress,
   String? imageUrl,
 }) async {
   final fmt = DateFormat('yyyy-MM-dd');
@@ -107,25 +108,20 @@ Future<TripPlanDetailModel> updateTripPlan({
     "description": description,
     "startDate": fmt.format(startDate),
     "endDate": fmt.format(endDate),
+    if (pickupAddress != null && pickupAddress.isNotEmpty) "pickupAddress": pickupAddress,
     if (imageUrl != null && imageUrl.isNotEmpty) "imageUrl": imageUrl,
   };
 
-  print("📤 Sending updateTripPlan body: $body");
-
-  final Response response = await BaseRepository().putRoute(
-    gateway: "${Endpoints.tripPlan}/$tripPlanId",
+  final Response res = await BaseRepository().putRoute(
+    gateway: "${Endpoints.tripPlan}/$tripPlanId", // /api/trip-plans/trip-plan/{id}
     data: body,
   );
 
-  print("📥 updateTripPlan status: ${response.statusCode}");
-  print("📥 updateTripPlan type: ${response.data.runtimeType}");
-  print("📥 updateTripPlan data: ${response.data}");
-
-  if (response.statusCode == StatusCode.ok || response.statusCode == StatusCode.created) {
-    return TripPlanDetailModel.fromJson(response.data['data']);
+  if (res.statusCode == StatusCode.ok || res.statusCode == StatusCode.created) {
+    return TripPlanDetailModel.fromJson(res.data['data']);
   }
-  throw Exception(response.data is Map && (response.data as Map)['message'] != null
-      ? (response.data as Map)['message']
+  throw Exception(res.data is Map && (res.data as Map)['message'] != null
+      ? (res.data as Map)['message']
       : "Không thể cập nhật Trip Plan");
 }
 Future<void> updateTripPlanLocations({

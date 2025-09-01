@@ -19,14 +19,14 @@ import 'package:travelogue_mobile/data/data_local/user_local.dart';
 import 'package:travelogue_mobile/model/tour/tour_day_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_review_model.dart';
-import 'package:travelogue_mobile/model/tour_guide/tour_guide_model.dart';
 import 'package:travelogue_mobile/representation/tour/widgets/timeline_card_tour_item.dart';
 import 'package:travelogue_mobile/representation/tour/widgets/tour_guide_profile.dart';
 import 'package:travelogue_mobile/representation/tour/widgets/tour_overview_header.dart';
+import 'package:travelogue_mobile/representation/workshop/screens/workshop_detail_screen.dart';
 
 class TourDetailContent extends StatelessWidget {
   final TourModel tour;
-  final TourGuideModel? guide;
+  final dynamic guide;
   final bool? readOnly;
   final DateTime? startTime;
   final bool? isBooked;
@@ -51,6 +51,82 @@ class TourDetailContent extends StatelessWidget {
       return '';
     }
   }
+
+  String _formatTimeStr(String? time) {
+    final t = (time ?? '').trim();
+    if (t.isEmpty) return '';
+    final parts = t.split(':');
+    if (parts.length >= 2) {
+      return '${parts[0].padLeft(2, '0')}:${parts[1].padLeft(2, '0')}';
+    }
+    return t;
+  }
+Widget _buildPickupStayCard(BuildContext context) {
+  final pickup = (tour.pickupAddress ?? '').trim();
+  final stay = (tour.stayInfo ?? '').trim();
+  if (pickup.isEmpty && stay.isEmpty) return const SizedBox.shrink();
+
+  final titleStyle = TextStyle(fontSize: 12.sp, color: Colors.blue[700], fontWeight: FontWeight.w600);
+  final valueTitleStyle = TextStyle(fontSize: 13.5.sp, fontWeight: FontWeight.w800, color: Colors.blue[800]);
+  final valueTextStyle = TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w700);
+
+  return Container(
+    margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 0.5.h),
+    padding: EdgeInsets.all(3.w),
+    decoration: BoxDecoration(
+      color: Colors.blue.withOpacity(0.06),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: Colors.blue.withOpacity(0.2)),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (stay.isNotEmpty) ...[
+          Row(
+            children: [
+              Icon(Icons.hotel_class_rounded, color: Colors.blue[700]),
+              SizedBox(width: 3.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Thông tin lưu trú', style: titleStyle),
+                    SizedBox(height: 0.3.h),
+                     Text(stay, style: valueTextStyle),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+        if (stay.isNotEmpty && pickup.isNotEmpty)
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 1.2.h),
+            child: Divider(height: 0, color: Colors.blue.withOpacity(0.2)),
+          ),
+        if (pickup.isNotEmpty) ...[
+          Row(
+            children: [
+              Icon(Icons.place_outlined, color: Colors.blue[700]),
+              SizedBox(width: 3.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Điểm đón', style: titleStyle),
+                    SizedBox(height: 0.3.h),
+                    Text(pickup, style: valueTextStyle),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    ),
+  );
+}
+
 
   final String _tourNoteMarkdown = """
 ### 📌 **Lưu ý khi tham gia tour khám phá Tây Ninh cùng Travelogue**
@@ -135,30 +211,28 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
     );
   }
 
-  Widget _buildDetailTab(BuildContext context) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.symmetric(vertical: 1.h),
-      child: Column(
-        children: [
-          _StartEndStrip(
-            startName: tour.startLocation?.name,
-            startAddress: tour.startLocation?.address,
-            endName: tour.endLocation?.name,
-            endAddress: tour.endLocation?.address,
-          ),
-          SizedBox(height: 1.h),
-          _buildTimeline(),
-        ],
-      ),
-    );
-  }
+Widget _buildDetailTab(BuildContext context) {
+  return SingleChildScrollView(
+    padding: EdgeInsets.symmetric(vertical: 1.h),
+    child: Column(
+      children: [
+        _buildPickupStayCard(context),
+        _StartEndStrip(
+          startName: tour.startLocation?.name,
+          startAddress: tour.startLocation?.address,
+          endName: tour.endLocation?.name,
+          endAddress: tour.endLocation?.address,
+        ),
+        SizedBox(height: 1.h),
+        _buildTimeline(),
+      ],
+    ),
+  );
+}
 
-  String _formatTime(DateTime time) {
-    return "${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}";
-  }
 
   Widget _buildTimeline() {
-    final List<TourDayModel> days = tour.days ?? [];
+    final List<TourDayModel> days = tour.days;
 
     return ListView.builder(
       itemCount: days.length,
@@ -167,10 +241,15 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
       itemBuilder: (context, index) {
         final day = days[index];
         final activities = day.activities ?? [];
-        final startTime =
+
+        final startTimeStr =
             activities.isNotEmpty ? activities.first.startTimeFormatted : null;
-        final endTime =
+        final endTimeStr =
             activities.isNotEmpty ? activities.last.endTimeFormatted : null;
+
+        final range = (startTimeStr != null && endTimeStr != null)
+            ? ' (${_formatTimeStr(startTimeStr)} - ${_formatTimeStr(endTimeStr)})'
+            : '';
 
         return Card(
           margin: EdgeInsets.symmetric(vertical: 1.h, horizontal: 4.w),
@@ -182,8 +261,7 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
             tilePadding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
             childrenPadding: EdgeInsets.only(bottom: 2.h),
             title: Text(
-              'Ngày ${day.dayNumber ?? index + 1}'
-              '${(startTime != null && endTime != null) ? " (${_formatTime(startTime)} - ${_formatTime(endTime)})" : ""}',
+              'Ngày ${day.dayNumber ?? index + 1}$range',
               style: TextStyle(
                 color: Colors.blue,
                 fontWeight: FontWeight.bold,
@@ -195,15 +273,57 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
                   ? activity.imageUrl!
                   : AssetHelper.img_default;
 
+              final isWorkshop = (activity.activityTypeText ?? '')
+                      .toLowerCase()
+                      .contains('workshop') ||
+                  (activity.workshop != null);
+              final workshopLine = (activity.workshop != null)
+                  ? ' • ${activity.workshop!.workshopName ?? 'Workshop'}'
+                  : '';
+
               return Padding(
                 padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
-                child: TimelineCardTourItem(
-                  item: activity,
-                  name: activity.name ?? 'Hoạt động',
-                  imageUrls: [imageUrl],
-                  description: activity.description ?? '',
-                  duration: activity.duration,
-                  note: activity.notes,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TimelineCardTourItem(
+                      item: activity,
+                      name: (activity.name ?? 'Hoạt động') +
+                          (isWorkshop ? workshopLine : ''),
+                      imageUrls: [imageUrl],
+                      description: activity.description ?? '',
+                      duration: activity.duration,
+                      note: activity.notes,
+                    ),
+                    if ((activity.startTimeFormatted ?? '').isNotEmpty ||
+                        (activity.endTimeFormatted ?? '').isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          const Icon(Icons.schedule_rounded,
+                              size: 16, color: Colors.blueGrey),
+                          const SizedBox(width: 6),
+                          Text(
+                            '${_formatTimeStr(activity.startTimeFormatted)}'
+                            '${(activity.endTimeFormatted ?? '').isNotEmpty ? ' - ${_formatTimeStr(activity.endTimeFormatted)}' : ''}',
+                            style: TextStyle(
+                              fontSize: 11.5.sp,
+                              color: Colors.black87,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    if (activity.workshop != null) ...[
+                      if (activity.workshop != null) ...[
+                        const SizedBox(height: 6),
+                        _WorkshopBlock(
+                          workshop: activity.workshop,
+                        ),
+                      ],
+                    ],
+                  ],
                 ),
               );
             }).toList(),
@@ -227,7 +347,7 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
 
   Widget _buildTourGuideInfo() {
     if (guide != null) {
-      return TourGuideProfile(guide: guide!);
+      return TourGuideProfile(guide: guide);
     } else {
       return Padding(
         padding: EdgeInsets.all(4.w),
@@ -241,7 +361,7 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
 
   Widget _buildReviewsTab() {
     final List<TourReviewModel> reviews =
-        (tour.reviews ?? []).cast<TourReviewModel>();
+        (tour.reviews).cast<TourReviewModel>();
     final avg = tour.averageRating;
     final total = tour.totalReviews ?? reviews.length;
     final myId = _currentUserIdSafe();
@@ -275,7 +395,6 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
       child: ListView(
         padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
         children: [
-          // Header rating
           Container(
             padding: EdgeInsets.all(3.w),
             decoration: BoxDecoration(
@@ -299,8 +418,6 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
             ),
           ),
           SizedBox(height: 1.5.h),
-
-          // List reviews
           ...reviews.map((r) {
             final reviewId = (r.id ?? '').trim();
             final isMine = (r.userId ?? '').trim() == myId;
@@ -439,7 +556,6 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Drag handle
                   Center(
                     child: Container(
                       width: 12.w,
@@ -451,8 +567,6 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
                       ),
                     ),
                   ),
-
-                  // Header
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -477,7 +591,6 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
                     ],
                   ),
                   SizedBox(height: 2.2.h),
-
                   Text(
                     'Chọn lý do báo cáo',
                     style: TextStyle(
@@ -487,8 +600,6 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
                     ),
                   ),
                   SizedBox(height: 1.2.h),
-
-                  // Chips gợi ý
                   Wrap(
                     spacing: 2.2.w,
                     runSpacing: 1.2.h,
@@ -524,8 +635,6 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
                     }).toList(),
                   ),
                   SizedBox(height: 2.2.h),
-
-                  // Label mô tả
                   Text(
                     'Mô tả chi tiết (tùy chọn)',
                     style: TextStyle(
@@ -535,8 +644,6 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
                     ),
                   ),
                   SizedBox(height: 0.8.h),
-
-                  // TextField
                   TextField(
                     controller: controller,
                     maxLines: 4,
@@ -567,8 +674,6 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
                     ),
                   ),
                   SizedBox(height: 2.2.h),
-
-                  // Actions
                   Row(
                     children: [
                       Expanded(
@@ -611,6 +716,7 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
                                     reason = (selectedReason ?? note);
                                   }
 
+                                  // ignore: use_build_context_synchronously
                                   context.read<ReportBloc>().add(
                                         SubmitReportEvent(
                                           ReportReviewRequest(
@@ -632,16 +738,16 @@ Chuyến đi không chỉ là hành trình thể chất, mà còn là hành trì
                             ),
                           ),
                           style: ButtonStyle(
-                            minimumSize: MaterialStateProperty.all(Size(0, 48)),
+                            minimumSize:
+                                MaterialStateProperty.all(const Size(0, 48)),
                             padding: MaterialStateProperty.all(
                               EdgeInsets.symmetric(
                                   vertical: 1.6.h, horizontal: 3.w),
                             ),
                             elevation:
                                 MaterialStateProperty.resolveWith((states) {
-                              if (states.contains(MaterialState.disabled)) {
+                              if (states.contains(MaterialState.disabled))
                                 return 0;
-                              }
                               return 3;
                             }),
                             shape: MaterialStateProperty.all(
@@ -774,6 +880,336 @@ class _LocRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _WorkshopBlock extends StatelessWidget {
+  final dynamic workshop;
+  const _WorkshopBlock({required this.workshop});
+
+  String _hm(String? hhmmss) {
+    final t = (hhmmss ?? '').trim();
+    if (t.isEmpty) return '';
+    final p = t.split(':');
+    if (p.length >= 2) return '${p[0].padLeft(2, '0')}:${p[1].padLeft(2, '0')}';
+    return t;
+  }
+
+  String _money(num? v) {
+    if (v == null) return '--';
+    final s = v.toStringAsFixed(0);
+    final buf = StringBuffer();
+    for (int i = 0; i < s.length; i++) {
+      buf.write(s[s.length - 1 - i]);
+      if (i % 3 == 2 && i != s.length - 1) buf.write(' ');
+    }
+    return buf.toString().split('').reversed.join();
+  }
+
+  Widget _chip(String text, {IconData? icon}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE9F3FF),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: const Color(0xFFB9DCFF)),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        if (icon != null) ...[
+          Icon(icon, size: 14, color: const Color(0xFF1565C0)),
+          const SizedBox(width: 6),
+        ],
+        Text(
+          text,
+          style: const TextStyle(
+            color: Color(0xFF0D47A1),
+            fontWeight: FontWeight.w600,
+            fontSize: 12,
+          ),
+        ),
+      ]),
+    );
+  }
+
+  Widget _infoRow(IconData icon, String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: const Color(0xFF1565C0)),
+        const SizedBox(width: 10),
+        Flexible(
+          child: RichText(
+            text: TextSpan(
+              style: const TextStyle(color: Colors.black87, height: 1.25),
+              children: [
+                TextSpan(
+                  text: '$label ',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                TextSpan(text: value),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _priceUnit(String typeName) {
+    final t = typeName.toLowerCase();
+    if (t.contains('người lớn')) return '/người lớn';
+    if (t.contains('trẻ em')) return '/trẻ em';
+    return '/vé';
+  }
+
+  String? _getWorkshopId() {
+    try {
+      if (workshop is Map) {
+        final v = (workshop['workshopId'] ?? workshop['id']);
+        if (v is String && v.isNotEmpty) return v;
+      } else {
+        final v = (workshop.workshopId ?? workshop.id) as String?;
+        if (v != null && v.isNotEmpty) return v;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final String name = ((workshop is Map)
+            ? (workshop['workshopName'] ?? '')
+            : (workshop.workshopName ?? ''))
+        .toString()
+        .trim();
+
+    final String typeName = ((workshop is Map)
+            ? (workshop['workshopTicketTypeName'] ?? '')
+            : (workshop.workshopTicketTypeName ?? ''))
+        .toString()
+        .trim();
+
+    final int? durationMin = (workshop is Map)
+        ? (workshop['workshopTicketDurationMinutes'] as int?)
+        : (workshop.workshopTicketDurationMinutes as int?);
+
+    final num? price = (workshop is Map)
+        ? (workshop['workshopTicketPrice'] as num?)
+        : (workshop.workshopTicketPrice as num?);
+
+    final String start = _hm((workshop is Map)
+        ? (workshop['workshopSessionStart'] as String?)
+        : (workshop.workshopSessionStart as String?));
+
+    final String end = _hm((workshop is Map)
+        ? (workshop['workshopSessionEnd'] as String?)
+        : (workshop.workshopSessionEnd as String?));
+
+    final int? capacity = (workshop is Map)
+        ? (workshop['workshopSessionCapacity'] as int?)
+        : (workshop.workshopSessionCapacity as int?);
+
+    final String? workshopId = _getWorkshopId();
+
+    return Container(
+      padding: EdgeInsets.all(3.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFB9DCFF)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1976D2).withOpacity(0.08),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Header
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE3F2FD),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.handyman_rounded,
+                    color: Color(0xFF1565C0)),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name.isNotEmpty ? name : 'Workshop trải nghiệm',
+                      style: TextStyle(
+                        fontSize: 13.5.sp,
+                        fontWeight: FontWeight.w800,
+                        height: 1.15,
+                        color: const Color(0xFF0D47A1),
+                      ),
+                    ),
+                    if (typeName.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        typeName,
+                        style: TextStyle(
+                          color: const Color(0xFF1565C0),
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              if (price != null)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1976D2),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF1976D2).withOpacity(0.2),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        '${_money(price)} đ',
+                        style: TextStyle(
+                          fontSize: 12.5.sp,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                        ),
+                      ),
+                      Text(
+                        _priceUnit(typeName),
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.9),
+                          fontSize: 10.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                if (durationMin != null && durationMin > 0)
+                  _chip('$durationMin phút', icon: Icons.timer_outlined),
+                if (start.isNotEmpty || end.isNotEmpty)
+                  _chip(
+                    '${start.isNotEmpty ? start : ''}${end.isNotEmpty ? ' - $end' : ''}',
+                    icon: Icons.schedule_rounded,
+                  ),
+                if (capacity != null && capacity > 0)
+                _chip('Tối đa: ${_money(capacity)} người', icon: Icons.people_alt_rounded),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 2.2.w),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0F7FF),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFCCE6FF)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _infoRow(Icons.workspace_premium_rounded, 'Hoạt động:',
+                    name.isNotEmpty ? name : '—'),
+                if (typeName.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  _infoRow(
+                      Icons.confirmation_number_rounded, 'Loại vé:', typeName),
+                ],
+                if (durationMin != null && durationMin > 0) ...[
+                  const SizedBox(height: 8),
+                  _infoRow(
+                      Icons.timer_outlined, 'Thời lượng:', '$durationMin phút'),
+                ],
+                if (start.isNotEmpty || end.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  _infoRow(Icons.schedule_rounded, 'Khung giờ:',
+                      '${start.isNotEmpty ? start : ''}${end.isNotEmpty ? ' - $end' : ''}'),
+                ],
+                if (capacity != null && capacity > 0) ...[
+                  const SizedBox(height: 8),
+              _infoRow(Icons.people_alt_rounded, 'Tối đa:', '${_money(capacity)} người'),
+
+                ],
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Xem thông tin chi tiết workshop, lịch và hoạt động liên quan.',
+                  style: TextStyle(
+                      fontSize: 11.5.sp, color: Colors.black54, height: 1.2),
+                ),
+              ),
+              const SizedBox(width: 10),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1976D2),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: (workshopId == null || workshopId.isEmpty)
+                    ? null
+                    : () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => WorkshopDetailScreen(
+                              workshopId: workshopId,
+                              hideIntroTab: true,
+                              hideScheduleTab: true,
+                            ),
+                          ),
+                        );
+                      },
+                label: const Text('Xem chi tiết',
+                    style: TextStyle(fontWeight: FontWeight.w800)),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
