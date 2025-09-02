@@ -29,7 +29,6 @@ class _VisitAdjust {
 
 class SelectPlaceForDayScreen extends StatefulWidget {
   static const routeName = '/select-place-for-day';
-
   const SelectPlaceForDayScreen({super.key});
 
   @override
@@ -41,6 +40,14 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
   static const _kBlue = Color(0xFF1565C0);
   static const _kBlueLight = Color(0xFFE3F2FD);
   static const _kBlueLight2 = Color(0xFFEEF6FF);
+
+  bool _forceFoodMode = false;
+  bool _autoInsertAfterPick = false;
+  TimeOfDay? _lunchAt;
+  int _lunchStayMinutes = 90;
+  int? _dayNumber;
+  String? _dayLabel;
+  bool _foodOnly = false;
 
   ButtonStyle get _tonalBlueButton => ElevatedButton.styleFrom(
         backgroundColor: _kBlueLight,
@@ -74,15 +81,9 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
           backgroundColor: Colors.white,
           surfaceTintColor: Colors.white,
           titleTextStyle: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: _kBlue,
-          ),
-          contentTextStyle: TextStyle(
-            fontSize: 14,
-            color: Colors.grey.shade800,
-            height: 1.4,
-          ),
+              fontSize: 18, fontWeight: FontWeight.w700, color: _kBlue),
+          contentTextStyle:
+              TextStyle(fontSize: 14, color: Colors.grey.shade800, height: 1.4),
         ),
       ),
       child: child,
@@ -95,13 +96,11 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
       context: context,
       builder: (ctx) => _wrapDialog(
         AlertDialog(
-          title: const Row(
-            children: [
-              Icon(Icons.info_outline, color: _kBlue),
-              SizedBox(width: 8),
-              Expanded(child: Text('')),
-            ],
-          ),
+          title: const Row(children: [
+            Icon(Icons.info_outline, color: _kBlue),
+            SizedBox(width: 8),
+            Expanded(child: Text(''))
+          ]),
           contentPadding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
           titlePadding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
           insetPadding:
@@ -118,9 +117,8 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
               const SizedBox(height: 8),
               DecoratedBox(
                 decoration: BoxDecoration(
-                  color: _kBlueLight2,
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                    color: _kBlueLight2,
+                    borderRadius: BorderRadius.circular(12)),
                 child:
                     Padding(padding: const EdgeInsets.all(12), child: content),
               ),
@@ -137,7 +135,6 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
     );
     return ok == true;
   }
-
 
   Future<bool> _showInputDialog({
     required String title,
@@ -189,10 +186,12 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
   final List<TripActivityModel> _selectedActivities = [];
   final Set<String> _selectedIds = <String>{};
   final Set<String> _blockedLocationIds = <String>{};
+
   bool _didHydrateCoords = false;
+  static const TimeOfDay kLunchStart = TimeOfDay(hour: 11, minute: 0);
+  static const TimeOfDay kLunchEnd = TimeOfDay(hour: 14, minute: 0);
 
   final List<ItineraryStop> _itinerary = [];
-
   List<LocationModel> _allLocations = [];
   bool _didInit = false;
 
@@ -211,6 +210,7 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
   late final VietmapRouteService _vietmap = VietmapRouteService(
     apiKey: '840f8a8247cb32578fc81fec50af42b8ede321173a31804b',
   );
+
   Future<void> _recomputeLinkAndTimesAfterRemove(int removedIdx) async {
     final currIdx = removedIdx;
     final prevIdx = removedIdx - 1;
@@ -277,19 +277,13 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
   }
 
   void _hydrateSelectedFromCatalog() {
-    if (_didHydrateCoords) {
-      return;
-    }
-    if (_allLocations.isEmpty || _itinerary.isEmpty) {
-      return;
-    }
+    if (_didHydrateCoords) return;
+    if (_allLocations.isEmpty || _itinerary.isEmpty) return;
 
     for (int i = 0; i < _itinerary.length; i++) {
       final stop = _itinerary[i];
       final pid = stop.place.id ?? '';
-      if (pid.isEmpty) {
-        continue;
-      }
+      if (pid.isEmpty) continue;
 
       final found = _allLocations.firstWhere(
         (l) => (l.id ?? '') == pid,
@@ -360,6 +354,9 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
       _dayDate = DateTime(now.year, now.month, now.day);
     }
 
+    _dayNumber = args['dayNumber'] as int?;
+    _dayLabel = DateFormat('dd/MM/yyyy (EEEE)', 'vi').format(_dayDate);
+
     final startTimeArg = args['startTime'];
     _dayStart = startTimeArg is TimeOfDay
         ? startTimeArg
@@ -367,9 +364,6 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
 
     final initialSelected =
         (args['selected'] as List?)?.cast<TripActivityModel>() ?? const [];
-    _dayStart = args['startTime'] is TimeOfDay
-        ? args['startTime'] as TimeOfDay
-        : const TimeOfDay(hour: minHour, minute: 0);
 
     if (initialSelected.isNotEmpty) {
       final t0 = initialSelected.first.startTime;
@@ -411,32 +405,96 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
       ..clear()
       ..addAll(
           otherSelected.map((e) => e.locationId).where((e) => e.isNotEmpty));
+
+    _forceFoodMode = args['forceFoodMode'] == true;
+    _foodOnly = args['foodOnly'] == true;
+    _autoInsertAfterPick = args['autoInsertAfterPick'] == true;
+    _lunchAt = args['lunchAt'] is TimeOfDay
+        ? args['lunchAt'] as TimeOfDay
+        : const TimeOfDay(hour: 12, minute: 0);
+    _lunchStayMinutes = (args['lunchStayMinutes'] is int)
+        ? args['lunchStayMinutes'] as int
+        : 90;
+
+    if (_forceFoodMode) {
+      selectedFilterIndex.value = 2; 
+    }
+    if (_foodOnly) {
+      selectedFilterIndex.value = 2; 
+    }
+  }
+
+  Widget _foodBanner() {
+    if (!_forceFoodMode) return const SizedBox.shrink();
+    final needFoodNow = _spansLunch && !_hasFoodSelected;
+
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.only(top: 0.5.h),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: needFoodNow
+            ? const Color(0xFFFFF3E0)
+            : (_hasFoodSelected ? const Color(0xFFE8F5E9) : _kBlueLight2),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: needFoodNow
+              ? const Color(0xFFEF6C00)
+              : (_hasFoodSelected ? const Color(0xFF2E7D32) : _kBlue),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(
+            _hasFoodSelected
+                ? Icons.check_circle
+                : (needFoodNow ? Icons.error_outline : Icons.restaurant),
+            color: _hasFoodSelected
+                ? const Color(0xFF2E7D32)
+                : (needFoodNow ? const Color(0xFFEF6C00) : _kBlue),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              _hasFoodSelected
+                  ? 'Đã chọn điểm ăn uống cho ngày ${_dayNumber ?? ''} • ${_dayLabel ?? ''}'
+                  : (needFoodNow
+                      ? 'Lịch đi qua khung trưa — vui lòng chọn Ẩm thực cho ngày ${_dayNumber ?? ''} • ${_dayLabel ?? ''}'
+                      : 'Bạn chưa chọn điểm ăn uống hôm nay. Bỏ qua Ẩm thực? Nhấn HOÀN TẤT để xác nhận.'),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: _hasFoodSelected
+                    ? const Color(0xFF2E7D32)
+                    : (needFoodNow ? const Color(0xFFEF6C00) : _kBlue),
+              ),
+            ),
+          ),
+          if (!_hasFoodSelected)
+            TextButton(
+                onPressed: () => selectedFilterIndex.value = 2,
+                child: Text(needFoodNow ? 'Chọn ngay' : 'Tới Ẩm thực')),
+        ],
+      ),
+    );
   }
 
   Future<void> _ensureLegRoutes() async {
     if (_itinerary.length <= 1) return;
-
     for (int i = 1; i < _itinerary.length; i++) {
       final prev = _itinerary[i - 1].place;
       final curr = _itinerary[i].place;
-
       final fLat = prev.safeLat, fLng = prev.safeLng;
       final tLat = curr.safeLat, tLng = curr.safeLng;
       if (fLat == null || fLng == null || tLat == null || tLng == null)
         continue;
-
-      if (_itinerary[i].travelSeconds > 0 && _itinerary[i].travelMeters > 0) {
+      if (_itinerary[i].travelSeconds > 0 && _itinerary[i].travelMeters > 0)
         continue;
-      }
 
       try {
         final route = await _vietmap.routeMotorcycle(
-          fromLat: fLat,
-          fromLng: fLng,
-          toLat: tLat,
-          toLng: tLng,
-        );
-
+            fromLat: fLat, fromLng: fLng, toLat: tLat, toLng: tLng);
         final old = _itinerary[i];
         _itinerary[i] = ItineraryStop(
           place: old.place,
@@ -451,17 +509,14 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
   }
 
   String? _openCloseText(LocationModel loc) {
-  final open = _parseOpenTime(itemOpenTime: loc.openTime);
-  final close = _parseCloseTime(itemCloseTime: loc.closeTime);
-
-  if (open == null && close == null) return null;
-
-  final parts = <String>[];
-  if (open != null) parts.add('Mở: ${_fmtTOD(open)}');
-  if (close != null) parts.add('Đóng: ${_fmtTOD(close)}');
-  return parts.join(' · ');
-}
-
+    final open = _parseOpenTime(itemOpenTime: loc.openTime);
+    final close = _parseCloseTime(itemCloseTime: loc.closeTime);
+    if (open == null && close == null) return null;
+    final parts = <String>[];
+    if (open != null) parts.add('Mở: ${_fmtTOD(open)}');
+    if (close != null) parts.add('Đóng: ${_fmtTOD(close)}');
+    return parts.join(' · ');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -524,9 +579,7 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
                           TextButton(
                             onPressed: () async {
                               final picked = await showTimePicker(
-                                context: context,
-                                initialTime: _dayStart,
-                              );
+                                  context: context, initialTime: _dayStart);
                               if (picked == null) return;
 
                               if (picked.hour < minHour ||
@@ -537,7 +590,6 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
                               }
 
                               final oldStart = _dayStart;
-
                               setState(() {
                                 _userPickedStart = true;
                                 _dayStart = picked;
@@ -554,7 +606,7 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
                                 if (adjust == null) {
                                   setState(() {
                                     _dayStart = oldStart;
-                                  }); // revert
+                                  });
                                   return;
                                 }
 
@@ -590,6 +642,7 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
                           ),
                         ],
                       ),
+                      _foodBanner(),
                       SizedBox(height: 0.5.h),
                       InkWell(
                         onTap: _showDistanceTip,
@@ -613,10 +666,10 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
                         ),
                       ),
                       SizedBox(height: 1.5.h),
-                      Center(
-                        child: FilterChipsBar(
-                            selectedIndexListenable: selectedFilterIndex),
-                      ),
+                      if (!_foodOnly)
+                        Center(
+                            child: FilterChipsBar(
+                                selectedIndexListenable: selectedFilterIndex)),
                       const TitleWithCustoneUnderline(
                           text: '📍Địa điểm ', text2: ' nổi bật'),
                       SizedBox(height: 2.h),
@@ -624,8 +677,10 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
                         child: ValueListenableBuilder<int>(
                           valueListenable: selectedFilterIndex,
                           builder: (context, filterIndex, _) {
+                            final appliedIndex = _foodOnly ? 2 : filterIndex;
+
                             final filtered =
-                                _filterLocations(_allLocations, filterIndex);
+                                _filterLocations(_allLocations, appliedIndex);
 
                             if (_anchorPlace != null) {
                               WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -669,6 +724,7 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
                                     }
                                   }
                                 }
+
                                 final openClose = _openCloseText(loc);
 
                                 return PlaceCard(
@@ -729,8 +785,8 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
     final ok = await _showConfirmDialog(
       title: 'Điểm mở cửa lúc ${_fmtTOD(openTod)}',
       content: Text(
-        'Giờ bạn chọn là ${_fmtTOD(effective)}, nhưng điểm này mở cửa lúc '
-        '${_fmtTOD(openTod)}. Bạn có muốn lùi “Bắt đầu từ” về ${_fmtTOD(openTod)} không?',
+        'Giờ bạn chọn là ${_fmtTOD(effective)}, nhưng điểm này mở cửa lúc ${_fmtTOD(openTod)}. '
+        'Bạn có muốn lùi “Bắt đầu từ” về ${_fmtTOD(openTod)} không?',
       ),
     );
 
@@ -801,8 +857,7 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
     await showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
       builder: (ctx) {
         return Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
@@ -824,9 +879,8 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
               const SizedBox(height: 12),
               DecoratedBox(
                 decoration: BoxDecoration(
-                  color: _kBlueLight2,
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                    color: _kBlueLight2,
+                    borderRadius: BorderRadius.circular(12)),
                 child: Padding(
                   padding: const EdgeInsets.all(12),
                   child: Text(
@@ -873,11 +927,7 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
       if (fLat != null && fLng != null && tLat != null && tLng != null) {
         try {
           final route = await _vietmap.routeMotorcycle(
-            fromLat: fLat,
-            fromLng: fLng,
-            toLat: tLat,
-            toLng: tLng,
-          );
+              fromLat: fLat, fromLng: fLng, toLat: tLat, toLng: tLng);
           final distanceKm = route.distanceMeters / 1000.0;
           if (distanceKm > _maxDistanceKm) {
             return _showConfirmDialog(
@@ -888,8 +938,8 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
                 children: [
                   _placePills(from.name ?? 'Điểm trước', to.name ?? 'Điểm sau'),
                   const SizedBox(height: 12),
-                  Text('Sau khi xóa, khoảng cách sẽ là '
-                      '${distanceKm.toStringAsFixed(1)} km (>${_maxDistanceKm.toStringAsFixed(0)} km).'),
+                  Text(
+                      'Sau khi xóa, khoảng cách sẽ là ${distanceKm.toStringAsFixed(1)} km (>${_maxDistanceKm.toStringAsFixed(0)} km).'),
                 ],
               ),
             );
@@ -932,8 +982,7 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
       builder: (_) {
         return StatefulBuilder(
           builder: (context, setModalState) {
@@ -943,6 +992,7 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
                       name: a.name,
                       description: a.description,
                       address: a.address,
+                      category: a.type,
                       medias:
                           (a.imageUrl != null && a.imageUrl!.trim().isNotEmpty)
                               ? [MediaModel(mediaUrl: a.imageUrl!.trim())]
@@ -990,8 +1040,8 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
                                   to.name ?? 'Điểm sau'),
                               const SizedBox(height: 12),
                               Text(
-                                  'Sau khi xóa “${removedAct.name}”, khoảng cách sẽ là '
-                                  '${distanceKm.toStringAsFixed(1)} km (>${_maxDistanceKm.toStringAsFixed(0)} km).'),
+                                'Sau khi xóa “${removedAct.name}”, khoảng cách sẽ là ${distanceKm.toStringAsFixed(1)} km (>${_maxDistanceKm.toStringAsFixed(0)} km).',
+                              ),
                             ],
                           ),
                         );
@@ -999,15 +1049,11 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
                     } catch (_) {}
                   }
                 }
-                if (!continueRemove) {
-                  return;
-                }
+                if (!continueRemove) return;
 
                 await _handleRemoveAt(idx);
 
-                if (!context.mounted) {
-                  return;
-                }
+                if (!context.mounted) return;
                 if (_selectedActivities.isEmpty) {
                   Navigator.pop(context);
                 } else {
@@ -1029,9 +1075,7 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
-            color: _kBlueLight,
-            borderRadius: BorderRadius.circular(999),
-          ),
+              color: _kBlueLight, borderRadius: BorderRadius.circular(999)),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -1060,7 +1104,7 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
       children: [
         chip(a, Icons.place),
         const Icon(Icons.arrow_forward, color: _kBlue, size: 18),
-        chip(b, Icons.flag),
+        chip(b, Icons.flag)
       ],
     );
   }
@@ -1083,8 +1127,7 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
           )
         : BoxDecoration(
             color: Colors.grey.shade300,
-            borderRadius: BorderRadius.circular(30),
-          );
+            borderRadius: BorderRadius.circular(30));
 
     return DecoratedBox(
       decoration: deco,
@@ -1106,25 +1149,27 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
             return;
           }
 
+          if (_forceFoodMode && _spansLunch && !_hasFoodSelected) {
+            _snack(
+                'Bạn cần chọn ít nhất một địa điểm Ẩm thực cho ngày này (lịch đi qua khung trưa).');
+            selectedFilterIndex.value = 2;
+            return;
+          }
           final payload = _toTplList();
           Navigator.pop(context, {
             'tpl': payload,
-            'acts': List<TripActivityModel>.from(_selectedActivities),
+            'acts': List<TripActivityModel>.from(_selectedActivities)
           });
         },
-        icon: Icon(
-          hasAny ? Icons.check_circle : Icons.save_outlined,
-          size: 20.sp,
-          color: hasAny ? Colors.white : Colors.black54,
-        ),
+        icon: Icon(hasAny ? Icons.check_circle : Icons.save_outlined,
+            size: 20.sp, color: hasAny ? Colors.white : Colors.black54),
         label: Text(
           hasAny ? 'HOÀN TẤT' : 'LƯU NGÀY TRỐNG',
           style: TextStyle(
-            fontSize: 14.sp,
-            fontWeight: FontWeight.bold,
-            color: hasAny ? Colors.white : Colors.black87,
-            letterSpacing: 1.2,
-          ),
+              fontSize: 14.sp,
+              fontWeight: FontWeight.bold,
+              color: hasAny ? Colors.white : Colors.black87,
+              letterSpacing: 1.2),
         ),
       ),
     );
@@ -1140,15 +1185,13 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
     final start = _dayStart;
     final startEarlier = (start.hour < openTod.hour) ||
         (start.hour == openTod.hour && start.minute < openTod.minute);
-
     if (!startEarlier) return;
 
     if (_userPickedStart && showPrompt) {
       final ok = await _showConfirmDialog(
         title: 'Điểm mở cửa lúc ${_fmtTOD(openTod)}',
         content: Text(
-          'Bạn đang bắt đầu lúc ${_fmtTOD(start)}, sớm hơn giờ mở cửa của '
-          '“${firstPlace.name ?? 'điểm đầu tiên'}” (${_fmtTOD(openTod)}). '
+          'Bạn đang bắt đầu lúc ${_fmtTOD(start)}, sớm hơn giờ mở cửa của “${firstPlace.name ?? 'điểm đầu tiên'}” (${_fmtTOD(openTod)}). '
           'Bạn có muốn lùi “Bắt đầu từ” về ${_fmtTOD(openTod)} không?',
         ),
       );
@@ -1165,6 +1208,16 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
   Future<void> _onPlaceTap(LocationModel loc) async {
     final id = loc.id ?? (loc.name ?? '');
     final isSelected = _selectedActivities.any((a) => a.locationId == id);
+
+    if (_forceFoodMode && _autoInsertAfterPick) {
+      final ok = await _insertLunchAt(loc);
+      if (!ok) return;
+      Navigator.pop(context, {
+        'tpl': _toTplList(),
+        'acts': List<TripActivityModel>.from(_selectedActivities)
+      });
+      return;
+    }
 
     if (isSelected) {
       final idx = _selectedActivities.indexWhere((a) => a.locationId == id);
@@ -1220,11 +1273,7 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
       if (!ok) return;
 
       final act = _makeActivityFromLocation(
-        loc: loc,
-        arrival: arrival,
-        depart: depart,
-        order: 1,
-      );
+          loc: loc, arrival: arrival, depart: depart, order: 1);
 
       setState(() {
         _selectedActivities.add(act);
@@ -1262,11 +1311,7 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
 
     try {
       final route = await _vietmap.routeMotorcycle(
-        fromLat: fromLat,
-        fromLng: fromLng,
-        toLat: toLat,
-        toLng: toLng,
-      );
+          fromLat: fromLat, fromLng: fromLng, toLat: toLat, toLng: toLng);
 
       final distanceKm = route.distanceMeters / 1000.0;
       if (distanceKm > _maxDistanceKm) {
@@ -1279,8 +1324,8 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
               _placePills(
                   lastStop.place.name ?? 'Điểm trước', loc.name ?? 'Điểm mới'),
               const SizedBox(height: 12),
-              Text('Điểm này cách điểm trước khoảng '
-                  '${distanceKm.toStringAsFixed(1)} km, vượt giới hạn khuyến nghị là ${_maxDistanceKm.toStringAsFixed(0)} km.'),
+              Text(
+                  'Điểm này cách điểm trước khoảng ${distanceKm.toStringAsFixed(1)} km, vượt giới hạn khuyến nghị là ${_maxDistanceKm.toStringAsFixed(0)} km.'),
             ],
           ),
         );
@@ -1289,7 +1334,6 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
 
       var arrival =
           lastStop.depart.add(Duration(seconds: route.durationSeconds));
-
       final adjust = await _respectOpenClose(loc, arrival, stay);
       if (adjust == null) return;
 
@@ -1370,6 +1414,7 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
           .clamp(5, 24 * 60);
 
       if (i == 0) {
+        // giữ cursor
       } else {
         final legTravelSecs = _itinerary[i].travelSeconds;
         cursor = _itinerary[i - 1].depart.add(Duration(seconds: legTravelSecs));
@@ -1437,7 +1482,6 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
     for (int i = 0; i < _selectedActivities.length; i++) {
       final a = _selectedActivities[i];
       final stop = _itinerary[i];
-
       result.add(
         TripPlanLocationModel(
           tripPlanLocationId: null,
@@ -1471,6 +1515,10 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
         return src
             .where((e) => _mapCategoryToType(e.category) == 'craft')
             .toList();
+      case 4: 
+        return src
+            .where((e) => _mapCategoryToType(e.category) == 'scenic')
+            .toList();
       default:
         return src;
     }
@@ -1478,15 +1526,9 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
 
   String _mapCategoryToType(String? category) {
     final c = (category ?? '').toLowerCase();
-    if (c.contains('lịch sử')) {
-      return 'history';
-    }
-    if (c.contains('làng nghề')) {
-      return 'craft';
-    }
-    if (c.contains('ẩm thực')) {
-      return 'food';
-    }
+    if (c.contains('lịch sử')) return 'history';
+    if (c.contains('làng nghề')) return 'craft';
+    if (c.contains('ẩm thực')) return 'food';
     return 'scenic';
   }
 
@@ -1520,21 +1562,13 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
 
   TimeOfDay? _parseOpenTime({String? itemOpenTime}) {
     final s = itemOpenTime?.trim();
-    if (s == null || s.isEmpty) {
-      return null;
-    }
+    if (s == null || s.isEmpty) return null;
     final m = RegExp(r'(\d{1,2})(?:[:hHgG]?(\d{2}))?').firstMatch(s);
-    if (m == null) {
-      return null;
-    }
+    if (m == null) return null;
     final h = int.tryParse(m.group(1) ?? '');
     final mm = int.tryParse(m.group(2) ?? '0') ?? 0;
-    if (h == null || h < 0 || h > 23) {
-      return null;
-    }
-    if (mm < 0 || mm > 59) {
-      return null;
-    }
+    if (h == null || h < 0 || h > 23) return null;
+    if (mm < 0 || mm > 59) return null;
     return TimeOfDay(hour: h, minute: mm);
   }
 
@@ -1550,11 +1584,148 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
     return TimeOfDay(hour: h, minute: mm);
   }
 
+  bool get _spansLunch {
+    if (_selectedActivities.isEmpty) return false;
+    final start = DateTime(_dayDate.year, _dayDate.month, _dayDate.day,
+        kLunchStart.hour, kLunchStart.minute);
+    final end = DateTime(_dayDate.year, _dayDate.month, _dayDate.day,
+        kLunchEnd.hour, kLunchEnd.minute);
+    final firstStart = _selectedActivities.first.startTime;
+    final lastEnd = _selectedActivities.last.endTime;
+    return firstStart.isBefore(end) && lastEnd.isAfter(start);
+  }
+
+  bool get _hasFoodSelected =>
+      _selectedActivities.any((a) => _mapCategoryToType(a.type) == 'food');
+
+  Future<bool> _insertLunchAt(LocationModel loc) async {
+    final target =
+        TimeOfDay(hour: _lunchAt?.hour ?? 12, minute: _lunchAt?.minute ?? 0);
+    final targetDt = TimeUtils.combine(_dayDate, target);
+    final lunchStay = _lunchStayMinutes;
+
+    if (_itinerary.isEmpty) {
+      final adjust = await _respectOpenClose(loc, targetDt, lunchStay);
+      if (adjust == null) return false;
+      final arr = adjust.arrival;
+      final dep = arr.add(Duration(minutes: adjust.stayMinutes));
+      if (!TimeUtils.withinDay(arr, _dayDate, minHour, maxHour) ||
+          !TimeUtils.withinDay(dep, _dayDate, minHour, maxHour)) {
+        _snack('Giờ trưa vượt khung $minHour:00–$maxHour:00.');
+        return false;
+      }
+      final act = _makeActivityFromLocation(
+          loc: loc, arrival: arr, depart: dep, order: 1);
+      setState(() {
+        _selectedActivities.add(act);
+        _itinerary.add(ItineraryStop(
+          place: loc,
+          arrival: arr,
+          depart: dep,
+          stayMinutes: adjust.stayMinutes,
+          travelMeters: 0,
+          travelSeconds: 0,
+        ));
+        _selectedIds.add((loc.id ?? loc.name) ?? '');
+        _anchorPlace = loc;
+        _roadKmCache.clear();
+      });
+      return true;
+    }
+
+    int insertIndex = _selectedActivities.length;
+    Duration bestDelta = const Duration(days: 999);
+
+    for (int i = 0; i < _itinerary.length; i++) {
+      final prev = _itinerary[i];
+      DateTime earliestReach = prev.depart;
+
+      if (i < _itinerary.length - 1) {
+        final next = _itinerary[i + 1];
+        final pLat = prev.place.safeLat, pLng = prev.place.safeLng;
+        final lLat = loc.safeLat, lLng = loc.safeLng;
+        if (pLat != null && pLng != null && lLat != null && lLng != null) {
+          try {
+            final r = await _vietmap.routeMotorcycle(
+                fromLat: pLat, fromLng: pLng, toLat: lLat, toLng: lLng);
+            final arrLoc =
+                prev.depart.add(Duration(seconds: r.durationSeconds));
+            final delta = (arrLoc.isAfter(targetDt))
+                ? arrLoc.difference(targetDt)
+                : targetDt.difference(arrLoc);
+            if (delta < bestDelta) {
+              bestDelta = delta;
+              insertIndex = i + 1;
+            }
+          } catch (_) {}
+        }
+      } else {
+        final delta = (earliestReach.isAfter(targetDt))
+            ? earliestReach.difference(targetDt)
+            : targetDt.difference(earliestReach);
+        if (delta < bestDelta) {
+          bestDelta = delta;
+          insertIndex = i + 1;
+        }
+      }
+    }
+
+    DateTime arrival = targetDt;
+    int travelMeters = 0, travelSeconds = 0;
+    if (insertIndex - 1 >= 0) {
+      final prev = _itinerary[insertIndex - 1];
+      final pLat = prev.place.safeLat, pLng = prev.place.safeLng;
+      final lLat = loc.safeLat, lLng = loc.safeLng;
+      if (pLat != null && pLng != null && lLat != null && lLng != null) {
+        try {
+          final r = await _vietmap.routeMotorcycle(
+              fromLat: pLat, fromLng: pLng, toLat: lLat, toLng: lLng);
+          travelMeters = r.distanceMeters;
+          travelSeconds = r.durationSeconds;
+          arrival = prev.depart.add(Duration(seconds: travelSeconds));
+        } catch (_) {}
+      }
+    }
+
+    final adjust = await _respectOpenClose(loc, arrival, lunchStay);
+    if (adjust == null) return false;
+
+    final arr = adjust.arrival;
+    final dep = arr.add(Duration(minutes: adjust.stayMinutes));
+
+    if (!TimeUtils.withinDay(arr, _dayDate, minHour, maxHour) ||
+        !TimeUtils.withinDay(dep, _dayDate, minHour, maxHour)) {
+      _snack('Giờ trưa vượt khung $minHour:00–$maxHour:00.');
+      return false;
+    }
+
+    final act = _makeActivityFromLocation(
+        loc: loc, arrival: arr, depart: dep, order: insertIndex + 1);
+
+    setState(() {
+      _selectedActivities.insert(insertIndex, act);
+      _itinerary.insert(
+        insertIndex,
+        ItineraryStop(
+          place: loc,
+          arrival: arr,
+          depart: dep,
+          stayMinutes: adjust.stayMinutes,
+          travelMeters: travelMeters,
+          travelSeconds: travelSeconds,
+        ),
+      );
+      _selectedIds.add((loc.id ?? loc.name) ?? '');
+      _anchorPlace = loc;
+      _roadKmCache.clear();
+    });
+
+    _recalcTimesForSelected(startFromIndex: insertIndex);
+    return true;
+  }
+
   Future<_VisitAdjust?> _respectOpenClose(
-    LocationModel loc,
-    DateTime rawArrival,
-    int stayMinutes,
-  ) async {
+      LocationModel loc, DateTime rawArrival, int stayMinutes) async {
     DateTime arrival = rawArrival;
     int stay = stayMinutes;
 
@@ -1567,9 +1738,7 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
         final ok = await _showConfirmDialog(
           title: 'Chưa mở cửa',
           content: Text(
-            '“${loc.name ?? 'Địa điểm'}” mở lúc ${_fmtTOD(openTod)}. '
-            'Bạn có muốn chờ đến ${_fmtTOD(openTod)} không?',
-          ),
+              '“${loc.name ?? 'Địa điểm'}” mở lúc ${_fmtTOD(openTod)}. Bạn có muốn chờ đến ${_fmtTOD(openTod)} không?'),
         );
         if (!ok) return null;
         arrival = openDt;
@@ -1595,9 +1764,8 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
         final ok = await _showConfirmDialog(
           title: 'Sắp đến giờ đóng cửa',
           content: Text(
-            '“${loc.name ?? 'Địa điểm'}” đóng lúc ${_fmtTOD(closeTod)}.\n'
-            'Chỉ còn $left phút. Bạn có muốn rút ngắn thời gian dừng xuống $left phút không?',
-          ),
+              '“${loc.name ?? 'Địa điểm'}” đóng lúc ${_fmtTOD(closeTod)}.\nChỉ còn $left phút. '
+              'Bạn có muốn rút ngắn thời gian dừng xuống $left phút không?'),
         );
         if (!ok) return null;
         stay = left;
@@ -1618,39 +1786,29 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
 
   Future<void> _refreshMatrixFor(List<LocationModel> targets) async {
     final a = _anchorPlace;
-    if (a == null) {
-      return;
-    }
+    if (a == null) return;
+
     final aLat = a.safeLat, aLng = a.safeLng;
-    if (aLat == null || aLng == null) {
-      return;
-    }
+    if (aLat == null || aLng == null) return;
 
     final usableTargets = <LocationModel>[];
     final coords = <List<double>>[];
     for (final t in targets) {
       final tId = (t.id ?? t.name) ?? '';
       final aId = (a.id ?? a.name) ?? '';
-      if (tId == aId) {
-        continue;
-      }
+      if (tId == aId) continue;
+
       final lat = t.safeLat, lng = t.safeLng;
-      if (lat == null || lng == null) {
-        continue;
-      }
+      if (lat == null || lng == null) continue;
 
       final key = _roadKey(a.id, a.name, t.id, t.name);
-      if (_roadKmCache.containsKey(key)) {
-        continue;
-      }
+      if (_roadKmCache.containsKey(key)) continue;
 
       usableTargets.add(t);
       coords.add([lat, lng]);
     }
 
-    if (coords.isEmpty) {
-      return;
-    }
+    if (coords.isEmpty) return;
 
     try {
       final kms = await _vietmap.matrixDistanceKm(
@@ -1663,15 +1821,11 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
       for (var i = 0; i < usableTargets.length; i++) {
         final t = usableTargets[i];
         final km = kms[i];
-        if (km == null) {
-          continue;
-        }
+        if (km == null) continue;
         final key = _roadKey(a.id, a.name, t.id, t.name);
         _roadKmCache[key] = km;
       }
-      if (mounted) {
-        setState(() {});
-      }
+      if (mounted) setState(() {});
     } catch (_) {}
   }
 
