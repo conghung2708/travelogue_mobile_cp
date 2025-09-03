@@ -5,6 +5,7 @@ import 'package:travelogue_mobile/core/blocs/bank_lookup/bank_lookup_cubit.dart'
 import 'package:travelogue_mobile/core/blocs/booking/booking_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/festival/festival_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/home/home_bloc.dart';
+import 'package:travelogue_mobile/core/blocs/location/location_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/main/main_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/media/media_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/nearest_data/nearest_data_bloc.dart';
@@ -23,6 +24,7 @@ import 'package:travelogue_mobile/core/blocs/workshop/workshop_bloc.dart';
 import 'package:travelogue_mobile/core/repository/bank_account_repository.dart';
 import 'package:travelogue_mobile/core/repository/bank_lookup_repository.dart';
 import 'package:travelogue_mobile/core/repository/booking_repository.dart';
+import 'package:travelogue_mobile/core/repository/location_repository.dart';
 import 'package:travelogue_mobile/core/repository/nearest_data_repository.dart';
 import 'package:travelogue_mobile/core/repository/notification_repository.dart';
 import 'package:travelogue_mobile/core/repository/refund_request_repository.dart';
@@ -58,6 +60,9 @@ class AppBloc {
       BankLookupCubit(BankLookupRepository());
   static final WalletBloc walletBloc =
       WalletBloc(walletRepository: WalletRepository());
+
+static final LocationBloc locationBloc =
+    LocationBloc(LocationRepository()); 
 
   static final ReportBloc reportBloc = ReportBloc(ReportRepository());
 
@@ -114,6 +119,9 @@ class AppBloc {
       create: (context) => reportBloc,
     ),
     BlocProvider<NotificationBloc>(create: (context) => notificationBloc),
+    BlocProvider<LocationBloc>(
+  create: (context) => locationBloc,
+), 
   ];
 
   void initial() {
@@ -183,7 +191,7 @@ class AppBloc {
     bankLookupCubit.close();
     walletBloc.close();
     reportBloc.close();
-
+locationBloc.close(); 
     notificationBloc.close();
   }
 

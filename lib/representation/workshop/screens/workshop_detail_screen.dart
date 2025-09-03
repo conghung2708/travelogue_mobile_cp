@@ -1,3 +1,4 @@
+// lib/representation/workshop/screens/workshop_detail_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sizer/sizer.dart';
@@ -7,6 +8,7 @@ import 'package:travelogue_mobile/core/blocs/workshop/workshop_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/workshop/workshop_event.dart';
 import 'package:travelogue_mobile/core/blocs/workshop/workshop_state.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
+
 import 'package:travelogue_mobile/model/workshop/workshop_detail_model.dart';
 
 import 'package:travelogue_mobile/representation/home/widgets/title_widget.dart';
@@ -16,15 +18,21 @@ import 'package:travelogue_mobile/representation/workshop/widgets/workshop_sched
 
 class WorkshopDetailScreen extends StatefulWidget {
   static const String routeName = '/workshop_detail';
+
   final String workshopId;
   final String? selectedScheduleId;
   final bool readOnly;
+
+  final bool hideIntroTab;
+  final bool hideScheduleTab;
 
   const WorkshopDetailScreen({
     super.key,
     required this.workshopId,
     this.selectedScheduleId,
     this.readOnly = false,
+    this.hideIntroTab = false,
+    this.hideScheduleTab = false,
   });
 
   @override
@@ -33,13 +41,12 @@ class WorkshopDetailScreen extends StatefulWidget {
 
 class _WorkshopDetailScreenState extends State<WorkshopDetailScreen>
     with TickerProviderStateMixin {
-  late final TabController _tabCtl;
+  late TabController _tabCtl;
+  bool _tabReady = false;
 
   @override
   void initState() {
     super.initState();
-    _tabCtl = TabController(length: 3, vsync: this);
-
     context
         .read<WorkshopBloc>()
         .add(GetWorkshopDetailEvent(workshopId: widget.workshopId));
@@ -47,7 +54,7 @@ class _WorkshopDetailScreenState extends State<WorkshopDetailScreen>
 
   @override
   void dispose() {
-    _tabCtl.dispose();
+    if (_tabReady) _tabCtl.dispose();
     super.dispose();
   }
 
@@ -58,13 +65,50 @@ class _WorkshopDetailScreenState extends State<WorkshopDetailScreen>
     return [words.sublist(0, mid).join(' '), words.sublist(mid).join(' ')];
   }
 
-  Widget _buildImage(String? imageUrl) {
-    if (imageUrl != null &&
-        imageUrl.isNotEmpty &&
-        imageUrl.startsWith('http')) {
-      return Image.network(imageUrl, fit: BoxFit.cover);
+  Widget _buildImage(WorkshopDetailModel w) {
+    final url = (w.schedules.isNotEmpty ? w.schedules.first.imageUrl : null) ??
+        (w.imageList.isNotEmpty ? w.imageList.first : null);
+
+    if (url != null && url.isNotEmpty && url.startsWith('http')) {
+      return Image.network(url, fit: BoxFit.cover);
     }
     return Image.asset(AssetHelper.img_default, fit: BoxFit.cover);
+  }
+
+({List<Tab> tabs, List<Widget> views}) _buildTabsAndViews(WorkshopDetailModel w) {
+  final tabs = <Tab>[];
+  final views = <Widget>[];
+
+  if (!widget.hideIntroTab) {
+    tabs.add(const Tab(text: 'Giới thiệu'));
+    views.add(WorkshopIntroTab(workshop: w));
+  }
+
+  if (!widget.hideScheduleTab) {
+    tabs.add(const Tab(text: 'Lịch'));
+    views.add(
+      WorkshopScheduleTab(
+        workshop: w,
+        workshopName: w.name ?? '',
+        schedules: widget.selectedScheduleId != null
+            ? w.schedules.where((s) => s.scheduleId == widget.selectedScheduleId).toList()
+            : w.schedules,
+        readOnly: widget.readOnly,
+      ),
+    );
+  }
+
+  tabs.add(const Tab(text: 'Hoạt động'));
+  views.add(WorkshopActivityTimeline(days: w.days));
+  return (tabs: tabs, views: views);
+}
+
+  void _ensureTabControllerLen(int len) {
+    if (!_tabReady || _tabCtl.length != len) {
+      if (_tabReady) _tabCtl.dispose();
+      _tabCtl = TabController(length: len, vsync: this);
+      _tabReady = true;
+    }
   }
 
   @override
@@ -75,17 +119,18 @@ class _WorkshopDetailScreenState extends State<WorkshopDetailScreen>
         builder: (context, state) {
           if (state is WorkshopLoading) {
             return const Center(child: CircularProgressIndicator());
-          } else if (state is WorkshopDetailLoaded) {
-            final workshop = state.workshop;
-            final parts = _splitTitle(workshop.name ?? '');
+          }
+
+          if (state is WorkshopDetailLoaded) {
+            final w = state.workshop;
+            final parts = _splitTitle(w.name ?? '');
+
+            final tv = _buildTabsAndViews(w);
+            _ensureTabControllerLen(tv.tabs.length);
 
             return Stack(
               children: [
-                Positioned.fill(
-                  child: (workshop.schedules.isNotEmpty)
-                      ? _buildImage(workshop.schedules.first.imageUrl)
-                      : Image.asset(AssetHelper.img_default, fit: BoxFit.cover),
-                ),
+                Positioned.fill(child: _buildImage(w)),
                 Positioned.fill(
                   child: Container(
                     decoration: BoxDecoration(
@@ -100,7 +145,6 @@ class _WorkshopDetailScreenState extends State<WorkshopDetailScreen>
                     ),
                   ),
                 ),
-                // Nút Back
                 SafeArea(
                   child: Padding(
                     padding: EdgeInsets.only(left: 4.w),
@@ -118,11 +162,13 @@ class _WorkshopDetailScreenState extends State<WorkshopDetailScreen>
                     ),
                   ),
                 ),
-                // Nội dung chi tiết
-                _buildDetailContent(workshop, parts),
+
+                _buildDetailContent(w, parts, tv.tabs, tv.views),
               ],
             );
-          } else if (state is WorkshopError) {
+          }
+
+          if (state is WorkshopError) {
             return Center(child: Text('Lỗi: ${state.message}'));
           }
           return const SizedBox();
@@ -131,7 +177,12 @@ class _WorkshopDetailScreenState extends State<WorkshopDetailScreen>
     );
   }
 
-  Widget _buildDetailContent(WorkshopDetailModel workshop, List<String> parts) {
+  Widget _buildDetailContent(
+    WorkshopDetailModel workshop,
+    List<String> parts,
+    List<Tab> tabs,
+    List<Widget> views,
+  ) {
     return DraggableScrollableSheet(
       initialChildSize: .46,
       minChildSize: .46,
@@ -156,7 +207,6 @@ class _WorkshopDetailScreenState extends State<WorkshopDetailScreen>
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  // Tiêu đề
                   Padding(
                     padding: EdgeInsets.symmetric(vertical: 1.h),
                     child: TitleWithCustoneUnderline(
@@ -164,7 +214,6 @@ class _WorkshopDetailScreenState extends State<WorkshopDetailScreen>
                       text2: parts[1],
                     ),
                   ),
-                  // TabBar
                   TabBar(
                     controller: _tabCtl,
                     indicatorColor: Colors.transparent,
@@ -172,39 +221,17 @@ class _WorkshopDetailScreenState extends State<WorkshopDetailScreen>
                     unselectedLabelColor: Colors.grey.shade600,
                     labelStyle:
                         TextStyle(fontWeight: FontWeight.bold, fontSize: 15.sp),
-                    tabs: const [
-                      Tab(text: 'Giới thiệu'),
-                      Tab(text: 'Lịch'),
-                      Tab(text: 'Hoạt động'),
-                    ],
+                    tabs: tabs,
                   ),
                 ],
               ),
             ),
-            // Tab nội dung
             SliverFillRemaining(
               hasScrollBody: true,
               child: TabBarView(
                 controller: _tabCtl,
                 physics: const ClampingScrollPhysics(),
-                children: [
-                  // Giới thiệu
-                  WorkshopIntroTab(workshop: workshop),
-                  // Lịch
-                  WorkshopScheduleTab(
-                    workshop: workshop,
-                    workshopName: workshop.name ?? '',
-                    schedules: widget.selectedScheduleId != null
-                        ? workshop.schedules
-                            .where((s) =>
-                                s.scheduleId == widget.selectedScheduleId)
-                            .toList()
-                        : workshop.schedules,
-                    readOnly: widget.readOnly, //Nhớ lọc theo ngày hiện tại
-                  ),
-                  // Hoạt động
-                  WorkshopActivityTimeline(workshop.days),
-                ],
+                children: views,
               ),
             ),
           ],

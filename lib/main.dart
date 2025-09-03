@@ -8,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:showcaseview/showcaseview.dart';
 import 'package:sizer/sizer.dart';
@@ -23,14 +24,29 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-void main() async {
+void testDateFormats() {
+  final now = DateTime.now();
+
+  final mmm = DateFormat('MMM', 'vi_VN').format(now); 
+  final eee = DateFormat('EEE', 'vi_VN').format(now); 
+  final full = DateFormat('EEEE, dd MMMM yyyy', 'vi_VN').format(now);
+
+  print("MMM (tháng rút gọn): $mmm");
+  print("EEE (thứ rút gọn): $eee");
+  print("Full format: $full");
+}
+
+Future<void> main() async {
   await runZonedGuarded(() async {
     final WidgetsBinding widgetsBinding =
         WidgetsFlutterBinding.ensureInitialized();
 
     print("🔄 App init start...");
 
-    await initializeDateFormatting('vi', null);
+
+    await initializeDateFormatting('vi_VN', null);
+    Intl.defaultLocale = 'vi_VN';
+    testDateFormats();
     print("✅ Date formatting ok");
 
     widgetsBinding.requestPerformanceMode(DartPerformanceMode.latency);

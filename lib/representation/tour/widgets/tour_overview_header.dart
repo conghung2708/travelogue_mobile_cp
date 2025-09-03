@@ -43,11 +43,17 @@ class TourOverviewHeader extends StatelessWidget {
     return Icons.route_rounded;
   }
 
+  String _durationLabel(int? totalDays) {
+    final int d = (totalDays ?? 1).clamp(1, 365);
+
+    if (d == 1) return '1 Ngày';
+    return '${d}N${d - 1}D';
+  }
+
   @override
   Widget build(BuildContext context) {
     final int totalDays = tour.totalDays ?? 1;
-    final String tourDuration =
-        '${totalDays}N${(totalDays - 1).clamp(1, totalDays)}D';
+    final String tourDuration = _durationLabel(totalDays);
 
     final String tourDate = startTime != null
         ? DateFormat('dd/MM/yyyy').format(startTime!)
@@ -72,7 +78,6 @@ class TourOverviewHeader extends StatelessWidget {
           ),
         ),
         SizedBox(height: 1.h),
-
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
@@ -93,10 +98,7 @@ class TourOverviewHeader extends StatelessWidget {
             ),
           ],
         ),
-
         SizedBox(height: 1.5.h),
-
-        // Chip phương tiện (string từ BE)
         Container(
           width: double.infinity,
           padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.2.h),
@@ -119,9 +121,7 @@ class TourOverviewHeader extends StatelessWidget {
             ],
           ),
         ),
-
         SizedBox(height: 2.h),
-
         Container(
           height: 5.h,
           width: double.infinity,
@@ -132,7 +132,6 @@ class TourOverviewHeader extends StatelessWidget {
           child: const TripMarqueeInfo(),
         ),
         SizedBox(height: 2.h),
-
         TourConfirmedActionCard(
           tour: tour,
           currencyFormat: currencyFormatter,
@@ -152,8 +151,9 @@ class TourOverviewHeader extends StatelessWidget {
               TourScheduleCalendarScreen.routeName,
               arguments: TourCalendarArgs(
                 tour: tour,
-                schedules: schedules,
+                schedules: tour.schedules,
                 isGroupTour: true,
+                pickupAddress: tour.pickupAddress,
               ),
             );
           },

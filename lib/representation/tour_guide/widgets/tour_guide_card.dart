@@ -34,7 +34,6 @@ class TourGuideCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-         
           ClipRRect(
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(4.w),
@@ -54,13 +53,11 @@ class TourGuideCard extends StatelessWidget {
                     fit: BoxFit.cover,
                   ),
           ),
-
           Padding(
             padding: EdgeInsets.all(3.w),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-             
                 Text(
                   guide.userName ?? "Không rõ tên",
                   style: TextStyle(
@@ -69,9 +66,7 @@ class TourGuideCard extends StatelessWidget {
                     color: Colors.black87,
                   ),
                 ),
-
                 SizedBox(height: 0.5.h),
-
                 if (guide.sexText != null || guide.sex != null)
                   Row(
                     children: [
@@ -90,8 +85,6 @@ class TourGuideCard extends StatelessWidget {
                       ),
                     ],
                   ),
-
-              
                 SizedBox(height: 0.5.h),
                 if (guide.averageRating != null)
                   Row(
@@ -107,8 +100,6 @@ class TourGuideCard extends StatelessWidget {
                       ),
                     ],
                   ),
-
-            
                 SizedBox(height: 0.5.h),
                 if (guide.price != null)
                   Text(
@@ -119,8 +110,24 @@ class TourGuideCard extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-
- 
+                if (guide.maxParticipants != null && guide.maxParticipants! > 0)
+                  Padding(
+                    padding: EdgeInsets.only(top: 0.5.h),
+                    child: Row(
+                      children: [
+                        Icon(Icons.group, size: 13.sp, color: Colors.blueGrey),
+                        SizedBox(width: 1.w),
+                        Text(
+                          "Tối đa ${guide.maxParticipants} người",
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: Colors.black54,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 if (guide.introduction != null &&
                     guide.introduction!.isNotEmpty) ...[
                   SizedBox(height: 1.5.h),
@@ -147,7 +154,6 @@ class TourGuideCard extends StatelessWidget {
                     ],
                   ),
                 ],
-
                 SizedBox(height: 2.h),
                 SizedBox(
                   width: double.infinity,

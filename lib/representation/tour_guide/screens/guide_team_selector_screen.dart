@@ -19,7 +19,8 @@ class GuideTeamSelectorScreen extends StatefulWidget {
   final DateTime endDate;
   final double unitPrice;
   final String? tripPlanId;
-  final int? maxPeople;
+  final int? maxPeople; 
+  final String? pickupAddress; 
 
   const GuideTeamSelectorScreen({
     super.key,
@@ -29,6 +30,7 @@ class GuideTeamSelectorScreen extends StatefulWidget {
     required this.unitPrice,
     this.tripPlanId,
     this.maxPeople,
+    this.pickupAddress,
   });
 
   @override
@@ -40,12 +42,21 @@ class _GuideTeamSelectorScreenState extends State<GuideTeamSelectorScreen> {
   final formatter = NumberFormat('#,###');
   final List<BookingParticipantModel> _rows = [];
 
+  
+  int? get _limit => (widget.maxPeople != null && widget.maxPeople! > 0)
+      ? widget.maxPeople
+      : (widget.guide.maxParticipants != null &&
+              widget.guide.maxParticipants! > 0
+          ? widget.guide.maxParticipants
+          : null);
+
   @override
   void initState() {
     super.initState();
+   
     _rows.add(
       BookingParticipantModel(
-        type: 1,
+        type: 1, 
         fullName: '',
         gender: 1,
         dateOfBirth: DateTime(1990, 1, 1),
@@ -57,11 +68,10 @@ class _GuideTeamSelectorScreenState extends State<GuideTeamSelectorScreen> {
   int get adultCount => _rows.where((e) => e.type == 1).length;
   int get childrenCount => _rows.where((e) => e.type == 2).length;
 
-  bool get hasLimit => widget.maxPeople != null && widget.maxPeople! > 0;
-  int get remainingSlot => hasLimit
-      ? (widget.maxPeople! - totalPeople).clamp(0, widget.maxPeople!).toInt()
-      : 9999;
-  bool get canAdd => !hasLimit || totalPeople < widget.maxPeople!;
+  bool get hasLimit => _limit != null;
+  int get remainingSlot =>
+      hasLimit ? (_limit! - totalPeople).clamp(0, _limit!).toInt() : 9999;
+  bool get canAdd => !hasLimit || totalPeople < _limit!;
 
   double get totalPrice =>
       widget.unitPrice *
@@ -71,7 +81,7 @@ class _GuideTeamSelectorScreenState extends State<GuideTeamSelectorScreen> {
     if (!hasLimit) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Bạn chỉ có thể chọn tối đa ${widget.maxPeople} người.'),
+        content: Text('Bạn chỉ có thể chọn tối đa $_limit người.'),
         backgroundColor: Colors.redAccent,
         behavior: SnackBarBehavior.floating,
         margin: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
@@ -87,6 +97,7 @@ class _GuideTeamSelectorScreenState extends State<GuideTeamSelectorScreen> {
     DateTime firstDate, lastDate, init;
 
     if (p.type == 2) {
+     
       firstDate = DateTime(now.year - 11, now.month, now.day);
       lastDate = DateTime(now.year - 5, now.month, now.day);
       init =
@@ -94,6 +105,7 @@ class _GuideTeamSelectorScreenState extends State<GuideTeamSelectorScreen> {
               ? DateTime(now.year - 8, now.month, now.day)
               : p.dateOfBirth;
     } else {
+      
       firstDate = DateTime(now.year - 100, 1, 1);
       lastDate = DateTime(now.year - 12, now.month, now.day);
       init =
@@ -123,18 +135,42 @@ class _GuideTeamSelectorScreenState extends State<GuideTeamSelectorScreen> {
     }
   }
 
-  void _addRow() {
+  void _addOne({required int type}) {
     if (!canAdd) {
       _limitSnack();
       return;
     }
     setState(() {
       _rows.add(BookingParticipantModel(
-        type: 1,
+        type: type, 
         fullName: '',
         gender: 1,
-        dateOfBirth: DateTime(1990, 1, 1),
+        dateOfBirth: type == 1
+            ? DateTime(1990, 1, 1)
+            : DateTime(DateTime.now().year - 8, 1, 1),
       ));
+    });
+  }
+
+  void _addManyAdults(int n) {
+    if (!canAdd) {
+      _limitSnack();
+      return;
+    }
+    final toAdd = hasLimit ? n.clamp(0, remainingSlot) : n;
+    if (toAdd <= 0) {
+      _limitSnack();
+      return;
+    }
+    setState(() {
+      for (int i = 0; i < toAdd; i++) {
+        _rows.add(BookingParticipantModel(
+          type: 1,
+          fullName: '',
+          gender: 1,
+          dateOfBirth: DateTime(1990, 1, 1),
+        ));
+      }
     });
   }
 
@@ -145,7 +181,8 @@ class _GuideTeamSelectorScreenState extends State<GuideTeamSelectorScreen> {
   void _goNext() {
     if (_rows.isEmpty || _rows.any((p) => p.fullName.trim().isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng nhập đầy đủ họ tên hành khách.')),
+        const SnackBar(
+            content: Text('Vui lòng nhập đầy đủ họ tên hành khách.')),
       );
       return;
     }
@@ -157,16 +194,18 @@ class _GuideTeamSelectorScreenState extends State<GuideTeamSelectorScreen> {
       if (p.type == 2 && (age < 5 || age > 11)) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content:
-                  Text('Hành khách ${i + 1} phải trong độ tuổi Trẻ em (5–11).')),
+            content:
+                Text('Hành khách ${i + 1} phải trong độ tuổi Trẻ em (5–11).'),
+          ),
         );
         return;
       }
       if (p.type == 1 && age < 12) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text(
-                  'Hành khách ${i + 1} (Người lớn) phải từ 12 tuổi trở lên.')),
+            content: Text(
+                'Hành khách ${i + 1} (Người lớn) phải từ 12 tuổi trở lên.'),
+          ),
         );
         return;
       }
@@ -186,6 +225,9 @@ class _GuideTeamSelectorScreenState extends State<GuideTeamSelectorScreen> {
           adults: adultCount,
           children: childrenCount,
           participants: _rows,
+          pickupAddress: (widget.pickupAddress?.trim().isNotEmpty ?? false)
+              ? widget.pickupAddress!.trim()
+              : null,
         ),
       ),
     );
@@ -198,34 +240,35 @@ class _GuideTeamSelectorScreenState extends State<GuideTeamSelectorScreen> {
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
-     bottomNavigationBar: AnimatedPadding(
-  duration: const Duration(milliseconds: 150),
-  curve: Curves.easeOut,
-  padding: EdgeInsets.only(bottom: bottomInset > 0 ? bottomInset : safeBottom),
-  child: SafeArea(
-    top: false,
-    child: Container(
-      decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.8), 
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.25),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
+      bottomNavigationBar: AnimatedPadding(
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeOut,
+        padding:
+            EdgeInsets.only(bottom: bottomInset > 0 ? bottomInset : safeBottom),
+        child: SafeArea(
+          top: false,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.8),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.25),
+                  blurRadius: 8,
+                  offset: const Offset(0, -2),
+                ),
+              ],
+            ),
+            padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 1.h),
+            child: TotalPriceBar(
+              totalPriceText:
+                  "Tổng ${widget.endDate.difference(widget.startDate).inDays + 1} ngày: ${formatter.format(totalPrice)}đ",
+              buttonText: "Tiếp tục",
+              onPressed: _goNext,
+              color: ColorPalette.primaryColor,
+            ),
           ),
-        ],
+        ),
       ),
-      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 1.h),
-      child: TotalPriceBar(
-        totalPriceText:
-            "Tổng ${widget.endDate.difference(widget.startDate).inDays + 1} ngày: ${formatter.format(totalPrice)}đ",
-        buttonText: "Tiếp tục",
-        onPressed: _goNext,
-        color: ColorPalette.primaryColor,
-      ),
-    ),
-  ),
-),
 
       body: Stack(
         children: [
@@ -233,13 +276,10 @@ class _GuideTeamSelectorScreenState extends State<GuideTeamSelectorScreen> {
           SafeArea(
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 3.h),
-
-           
               child: SingleChildScrollView(
-                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                padding: EdgeInsets.only(
-                  bottom: 2.h + 72, 
-                ),
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                padding: EdgeInsets.only(bottom: 2.h + 72),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -257,12 +297,24 @@ class _GuideTeamSelectorScreenState extends State<GuideTeamSelectorScreen> {
                       formatter: formatter,
                     ),
                     SizedBox(height: 2.h),
+                    _QuickAddRow(
+                      canAdd: canAdd,
+                      remaining: remainingSlot,
+                      onAddAdult: () => _addOne(type: 1),
+                      onAddChild: () => _addOne(type: 2),
+                      onAddAllRemainingAdults: () =>
+                          _addManyAdults(remainingSlot),
+                      hasLimit: hasLimit,
+                      limit: _limit,
+                      total: totalPeople,
+                    ),
+                    SizedBox(height: 1.2.h),
 
                     ParticipantsEditor(
                       rows: _rows,
                       onChanged: () => setState(() {}),
                       onRemove: _removeRow,
-                      onAdd: _addRow,
+                      onAdd: () => _addOne(type: 1),
                       onPickDob: _pickDob,
                     ),
                     SizedBox(height: 1.2.h),
@@ -270,9 +322,9 @@ class _GuideTeamSelectorScreenState extends State<GuideTeamSelectorScreen> {
                     Text(
                       hasLimit
                           ? (canAdd
-                              ? '👥 Bạn có thể thêm tối đa $remainingSlot người.'
-                              : '⚠️ Đã đạt giới hạn số người (${widget.maxPeople})')
-                          : '👥 Bạn có thể thêm nhiều hành khách.',
+                              ? '👥 Tối đa $_limit khách • Còn $remainingSlot chỗ trống.'
+                              : '⚠️ Đã đạt giới hạn số người ($_limit).')
+                          : '👥 Không giới hạn số hành khách.',
                       style: TextStyle(
                         fontSize: 13.sp,
                         color: canAdd ? Colors.white70 : Colors.yellow,
@@ -317,8 +369,9 @@ class GuideTeamSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final df = DateFormat('dd/MM/yyyy');
-    final name =
-        (guide.userName?.trim().isNotEmpty ?? false) ? guide.userName! : 'Hướng dẫn viên';
+    final name = (guide.userName?.trim().isNotEmpty ?? false)
+        ? guide.userName!
+        : 'Hướng dẫn viên';
     final rating = guide.averageRating;
     final reviewCount = guide.totalReviews;
     final address = guide.address?.trim();
@@ -347,12 +400,13 @@ class GuideTeamSummaryCard extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             rating.toStringAsFixed(rating % 1 == 0 ? 0 : 1),
-            style:
-                const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+            style: const TextStyle(
+                color: Colors.white, fontWeight: FontWeight.w600),
           ),
           if (reviewCount != null && reviewCount > 0) ...[
             const SizedBox(width: 6),
-            Text('($reviewCount)', style: const TextStyle(color: Colors.white70)),
+            Text('($reviewCount)',
+                style: const TextStyle(color: Colors.white70)),
           ],
         ],
       );
@@ -368,15 +422,39 @@ class GuideTeamSummaryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          const Text('Giá', style: TextStyle(color: Colors.white70, fontSize: 11)),
+          const Text('Giá',
+              style: TextStyle(color: Colors.white70, fontSize: 11)),
           Text(
             '${formatter.format(unitPrice)}đ',
             style: const TextStyle(
-              color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
           ),
         ],
       ),
     );
+
+    final limitChip =
+        (guide.maxParticipants != null && guide.maxParticipants! > 0)
+            ? Padding(
+                padding: const EdgeInsets.only(top: 6.0),
+                child: Chip(
+                  visualDensity: VisualDensity.compact,
+                  backgroundColor: Colors.white.withOpacity(0.08),
+                  side: BorderSide(color: Colors.white.withOpacity(0.14)),
+                  label: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.group, color: Colors.white70, size: 16),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Tối đa ${guide.maxParticipants} khách',
+                        style: const TextStyle(color: Colors.white70),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            : const SizedBox.shrink();
 
     return Container(
       decoration: BoxDecoration(
@@ -406,6 +484,9 @@ class GuideTeamSummaryCard extends StatelessWidget {
                   children: [
                     Text(
                       name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      softWrap: false,
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 16,
@@ -415,10 +496,16 @@ class GuideTeamSummaryCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     ratingRow(),
+       
                   ],
                 ),
               ),
-              priceBox,
+              const SizedBox(width: 8),
+              ConstrainedBox(
+                constraints:
+                    const BoxConstraints(maxWidth: 120), 
+                child: priceBox,
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -443,11 +530,141 @@ class GuideTeamSummaryCard extends StatelessWidget {
                     size: 16, color: Colors.white70),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(address, style: const TextStyle(color: Colors.white70)),
+                  child: Text(address,
+                      style: const TextStyle(color: Colors.white70)),
                 ),
               ],
             ),
         ],
+      ),
+    );
+  }
+}
+
+class _QuickAddRow extends StatelessWidget {
+  final bool canAdd;
+  final int remaining;
+  final VoidCallback onAddAdult;
+  final VoidCallback onAddChild;
+  final VoidCallback onAddAllRemainingAdults;
+  final bool hasLimit;
+  final int? limit;
+  final int total;
+
+  const _QuickAddRow({
+    super.key,
+    required this.canAdd,
+    required this.remaining,
+    required this.onAddAdult,
+    required this.onAddChild,
+    required this.onAddAllRemainingAdults,
+    required this.hasLimit,
+    required this.limit,
+    required this.total,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textStyle = TextStyle(
+      color: Colors.white70,
+      fontSize: 11.5.sp,
+      height: 1.25,
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+
+        Row(
+          children: [
+            const Icon(Icons.group_outlined, size: 18, color: Colors.white70),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                hasLimit
+                    ? 'Giới hạn ${limit ?? 0} khách • Đã chọn $total • Còn $remaining'
+                    : 'Không giới hạn số hành khách',
+                style: textStyle,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 0.8.h),
+
+ 
+        Row(
+          children: [
+            _pillButton(
+              context,
+              icon: Icons.person_add_alt_1_rounded,
+              label: 'Thêm người lớn',
+              onTap: canAdd ? onAddAdult : null,
+            ),
+            SizedBox(width: 2.w),
+            _pillButton(
+              context,
+              icon: Icons.child_care_rounded,
+              label: 'Thêm trẻ em',
+              onTap: canAdd ? onAddChild : null,
+            ),
+            const Spacer(),
+            if (hasLimit && remaining > 0)
+              _pillButton(
+                context,
+                icon: Icons.playlist_add_rounded,
+                label: 'Thêm $remaining còn lại',
+                onTap: canAdd ? onAddAllRemainingAdults : null,
+                isPrimary: true,
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _pillButton(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required VoidCallback? onTap,
+    bool isPrimary = false,
+  }) {
+    final bg = isPrimary
+        ? Colors.green.withOpacity(onTap == null ? 0.25 : 0.18)
+        : Colors.white.withOpacity(onTap == null ? 0.14 : 0.12);
+    final fg = isPrimary
+        ? (onTap == null ? Colors.white38 : Colors.greenAccent)
+        : (onTap == null ? Colors.white38 : Colors.white);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Ink(
+          padding: EdgeInsets.symmetric(horizontal: 3.6.w, vertical: 0.9.h),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: fg.withOpacity(0.35),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, size: 16, color: fg),
+              SizedBox(width: 1.5.w),
+              Text(
+                label,
+                style: TextStyle(
+                  color: fg,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 11.8.sp,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

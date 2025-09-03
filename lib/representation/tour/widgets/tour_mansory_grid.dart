@@ -1,3 +1,4 @@
+// lib/representation/tour/widgets/tour_mansory_grid.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:sizer/sizer.dart';
@@ -28,7 +29,7 @@ class TourMasonryGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const ratios = [1.15];
+    const ratios = [1.0];
 
     return MasonryGridView.count(
       crossAxisCount: 2,
@@ -45,7 +46,8 @@ class TourMasonryGrid extends StatelessWidget {
         return TourCard(
           tour: tour,
           image: image,
-          headerAspectRatio: ratio, 
+          headerAspectRatio: ratio,
+          // isDiscount: tour.isDiscount ?? false,
           onTap: () {
             Navigator.push(
               context,

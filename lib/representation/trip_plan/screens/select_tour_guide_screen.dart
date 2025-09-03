@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart'; // ✅ thêm
 import 'package:sizer/sizer.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
@@ -23,6 +24,11 @@ class _SelectTourGuideScreenState extends State<SelectTourGuideScreen> {
   TripPlanDetailModel? tripDetail;
   List<TourGuideModel> guides = [];
   bool _isLoading = true;
+
+  
+  String _money(num v) =>
+      NumberFormat.currency(locale: 'vi_VN', symbol: 'đ', decimalDigits: 0)
+          .format(v);
 
   @override
   void didChangeDependencies() {
@@ -129,7 +135,7 @@ class _SelectTourGuideScreenState extends State<SelectTourGuideScreen> {
                           ),
                           const Spacer(),
                           Container(
-                            padding: EdgeInsets.all(2),
+                            padding: const EdgeInsets.all(2),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               boxShadow: [
@@ -157,16 +163,25 @@ class _SelectTourGuideScreenState extends State<SelectTourGuideScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
                               _buildGlassButton(
-                                  Icons.close, 'Bỏ qua', Colors.redAccent, () {
-                                _controller.nextPage(
-                                  duration: const Duration(milliseconds: 300),
-                                  curve: Curves.easeInOut,
-                                );
-                              }),
+                                Icons.close,
+                                'Bỏ qua',
+                                Colors.redAccent,
+                                () {
+                                  _controller.nextPage(
+                                    duration:
+                                        const Duration(milliseconds: 300),
+                                    curve: Curves.easeInOut,
+                                  );
+                                },
+                              ),
                               _buildGlassButton(
-                                  Icons.check, 'Chọn', Colors.green, () {
-                                Navigator.pop(context, guide);
-                              }),
+                                Icons.check,
+                                'Chọn',
+                                Colors.green,
+                                () {
+                                  Navigator.pop(context, guide);
+                                },
+                              ),
                             ],
                           ),
                           SizedBox(height: 4.h),
@@ -219,9 +234,10 @@ class _SelectTourGuideScreenState extends State<SelectTourGuideScreen> {
               Text(
                 guide.userName ?? 'Không rõ tên',
                 style: TextStyle(
-                    fontSize: 20.sp,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black),
+                  fontSize: 20.sp,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
               ),
               SizedBox(height: 0.5.h),
               if (guide.sexText != null)
@@ -230,6 +246,8 @@ class _SelectTourGuideScreenState extends State<SelectTourGuideScreen> {
                   style: TextStyle(fontSize: 13.sp, color: Colors.grey[700]),
                 ),
               SizedBox(height: 1.h),
+
+              // ⭐ Rating
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -254,8 +272,29 @@ class _SelectTourGuideScreenState extends State<SelectTourGuideScreen> {
                     ),
                 ],
               ),
+
+
+              if (guide.maxParticipants != null) ...[
+                SizedBox(height: 0.6.h),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.group, color: Colors.blueGrey, size: 18),
+                    SizedBox(width: 1.w),
+                    Text(
+                      'Tối đa ${guide.maxParticipants} khách',
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+
               SizedBox(height: 1.h),
-              if (guide.introduction != null && guide.introduction!.isNotEmpty)
+              if (guide.introduction != null &&
+                  guide.introduction!.isNotEmpty)
                 Text(
                   guide.introduction!,
                   style: TextStyle(fontSize: 13.sp, color: Colors.black87),
@@ -272,15 +311,19 @@ class _SelectTourGuideScreenState extends State<SelectTourGuideScreen> {
                   guide.address!,
                   style: TextStyle(fontSize: 12.sp, color: Colors.black54),
                 ),
+
               if (guide.price != null)
                 Padding(
                   padding: EdgeInsets.only(top: 1.h),
                   child: Chip(
                     backgroundColor: Colors.green.shade50,
                     label: Text(
-                      'Giá: ${guide.price!.toStringAsFixed(0)}đ/ngày',
-                      style:
-                          TextStyle(color: Colors.green[700], fontSize: 13.sp),
+                      'Giá: ${_money(guide.price!)}/ngày',
+                      style: TextStyle(
+                        color: Colors.green[700],
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),

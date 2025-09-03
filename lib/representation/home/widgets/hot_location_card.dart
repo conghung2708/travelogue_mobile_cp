@@ -113,24 +113,25 @@ class _HotLocationCardState extends State<HotLocationCard> {
 
     return GestureDetector(
       onTap: () {
-        if ((widget.place.category ?? '') == "Làng nghề") {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => BlocProvider(
-                create: (_) => WorkshopBloc(WorkshopRepository())
-                  ..add(GetWorkshopsEvent(craftVillageId: widget.place.id ?? '')),
-                child: const CraftVillageDetailScreen(),
-              ),
-              settings: RouteSettings(arguments: widget.place),
-            ),
-          );
-        } else {
-          Navigator.of(context).pushNamed(
-            PlaceDetailScreen.routeName,
-            arguments: widget.place,
-          );
-        }
-      },
+  if ((widget.place.category ?? '') == "Làng nghề") {
+    
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => BlocProvider(
+          create: (_) => WorkshopBloc(WorkshopRepository()),
+          child: const CraftVillageDetailScreen(),
+        ),
+       
+        settings: RouteSettings(arguments: widget.place.id),
+      ),
+    );
+  } else {
+    Navigator.of(context).pushNamed(
+      PlaceDetailScreen.routeName,
+      arguments: widget.place,
+    );
+  }
+},
       child: Padding(
         padding: EdgeInsets.symmetric(vertical: 14.sp),
         child: Container(
@@ -140,7 +141,8 @@ class _HotLocationCardState extends State<HotLocationCard> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
             boxShadow: const [
-              BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(4, 4)),
+              BoxShadow(
+                  color: Colors.black26, blurRadius: 8, offset: Offset(4, 4)),
             ],
           ),
           child: ClipRRect(
@@ -155,7 +157,6 @@ class _HotLocationCardState extends State<HotLocationCard> {
                     height: double.infinity,
                   ),
                 ),
-
                 Positioned.fill(
                   child: IgnorePointer(
                     child: DecoratedBox(
@@ -173,12 +174,11 @@ class _HotLocationCardState extends State<HotLocationCard> {
                     ),
                   ),
                 ),
-
                 if (category.isNotEmpty || district.isNotEmpty)
                   Positioned(
                     top: 8,
                     left: 8,
-                    right: 56, 
+                    right: 56,
                     child: Wrap(
                       spacing: 6.sp,
                       runSpacing: 6.sp,
@@ -186,11 +186,11 @@ class _HotLocationCardState extends State<HotLocationCard> {
                         if (category.isNotEmpty)
                           _chip(icon: Icons.category_rounded, text: category),
                         if (district.isNotEmpty)
-                          _chip(icon: Icons.location_on_rounded, text: district),
+                          _chip(
+                              icon: Icons.location_on_rounded, text: district),
                       ],
                     ),
                   ),
-
                 Positioned(
                   top: 4,
                   right: 4,
@@ -200,12 +200,14 @@ class _HotLocationCardState extends State<HotLocationCard> {
                       customBorder: const CircleBorder(),
                       onTap: () {
                         if (UserLocal().getAccessToken.isEmpty) {
-                          Navigator.of(context).pushNamed(LoginScreen.routeName);
+                          Navigator.of(context)
+                              .pushNamed(LoginScreen.routeName);
                           return;
                         }
                         setState(() => isLiked = !isLiked);
                         _debounce?.cancel();
-                        _debounce = Timer(const Duration(milliseconds: 500), () {
+                        _debounce =
+                            Timer(const Duration(milliseconds: 500), () {
                           if (isLiked != widget.place.isLiked) {
                             AppBloc.homeBloc.add(
                               UpdateLikedLocationEvent(
@@ -230,7 +232,6 @@ class _HotLocationCardState extends State<HotLocationCard> {
                     ),
                   ),
                 ),
-
                 Positioned(
                   left: 10,
                   right: 10,
@@ -238,7 +239,6 @@ class _HotLocationCardState extends State<HotLocationCard> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                   
                       Text(
                         widget.place.name ?? '',
                         textAlign: TextAlign.center,
@@ -255,8 +255,6 @@ class _HotLocationCardState extends State<HotLocationCard> {
                         ),
                       ),
                       SizedBox(height: 6.sp),
-
-           
                       if ((hoursLabel).trim().isNotEmpty || isOpen != null)
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,

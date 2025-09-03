@@ -29,16 +29,16 @@ class _TourScheduleCalendarScreenState
   late List<TourScheduleModel> schedules;
   late bool isGroupTour;
 
+  String? pickupAddress;
 
   _ViewMode _mode = _ViewMode.list;
   DateTime focusedDay = DateTime.now();
   DateTime? selectedDay;
 
-
   final TextEditingController _searchCtl = TextEditingController();
   String _search = '';
-  int? _filterMonth; 
-  int? _filterYear; 
+  int? _filterMonth;
+  int? _filterYear;
 
   final formatter = NumberFormat('#,###');
 
@@ -54,6 +54,7 @@ class _TourScheduleCalendarScreenState
     tour = args.tour;
     schedules = args.schedules;
     isGroupTour = args.isGroupTour;
+    pickupAddress = args.pickupAddress;
   }
 
   @override
@@ -86,6 +87,7 @@ class _TourScheduleCalendarScreenState
       isGroupTour: isGroupTour,
       media: media,
       formatter: formatter,
+      pickupAddress: pickupAddress,
     );
   }
 
@@ -130,7 +132,6 @@ class _TourScheduleCalendarScreenState
     });
   }
 
-
   List<TourScheduleModel> _filteredSchedules() {
     final now = DateTime.now();
     final query = _search.trim().toLowerCase();
@@ -141,7 +142,6 @@ class _TourScheduleCalendarScreenState
       final d = s.startTime!;
       if (_filterMonth != null && d.month != _filterMonth) return false;
       if (_filterYear != null && d.year != _filterYear) return false;
-
 
       if (query.isNotEmpty) {
         final labelDate =
@@ -197,7 +197,6 @@ class _TourScheduleCalendarScreenState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                
                   TourScheduleHeader(onBack: () => Navigator.pop(context)),
                   SizedBox(height: 1.5.h),
                   Wrap(
@@ -247,12 +246,11 @@ class _TourScheduleCalendarScreenState
                         ),
                       ),
 
-                     
                       // Wrap(
                       //   spacing: 8,
                       //   crossAxisAlignment: WrapCrossAlignment.center,
                       //   children: [
-                    
+
                       //     OutlinedButton.icon(
                       //       onPressed: () => _goToNextAvailable(
                       //         switchToCalendarIfNeeded: _mode == _ViewMode.calendar,
@@ -269,7 +267,6 @@ class _TourScheduleCalendarScreenState
                       //       label: const Text('Lịch gần nhất'),
                       //     ),
 
-                    
                       //     TextButton.icon(
                       //       onPressed: _jumpToMonth,
                       //       style: TextButton.styleFrom(
@@ -287,9 +284,7 @@ class _TourScheduleCalendarScreenState
                       // ),
                     ],
                   ),
-
                   SizedBox(height: 2.h),
-
                   if (_mode == _ViewMode.calendar)
                     Align(
                       alignment: Alignment.centerLeft,
@@ -307,33 +302,50 @@ class _TourScheduleCalendarScreenState
                         label: const Text('Xem lịch tháng này'),
                       ),
                     ),
-
                   SizedBox(height: 1.2.h),
-
                   if (_mode == _ViewMode.calendar) ...[
                     _CalendarShell(
-                      child: TourCalendarSelector(
-                        focusedDay: focusedDay,
-                        selectedDay: selectedDay,
-                        getScheduleForDay: getScheduleForDay,
-                        onDaySelected: (selected, focused) {
-                          if (_isPastOrToday(selected)) {
-                            _showEmptyDayHint(context);
-                            return;
-                          }
+                      child: AspectRatio(
+                        aspectRatio: 1.08,
+                        child: LayoutBuilder(
+                          builder: (context, c) {
+                            const headerH = 52.0;
+                            const dowH = 24.0;
+                            const gaps = 12.0;
 
-                          final matched = getScheduleForDay(selected);
-                          if (matched != null) {
-                            _openConfirm(matched);
-                          } else {
-                            _showEmptyDayHint(context);
-                          }
+                            final rowH =
+                                ((c.maxHeight - headerH - dowH - gaps) / 6)
+                                    .clamp(34.0, 48.0);
 
-                          setState(() {
-                            selectedDay = selected;
-                            focusedDay = focused;
-                          });
-                        },
+                            return ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: TourCalendarSelector(
+                                focusedDay: focusedDay,
+                                selectedDay: selectedDay,
+                                getScheduleForDay: getScheduleForDay,
+                                onDaySelected: (selected, focused) {
+                                  if (_isPastOrToday(selected)) {
+                                    _showEmptyDayHint(context);
+                                    return;
+                                  }
+                                  final m = getScheduleForDay(selected);
+                                  if (m != null)
+                                    _openConfirm(m);
+                                  else
+                                    _showEmptyDayHint(context);
+                                  setState(() {
+                                    selectedDay = selected;
+                                    focusedDay = focused;
+                                  });
+                                },
+                                rowHeight: rowH,
+                                daysOfWeekHeight: dowH,
+                                headerPadding: const EdgeInsets.only(bottom: 8),
+                                tableTopPadding: 6.0,
+                              ),
+                            );
+                          },
+                        ),
                       ),
                     ),
                     SizedBox(height: 1.6.h),
@@ -454,6 +466,7 @@ class _CalendarShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      clipBehavior: Clip.hardEdge,
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.05),
         borderRadius: BorderRadius.circular(20),
@@ -528,7 +541,6 @@ class _ListFilters extends StatelessWidget {
         // ),
         // SizedBox(height: 1.h),
 
-  
         Row(
           children: [
             OutlinedButton.icon(
@@ -613,7 +625,6 @@ class _ScheduleListView extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: .8.h),
                 child: Text(
@@ -627,7 +638,6 @@ class _ScheduleListView extends StatelessWidget {
                   ),
                 ),
               ),
-            
               ...list.map((s) {
                 final d = s.startTime!;
                 final label = DateFormat('EEE, dd/MM/yyyy', 'vi_VN').format(d);
@@ -636,7 +646,7 @@ class _ScheduleListView extends StatelessWidget {
                 final int max = s.maxParticipant ?? 0;
                 final int booked = s.currentBooked ?? 0;
                 final int available = (max - booked).clamp(0, max);
-                final bool low = available <= 5; 
+                final bool low = available <= 5;
 
                 return Container(
                   margin: EdgeInsets.symmetric(horizontal: 2.w, vertical: .6.h),
@@ -699,7 +709,9 @@ class _ScheduleListView extends StatelessWidget {
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                available == 0 ? 'Hết chỗ' : '$available/${max == 0 ? "?" : max} chỗ',
+                                available == 0
+                                    ? 'Hết chỗ'
+                                    : '$available/${max == 0 ? "?" : max} chỗ',
                                 style: TextStyle(
                                   fontWeight: FontWeight.w600,
                                   color: (available == 0)

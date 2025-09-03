@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 
 class RouteDialogs {
-  // ===== THEME CONSTANTS =====
-  static const Color _kBlue = Color(0xFF1565C0); // primary
-  static const Color _kBlueLight = Color(0xFFE3F2FD); // buttons / chips bg
-  static const Color _kBlueSurface = Color(0xFFEEF6FF); // panels
+  static const Color _kBlue = Color(0xFF1565C0); 
+  static const Color _kBlueLight = Color(0xFFE3F2FD); 
+  static const Color _kBlueSurface = Color(0xFFEEF6FF); 
 
   static ButtonStyle _tonalBlueButton(BuildContext context) =>
       ElevatedButton.styleFrom(
@@ -33,32 +32,31 @@ class RouteDialogs {
     );
   }
 
-  static Theme _wrapDialog(BuildContext context, Widget child) {
-    final base = Theme.of(context);
-    return Theme(
-      data: base.copyWith(
-        dialogTheme: DialogTheme(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.white,
-          titleTextStyle: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-            color: _kBlue,
-          ),
-          contentTextStyle: TextStyle(
-            fontSize: 14,
-            color: Colors.grey.shade800,
-            height: 1.4,
-          ),
+static Theme _wrapDialog(BuildContext context, Widget child) {
+  final base = Theme.of(context);
+  return Theme(
+    data: base.copyWith(
+      dialogTheme: DialogThemeData(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        titleTextStyle: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w800,
+          color: _kBlue,
+        ),
+        contentTextStyle: TextStyle(
+          fontSize: 14,
+          color: Colors.grey.shade800,
+          height: 1.4,
         ),
       ),
-      child: child,
-    );
-  }
+    ),
+    child: child,
+  );
+}
 
-  // ===================== PUBLIC APIs (LOGIC UNCHANGED) =====================
+
   static Future<int?> askStayMinutes(BuildContext context) async {
     return showModalBottomSheet<int>(
       context: context,
@@ -232,7 +230,7 @@ class RouteDialogs {
         false;
   }
 
-  // ===================== SMALL UI HELPERS =====================
+
   static Widget _infoPanel(List<Widget> children) => DecoratedBox(
         decoration: BoxDecoration(
           color: _kBlueSurface,
@@ -258,7 +256,7 @@ class RouteDialogs {
         ],
       );
 
-  // ===================== PURE FORMATTERS (UNCHANGED) =====================
+
   static String _fmtTime(DateTime dt) =>
       '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}'
           .toString();

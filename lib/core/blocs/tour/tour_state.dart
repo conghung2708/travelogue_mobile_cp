@@ -2,18 +2,20 @@ part of 'tour_bloc.dart';
 
 abstract class TourState extends Equatable {
   const TourState();
-
   @override
   List<Object?> get props => [];
 }
 
-class TourInitial extends TourState {}
+class TourInitial extends TourState {
+  const TourInitial();
+}
 
-class TourLoading extends TourState {}
+class TourLoading extends TourState {
+  const TourLoading();
+}
 
 class GetToursSuccess extends TourState {
   final List<TourModel> tours;
-
   const GetToursSuccess({required this.tours});
 
   @override
@@ -22,7 +24,6 @@ class GetToursSuccess extends TourState {
 
 class GetToursWithGuideSuccess extends TourState {
   final List<TourDetailCompositeModel> toursWithGuide;
-
   const GetToursWithGuideSuccess({required this.toursWithGuide});
 
   @override
@@ -31,7 +32,6 @@ class GetToursWithGuideSuccess extends TourState {
 
 class GetTourDetailByIdSuccess extends TourState {
   final TourDetailCompositeModel tourDetail;
-
   const GetTourDetailByIdSuccess({required this.tourDetail});
 
   @override
@@ -40,7 +40,6 @@ class GetTourDetailByIdSuccess extends TourState {
 
 class TourError extends TourState {
   final String message;
-
   const TourError(this.message);
 
   @override

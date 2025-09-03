@@ -4,6 +4,7 @@ class TourGuideModel {
   final String? id;
   final String? email;
   final String? userName;
+  final int? maxParticipants;   
   final int? sex;
   final String? sexText;
   final String? address;
@@ -17,6 +18,7 @@ class TourGuideModel {
     this.id,
     this.email,
     this.userName,
+    this.maxParticipants,       
     this.sex,
     this.sexText,
     this.address,
@@ -29,28 +31,31 @@ class TourGuideModel {
 
   factory TourGuideModel.fromMap(Map<String, dynamic> map) {
     return TourGuideModel(
-      id: map['id'],
-      email: map['email'],
-      userName: map['userName'],
-      sex: map['sex'],
-      sexText: map['sexText'],
-      address: map['address'],
+      id: map['id']?.toString(),
+      email: map['email']?.toString(),
+      userName: map['userName']?.toString(),
+      maxParticipants: map['maxParticipants'] as int?, 
+      sex: map['sex'] as int?,
+      sexText: map['sexText']?.toString(),
+      address: map['address']?.toString(),
       price: (map['price'] as num?)?.toDouble(),
-      introduction: map['introduction'],
-      avatarUrl: map['avatarUrl'],
+      introduction: map['introduction']?.toString(),
+      avatarUrl: map['avatarUrl']?.toString(),
       averageRating: (map['averageRating'] as num?)?.toDouble(),
-      totalReviews: map['totalReviews'],
+      totalReviews: map['totalReviews'] as int?,
     );
   }
 
   factory TourGuideModel.fromJson(Map<String, dynamic> json) {
     return TourGuideModel.fromMap(json);
   }
+
   Map<String, dynamic> toMap() {
     return {
       'id': id,
       'email': email,
       'userName': userName,
+      'maxParticipants': maxParticipants, 
       'sex': sex,
       'sexText': sexText,
       'address': address,
@@ -62,9 +67,7 @@ class TourGuideModel {
     };
   }
 
-  Map<String, dynamic> toJson() {
-    return toMap();
-  }
+  Map<String, dynamic> toJson() => toMap();
 
   String toJsonString() => json.encode(toMap());
 }

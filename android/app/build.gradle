@@ -1,9 +1,12 @@
 plugins {
     id 'com.android.application'
-    id 'kotlin-android'
+    id 'org.jetbrains.kotlin.android'
     id 'dev.flutter.flutter-gradle-plugin'
     id 'com.google.gms.google-services'
 }
+
+import java.util.Properties
+import java.io.FileInputStream
 
 def keystoreProperties = new Properties()
 def keystorePropertiesFile = rootProject.file('key.properties')
@@ -27,10 +30,12 @@ android {
 
     signingConfigs {
         release {
-            keyAlias keystoreProperties['keyAlias']
-            keyPassword keystoreProperties['keyPassword']
-            storeFile file("upload.jks")
-            storePassword keystoreProperties['storePassword']
+            if (keystorePropertiesFile.exists()) {
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+            }
         }
     }
 
@@ -54,10 +59,8 @@ android {
 
     kotlinOptions {
         jvmTarget = '17'
-        freeCompilerArgs += [
-            "-Xskip-metadata-version-check",
-            "-Xskip-prerelease-check"
-        ]
+        // Nếu trước đây bạn dùng các flag skip metadata thì có thể bỏ khi đã lên Kotlin 2.1
+        // freeCompilerArgs += ["-Xskip-metadata-version-check", "-Xskip-prerelease-check"]
     }
 }
 
@@ -68,13 +71,10 @@ flutter {
 dependencies {
     implementation platform('com.google.firebase:firebase-bom:33.12.0')
 
-    // Firebase SDKs
+    // Firebase SDKs bạn đang dùng
     implementation 'com.google.firebase:firebase-analytics'
-    implementation 'com.google.firebase:firebase-auth' // 👈 Google Sign-In
+    implementation 'com.google.firebase:firebase-auth'
 
-    // Optional Firebase services
-    // implementation 'com.google.firebase:firebase-firestore'
-
-    // Google Play Services
-    implementation 'com.google.android.gms:play-services-measurement-api:21.5.0'
+    // KHÔNG thêm play-services-measurement-api thủ công (đã được BoM quản)
+    // implementation 'com.google.android.gms:play-services-measurement-api:21.5.0'  // <- bỏ
 }

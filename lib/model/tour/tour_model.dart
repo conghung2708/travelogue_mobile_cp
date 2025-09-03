@@ -4,8 +4,8 @@ import 'package:travelogue_mobile/model/tour/tour_day_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_plan_location_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_review_model.dart';
 import 'package:travelogue_mobile/model/tour_guide/tour_guide_model.dart';
-import 'package:travelogue_mobile/model/tour/tour_media_test_model.dart';
 import 'package:travelogue_mobile/model/tour/tour_schedule_model.dart';
+import 'package:travelogue_mobile/model/tour/tour_activity_model.dart';
 
 class TourModel {
   final String? tourId;
@@ -13,6 +13,10 @@ class TourModel {
   final String? description;
   final String? content;
   final String? transportType;
+
+  final String? pickupAddress;
+  final String? stayInfo;
+
   final int? totalDays;
   final int? tourType;
   final String? tourTypeText;
@@ -23,6 +27,16 @@ class TourModel {
   final bool? isDiscount;
   final int? status;
   final String? statusText;
+
+  final bool? isTourWorkshop;
+
+  
+  final DateTime? createdTime;
+  final DateTime? lastUpdatedTime;
+  final String? createdBy;
+  final String? createdByName;
+  final String? lastUpdatedBy;
+  final String? lastUpdatedByName;
 
   final List<TourScheduleModel> schedules;
   final List<TourDayModel> days;
@@ -42,6 +56,8 @@ class TourModel {
     this.description,
     this.content,
     this.transportType,
+    this.pickupAddress,
+    this.stayInfo,
     this.totalDays,
     this.tourType,
     this.tourTypeText,
@@ -52,6 +68,13 @@ class TourModel {
     this.isDiscount,
     this.status,
     this.statusText,
+    this.isTourWorkshop,      
+    this.createdTime,          
+    this.lastUpdatedTime,      
+    this.createdBy,             
+    this.createdByName,         
+    this.lastUpdatedBy,        
+    this.lastUpdatedByName,    
     this.tourGuide,
     this.averageRating,
     this.totalReviews,
@@ -64,23 +87,37 @@ class TourModel {
     this.reviews = const [],
   });
 
+  bool get hasWorkshop {
+    if (isTourWorkshop == true) return true;
+    for (final d in days) {
+      final acts = d.activities ?? const [];
+      for (final a in acts) {
+        if ((a.activityType ?? 0) == 3) return true; 
+        if ((a.activityTypeText ?? '').toLowerCase().contains('workshop')) return true;
+        if (a.workshop != null) return true;
+      }
+    }
+    return false;
+  }
+
+  static DateTime? _parseDate(dynamic v) {
+    if (v == null) return null;
+    if (v is DateTime) return v;
+    if (v is String && v.trim().isNotEmpty) {
+      try { return DateTime.parse(v); } catch (_) {}
+    }
+    return null;
+  }
+
   factory TourModel.fromLiteJson(Map<String, dynamic> json) {
     final rawMedias = (json['medias'] is List)
         ? json['medias']
         : (json['mediaList'] is List ? json['mediaList'] : const []);
 
-    print(
-        '[fromLiteJson] ${json['name']} - rawMedias type=${rawMedias.runtimeType} len=${(rawMedias as List).length}');
-    if (rawMedias is List && rawMedias.isNotEmpty) {
-      print('[fromLiteJson] first media: ${rawMedias.first}');
-    }
-
     final mediaList = (rawMedias as List)
         .whereType<Map<String, dynamic>>()
         .map((e) => MediaModel.fromJson(e))
         .toList();
-    print(
-        '[fromLiteJson] ${json['name']} -> medias.length=${mediaList.length}');
 
     return TourModel(
       tourId: json['tourId'] as String?,
@@ -88,6 +125,8 @@ class TourModel {
       description: json['description'] as String?,
       content: json['content'] as String?,
       transportType: json['transportType'] as String?,
+      pickupAddress: json['pickupAddress'] as String?,
+      stayInfo: json['stayInfo'] as String?,
       totalDays: json['totalDays'] as int?,
       tourType: json['tourType'] as int?,
       tourTypeText: json['tourTypeText'] as String?,
@@ -100,20 +139,24 @@ class TourModel {
       statusText: json['statusText'] as String?,
       averageRating: (json['averageRating'] as num?)?.toDouble(),
       totalReviews: json['totalReviews'] as int?,
+      isTourWorkshop: json['isTourWorkshop'] as bool?,                
+      createdTime: _parseDate(json['createdTime']),                   
+      lastUpdatedTime: _parseDate(json['lastUpdatedTime']),            
+      createdBy: json['createdBy'] as String?,                        
+      createdByName: json['createdByName'] as String?,                
+      lastUpdatedBy: json['lastUpdatedBy'] as String?,                
+      lastUpdatedByName: json['lastUpdatedByName'] as String?,        
       medias: mediaList,
     );
   }
 
-  factory TourModel.fromDetailJson(Map<String, dynamic> json,
-      {bool logSchedules = false}) {
+  factory TourModel.fromDetailJson(Map<String, dynamic> json, {bool logSchedules = false}) {
     final rawSchedules = json['schedules'];
     final guideRaw = json['tourGuide'];
     final rawDays = json['days'];
-
     final rawMedias = (json['medias'] is List)
         ? json['medias']
         : (json['mediaList'] is List ? json['mediaList'] : const []);
-
     final rawPromotions = json['promotions'];
     final rawReviews = json['reviews'];
     final rawStartLocation = json['startLocation'];
@@ -125,6 +168,8 @@ class TourModel {
       description: json['description'] as String?,
       content: json['content'] as String?,
       transportType: json['transportType'] as String?,
+      pickupAddress: json['pickupAddress'] as String?,
+      stayInfo: json['stayInfo'] as String?,
       totalDays: json['totalDays'] as int?,
       tourType: json['tourType'] as int?,
       tourTypeText: json['tourTypeText'] as String?,
@@ -137,36 +182,60 @@ class TourModel {
       statusText: json['statusText'] as String?,
       averageRating: (json['averageRating'] as num?)?.toDouble(),
       totalReviews: json['totalReviews'] as int?,
+
+      /// NEW fields
+      isTourWorkshop: json['isTourWorkshop'] as bool?,
+      createdTime: _parseDate(json['createdTime']),
+      lastUpdatedTime: _parseDate(json['lastUpdatedTime']),
+      createdBy: json['createdBy'] as String?,
+      createdByName: json['createdByName'] as String?,
+      lastUpdatedBy: json['lastUpdatedBy'] as String?,
+      lastUpdatedByName: json['lastUpdatedByName'] as String?,
+
       schedules: (rawSchedules is List)
           ? rawSchedules
-              .map((e) => TourScheduleModel.fromMap(e as Map<String, dynamic>))
+              .whereType<Map<String, dynamic>>()
+              .map((e) => TourScheduleModel.fromMap(e))
               .toList()
           : const [],
+
       days: (rawDays is List)
-          ? rawDays.map((e) => TourDayModel.fromJson(e)).toList()
+          ? rawDays
+              .whereType<Map<String, dynamic>>()
+              .map((e) => TourDayModel.fromJson(e))
+              .toList()
           : const [],
+
       tourGuide: (() {
         if (guideRaw is List && guideRaw.isNotEmpty) {
-          return TourGuideModel.fromJson(guideRaw.first);
+          final first = guideRaw.first;
+          if (first is Map<String, dynamic>) {
+            return TourGuideModel.fromJson(first);
+          }
         } else if (guideRaw is Map<String, dynamic>) {
           return TourGuideModel.fromJson(guideRaw);
         }
         return null;
       })(),
+
       medias: (rawMedias as List)
+          .whereType<Map<String, dynamic>>()
           .map((e) => MediaModel.fromJson(e))
-          .toList()
-          .cast<MediaModel>(),
+          .toList(),
+
       promotions: (rawPromotions is List) ? rawPromotions : const [],
+
       startLocation: (rawStartLocation is Map<String, dynamic>)
           ? TourPlanLocationModel.fromJson(rawStartLocation)
           : null,
       endLocation: (rawEndLocation is Map<String, dynamic>)
           ? TourPlanLocationModel.fromJson(rawEndLocation)
           : null,
+
       reviews: (rawReviews is List)
           ? rawReviews
-              .map((e) => TourReviewModel.fromJson(e as Map<String, dynamic>))
+              .whereType<Map<String, dynamic>>()
+              .map((e) => TourReviewModel.fromJson(e))
               .toList()
           : const [],
     );
@@ -182,6 +251,8 @@ class TourModel {
       'description': description,
       'content': content,
       'transportType': transportType,
+      'pickupAddress': pickupAddress,
+      'stayInfo': stayInfo,
       'totalDays': totalDays,
       'tourType': tourType,
       'tourTypeText': tourTypeText,
@@ -192,6 +263,13 @@ class TourModel {
       'isDiscount': isDiscount,
       'status': status,
       'statusText': statusText,
+      'isTourWorkshop': isTourWorkshop,                 
+      'createdTime': createdTime?.toIso8601String(),    
+      'lastUpdatedTime': lastUpdatedTime?.toIso8601String(), 
+      'createdBy': createdBy,                          
+      'createdByName': createdByName,                   
+      'lastUpdatedBy': lastUpdatedBy,                   
+      'lastUpdatedByName': lastUpdatedByName,          
       'averageRating': averageRating,
       'totalReviews': totalReviews,
       'schedules': schedules.map((e) => e.toJson()).toList(),

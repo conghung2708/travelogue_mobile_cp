@@ -19,6 +19,9 @@ class TripActivityModel {
   final int order;
   final String? imageUrl;
 
+  final int? minPrice;
+  final int? maxPrice;
+
   TripActivityModel({
     required this.locationId,
     required this.startTime,
@@ -34,6 +37,8 @@ class TripActivityModel {
     this.notes = '',
     this.order = 0,
     this.imageUrl,
+    this.minPrice,
+    this.maxPrice,
   });
 
   TripActivityModel copyWith({
@@ -51,6 +56,8 @@ class TripActivityModel {
     String? notes,
     int? order,
     String? imageUrl,
+    int? minPrice,
+    int? maxPrice,
   }) {
     return TripActivityModel(
       tripPlanLocationId: tripPlanLocationId ?? this.tripPlanLocationId,
@@ -67,6 +74,8 @@ class TripActivityModel {
       notes: notes ?? this.notes,
       order: order ?? this.order,
       imageUrl: imageUrl ?? this.imageUrl,
+      minPrice: minPrice ?? this.minPrice,
+      maxPrice: maxPrice ?? this.maxPrice,
     );
   }
 
@@ -102,6 +111,8 @@ class TripActivityModel {
       notes: _asStr(json['notes'], fallback: ''),
       order: _asInt(json['order']),
       imageUrl: _asOptStr(json['imageUrl']),
+      minPrice: json['minPrice'] != null ? _asInt(json['minPrice']) : null,
+      maxPrice: json['maxPrice'] != null ? _asInt(json['maxPrice']) : null,
     );
   }
 
@@ -121,6 +132,8 @@ class TripActivityModel {
       'notes': notes,
       'order': order,
       'imageUrl': imageUrl,
+      'minPrice': minPrice,
+      'maxPrice': maxPrice,
     };
   }
 }

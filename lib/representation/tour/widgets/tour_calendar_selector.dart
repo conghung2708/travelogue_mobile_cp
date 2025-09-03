@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:sizer/sizer.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:sizer/sizer.dart';
+
 import 'package:travelogue_mobile/model/tour/tour_schedule_model.dart';
 import 'package:travelogue_mobile/representation/tour/widgets/calendar_day_cell.dart';
 
 class TourCalendarSelector extends StatelessWidget {
   final DateTime focusedDay;
   final DateTime? selectedDay;
-  final void Function(DateTime selected, DateTime focused) onDaySelected;
-  final TourScheduleModel? Function(DateTime day) getScheduleForDay;
+  final void Function(DateTime, DateTime) onDaySelected;
+  final TourScheduleModel? Function(DateTime) getScheduleForDay;
+
+  final double? rowHeight;
+  final double? daysOfWeekHeight;
+  final EdgeInsets? headerPadding;
+  final double? tableTopPadding;
 
   const TourCalendarSelector({
     super.key,
@@ -16,68 +22,47 @@ class TourCalendarSelector extends StatelessWidget {
     required this.selectedDay,
     required this.onDaySelected,
     required this.getScheduleForDay,
+    this.rowHeight,
+    this.daysOfWeekHeight,
+    this.headerPadding,
+    this.tableTopPadding,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: TableCalendar(
-        locale: 'vi_VN',
-        firstDay: DateTime.now().subtract(const Duration(days: 30)),
-        lastDay: DateTime.now().add(const Duration(days: 365)),
-        focusedDay: focusedDay,
-        selectedDayPredicate: (day) {
-          return selectedDay != null && isSameDay(day, selectedDay);
-        },
-        calendarFormat: CalendarFormat.month,
-        availableCalendarFormats: const {CalendarFormat.month: 'Tháng'},
-        onFormatChanged: (_) {},
-        headerStyle: HeaderStyle(
-          titleCentered: true,
-          formatButtonVisible: false,
-          titleTextStyle: TextStyle(
-            fontSize: 17.sp,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-          leftChevronIcon: const Icon(Icons.chevron_left, color: Colors.white),
-          rightChevronIcon:
-              const Icon(Icons.chevron_right, color: Colors.white),
-        ),
-        daysOfWeekStyle: DaysOfWeekStyle(
-          weekdayStyle: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w500,
-            fontSize: 15.sp,
-          ),
-          weekendStyle: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-            fontSize: 15.sp,
-          ),
-        ),
-        calendarStyle: CalendarStyle(
-          tablePadding: EdgeInsets.only(top: 2.h),
-        ),
-        onDaySelected: onDaySelected,
-        calendarBuilders: CalendarBuilders(
-          defaultBuilder: (context, day, _) {
-            final matched = getScheduleForDay(day);
-            return CalendarDayCell(day: day, schedule: matched);
-          },
-          todayBuilder: (context, day, _) {
-            final matched = getScheduleForDay(day);
-            return CalendarDayCell(day: day, schedule: matched, isToday: true);
-          },
-          selectedBuilder: (context, day, _) {
-            final matched = getScheduleForDay(day);
-            return CalendarDayCell(
-              day: day,
-              schedule: matched,
-              isSelected: true,
-            );
-          },
-        ),
+    return TableCalendar(
+      locale: 'vi_VN',
+      firstDay: DateTime.now().subtract(const Duration(days: 30)),
+      lastDay: DateTime.now().add(const Duration(days: 365)),
+      focusedDay: focusedDay,
+      selectedDayPredicate: (d) => selectedDay != null && isSameDay(d, selectedDay),
+      calendarFormat: CalendarFormat.month,
+      availableCalendarFormats: const { CalendarFormat.month: 'Tháng' },
+      onFormatChanged: (_) {},
+      rowHeight: rowHeight ?? 44,
+      daysOfWeekHeight: daysOfWeekHeight ?? 24,
+
+      headerStyle: HeaderStyle(
+        titleCentered: true,
+        formatButtonVisible: false,
+        headerPadding: headerPadding ?? const EdgeInsets.only(bottom: 8),
+        titleTextStyle: TextStyle(fontSize: 17.sp, fontWeight: FontWeight.bold, color: Colors.white),
+        leftChevronIcon: const Icon(Icons.chevron_left,  color: Colors.white),
+        rightChevronIcon: const Icon(Icons.chevron_right, color: Colors.white),
+      ),
+      daysOfWeekStyle: DaysOfWeekStyle(
+        weekdayStyle: TextStyle(color: Colors.white, fontWeight: FontWeight.w500, fontSize: 15.sp),
+        weekendStyle: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15.sp),
+      ),
+      calendarStyle: CalendarStyle(
+        tablePadding: EdgeInsets.only(top: tableTopPadding ?? 6),
+      ),
+
+      onDaySelected: onDaySelected,
+      calendarBuilders: CalendarBuilders(
+        defaultBuilder: (ctx, day, _) => CalendarDayCell(day: day, schedule: getScheduleForDay(day)),
+        todayBuilder:   (ctx, day, _) => CalendarDayCell(day: day, schedule: getScheduleForDay(day), isToday: true),
+        selectedBuilder:(ctx, day, _) => CalendarDayCell(day: day, schedule: getScheduleForDay(day), isSelected: true),
       ),
     );
   }

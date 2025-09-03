@@ -132,14 +132,21 @@ class _MyBookingScreenState extends State<MyBookingScreen>
     with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
-  int selectedStatusTab = 0;
-  final List<String> statusTabs = [
-    "Hết hạn",
-    "Đã thanh toán",
-    "Đã hoàn thành",
-    "Đã hủy",
-  ];
+  int selectedStatusTab = 0; 
 
+final List<String> statusTabs = [
+  "Đã thanh toán",
+  "Đã hoàn thành",
+  "Đã hủy",
+  "Hết hạn",
+];
+
+final List<int> statusOrder = [
+  1, // Đã thanh toán
+  2, // Đã hoàn thành
+  3, // Đã hủy
+  0, // Hết hạn
+];
   final Set<String> _refundRequestedIdsBE = <String>{};
   void _markRefundRequested(String bookingId) {
     _refundRequestedIdsBE.add(bookingId);
@@ -942,21 +949,10 @@ class _MyBookingScreenState extends State<MyBookingScreen>
       return true;
     }).toList();
 
-    final filtered = typeFiltered.where((b) {
-      final code = b.tabCode;
-      switch (selectedStatusTab) {
-        case 0:
-          return code == 0;
-        case 1:
-          return code == 1;
-        case 2:
-          return code == 2;
-        case 3:
-          return code == 3;
-        default:
-          return false;
-      }
-    }).toList();
+final filtered = typeFiltered.where((b) {
+  final selectedCode = statusOrder[selectedStatusTab];
+  return b.tabCode == selectedCode;
+}).toList();
 
     filtered.sort((a, b) {
       final da = _safeBookingDate(a);
