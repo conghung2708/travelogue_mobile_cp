@@ -1,3 +1,4 @@
+// lib/representation/workshop/screens/workshop_booking_screen.dart
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -21,12 +22,18 @@ class WorkshopBookingScreen extends StatefulWidget {
   final String workshopName;
   final ScheduleModel schedule;
   final WorkshopDetailModel workshop;
+  final String? ticketTypeId;
+  final String? ticketTypeName;
+  final num? ticketPrice;
 
   const WorkshopBookingScreen({
     super.key,
     required this.workshopName,
     required this.schedule,
     required this.workshop,
+    this.ticketTypeId,
+    this.ticketTypeName,
+    this.ticketPrice,
   });
 
   @override
@@ -35,14 +42,11 @@ class WorkshopBookingScreen extends StatefulWidget {
 
 class _WorkshopBookingScreenState extends State<WorkshopBookingScreen> {
   final fmt = NumberFormat('#,###');
-
-  // ==== Participants like selector ====
   final List<BookingParticipantModel> _rows = [];
 
   @override
   void initState() {
     super.initState();
-    // luôn có sẵn 1 người lớn để không bị trống
     _rows.add(
       BookingParticipantModel(
         type: 1,
@@ -53,21 +57,29 @@ class _WorkshopBookingScreenState extends State<WorkshopBookingScreen> {
     );
   }
 
-  // ==== Derived values ====
   int get adultCount => _rows.where((e) => e.type == 1).length;
   int get childrenCount => _rows.where((e) => e.type == 2).length;
 
-  int get maxSlot => widget.schedule.maxParticipant ?? 0;
+  int get maxSlot => widget.schedule.capacity ?? 0;
   int get booked => widget.schedule.currentBooked ?? 0;
-  int get available => (maxSlot > 0) ? (maxSlot - booked) : 999999;
+  int get remainingTotal =>
+      (maxSlot > 0) ? (maxSlot - booked).clamp(0, 999999) : 999999;
+  int get remainingAfterSelection => (maxSlot > 0)
+      ? (maxSlot - booked - _rows.length).clamp(0, 999999)
+      : 999999;
 
+  bool get usingTicketType => widget.ticketPrice != null;
+  double get _ticketUnitPrice => widget.ticketPrice?.toDouble() ?? 0;
   double get _adultPrice => widget.schedule.adultPrice?.toDouble() ?? 0;
   double get _childPrice => widget.schedule.childrenPrice?.toDouble() ?? 0;
 
-  double get totalPrice =>
-      adultCount * _adultPrice + childrenCount * _childPrice;
+  double get totalPrice => usingTicketType
+      ? _rows.length * _ticketUnitPrice
+      : adultCount * _adultPrice + childrenCount * _childPrice;
 
-  // ==== Helpers ====
+  bool get isOver => (maxSlot > 0) && _rows.length > remainingTotal;
+  bool get confirmDisabled => isOver;
+
   void _limitSnack(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.redAccent),
@@ -81,21 +93,19 @@ class _WorkshopBookingScreenState extends State<WorkshopBookingScreen> {
     DateTime firstDate, lastDate, init;
 
     if (p.type == 2) {
-      // Trẻ em: 5–11
       firstDate = DateTime(now.year - 11, now.month, now.day);
       lastDate = DateTime(now.year - 5, now.month, now.day);
-      init = (p.dateOfBirth.isBefore(firstDate) ||
-              p.dateOfBirth.isAfter(lastDate))
-          ? DateTime(now.year - 8, now.month, now.day)
-          : p.dateOfBirth;
+      init =
+          (p.dateOfBirth.isBefore(firstDate) || p.dateOfBirth.isAfter(lastDate))
+              ? DateTime(now.year - 8, now.month, now.day)
+              : p.dateOfBirth;
     } else {
-      // Người lớn: ≥12
       firstDate = DateTime(now.year - 100, 1, 1);
       lastDate = DateTime(now.year - 12, now.month, now.day);
-      init = (p.dateOfBirth.isAfter(lastDate) ||
-              p.dateOfBirth.isBefore(firstDate))
-          ? DateTime(now.year - 30, now.month, now.day)
-          : p.dateOfBirth;
+      init =
+          (p.dateOfBirth.isAfter(lastDate) || p.dateOfBirth.isBefore(firstDate))
+              ? DateTime(now.year - 30, now.month, now.day)
+              : p.dateOfBirth;
     }
 
     final picked = await showDatePicker(
@@ -120,7 +130,10 @@ class _WorkshopBookingScreenState extends State<WorkshopBookingScreen> {
   }
 
   void _addRow() {
-    // không chặn ở đây (để user thêm thoải mái), sẽ check khi bấm xác nhận
+    if (maxSlot > 0 && remainingAfterSelection <= 0) {
+      _limitSnack('Đã đạt tối đa $remainingTotal chỗ cho lịch này.');
+      return;
+    }
     setState(() {
       _rows.add(
         BookingParticipantModel(
@@ -136,12 +149,10 @@ class _WorkshopBookingScreenState extends State<WorkshopBookingScreen> {
   void _removeRow(int i) => setState(() => _rows.removeAt(i));
 
   void _onConfirm() {
-    // validate tên
     if (_rows.isEmpty || _rows.any((p) => p.fullName.trim().isEmpty)) {
       _limitSnack('Vui lòng nhập đầy đủ họ tên hành khách.');
       return;
     }
-    // validate tuổi theo type
     for (int i = 0; i < _rows.length; i++) {
       final p = _rows[i];
       final age = _ageFromDob(p.dateOfBirth);
@@ -150,15 +161,12 @@ class _WorkshopBookingScreenState extends State<WorkshopBookingScreen> {
         return;
       }
       if (p.type == 1 && age < 12) {
-        _limitSnack(
-            'Hành khách ${i + 1} (Người lớn) phải từ 12 tuổi trở lên.');
+        _limitSnack('Hành khách ${i + 1} (Người lớn) phải từ 12 tuổi trở lên.');
         return;
       }
     }
-    // check slot
-    final totalPeople = _rows.length;
-    if (totalPeople > available) {
-      _limitSnack('Chỉ còn $available chỗ trống.');
+    if (maxSlot > 0 && _rows.length > remainingTotal) {
+      _limitSnack('Chỉ còn $remainingTotal chỗ trống.');
       return;
     }
 
@@ -171,6 +179,9 @@ class _WorkshopBookingScreenState extends State<WorkshopBookingScreen> {
           adults: adultCount,
           children: childrenCount,
           participants: _rows,
+          ticketTypeId: widget.ticketTypeId,
+          ticketTypeName: widget.ticketTypeName,
+          ticketPrice: widget.ticketPrice,
         ),
       ),
     );
@@ -190,10 +201,7 @@ class _WorkshopBookingScreenState extends State<WorkshopBookingScreen> {
                   children: [
                     _backBtn(context),
                     SizedBox(height: 3.h),
-
-                    // tiêu đề giống selector
                     const TourTeamTitle(),
-
                     SizedBox(height: 0.5.h),
                     Text(
                       widget.workshopName,
@@ -204,9 +212,9 @@ class _WorkshopBookingScreenState extends State<WorkshopBookingScreen> {
                       ),
                     ),
                     _summaryCard(),
-                    SizedBox(height: 2.h),
-
-                    // ==== ParticipantsEditor (selector style) ====
+                    SizedBox(height: 1.2.h),
+                    _capacityBanner(),
+                    SizedBox(height: 1.8.h),
                     Expanded(
                       child: SingleChildScrollView(
                         keyboardDismissBehavior:
@@ -221,8 +229,6 @@ class _WorkshopBookingScreenState extends State<WorkshopBookingScreen> {
                         ),
                       ),
                     ),
-
-                    // Footer
                     SizedBox(height: 1.h),
                     _totalBar(),
                   ],
@@ -304,14 +310,27 @@ class _WorkshopBookingScreenState extends State<WorkshopBookingScreen> {
                     _iconText(Icons.calendar_month, d),
                     _iconText(Icons.schedule, t),
                     SizedBox(height: 0.5.h),
-                    if (widget.schedule.adultPrice != null)
-                      _iconText(Icons.person,
+                    if (usingTicketType) ...[
+                      _chipRow(
+                        icon: Icons.confirmation_number_outlined,
+                        label: widget.ticketTypeName ?? 'Loại vé',
+                        value: '${fmt.format(_ticketUnitPrice)}đ / khách',
+                        color: ColorPalette.primaryColor,
+                      ),
+                    ] else ...[
+                      if (widget.schedule.adultPrice != null)
+                        _iconText(
+                          Icons.person,
                           '${fmt.format(widget.schedule.adultPrice)}đ / người lớn',
-                          color: Colors.orange),
-                    if (widget.schedule.childrenPrice != null)
-                      _iconText(Icons.child_care,
+                          color: Colors.orange,
+                        ),
+                      if (widget.schedule.childrenPrice != null)
+                        _iconText(
+                          Icons.child_care,
                           '${fmt.format(widget.schedule.childrenPrice)}đ / trẻ em',
-                          color: Colors.green),
+                          color: Colors.green,
+                        ),
+                    ],
                   ],
                 ),
               ),
@@ -362,6 +381,103 @@ class _WorkshopBookingScreenState extends State<WorkshopBookingScreen> {
     );
   }
 
+  Widget _chipRow({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, size: 14.sp, color: color),
+        SizedBox(width: 1.5.w),
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: .6.h),
+          decoration: BoxDecoration(
+            color: color.withOpacity(.08),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: color.withOpacity(.4)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(label,
+                  style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: color,
+                      fontSize: 11.sp)),
+              SizedBox(width: 2.w),
+              Text('•',
+                  style: TextStyle(
+                      color: color.withOpacity(.8),
+                      fontWeight: FontWeight.bold)),
+              SizedBox(width: 2.w),
+              Text(value,
+                  style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: color,
+                      fontSize: 11.sp)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _capacityBanner() {
+    if (maxSlot <= 0) return const SizedBox.shrink();
+    final remainAfter = remainingAfterSelection;
+    final usedNow = (booked + _rows.length);
+    final ratio = maxSlot == 0 ? 0.0 : (usedNow / maxSlot).clamp(0.0, 1.0);
+
+    final over = isOver;
+    final bg = over ? const Color(0xFFFFEBEE) : const Color(0xFFF1F8E9);
+    final bd = over ? const Color(0xFFFFCDD2) : const Color(0xFFDCEDC8);
+    final ic = over ? Colors.red : Colors.green;
+    final txt = over
+        ? 'Số khách đang vượt quá số chỗ còn lại (${remainAfter < 0 ? 0 : remainAfter}). Vui lòng giảm số lượng.'
+        : 'Còn lại $remainAfter/$maxSlot chỗ cho lịch này.';
+
+    return Container(
+      padding: EdgeInsets.all(3.w),
+      decoration: BoxDecoration(
+        color: bg,
+        border: Border.all(color: bd),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(over ? Icons.error_outline_rounded : Icons.event_available,
+                  color: ic),
+              SizedBox(width: 2.w),
+              Expanded(
+                child: Text(
+                  txt,
+                  style: TextStyle(
+                    color: over ? Colors.red.shade800 : Colors.green.shade800,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 1.h),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: LinearProgressIndicator(
+              value: ratio,
+              minHeight: 10,
+              backgroundColor: Colors.grey.shade200,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _totalBar() => Padding(
         padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 1.h),
         child: Row(
@@ -375,26 +491,32 @@ class _WorkshopBookingScreenState extends State<WorkshopBookingScreen> {
                     color: Colors.white),
               ),
             ),
-            InkWell(
-              onTap: _onConfirm,
-              borderRadius: BorderRadius.circular(50),
-              child: Container(
-                padding:
-                    EdgeInsets.symmetric(horizontal: 8.w, vertical: 1.5.h),
-                decoration: BoxDecoration(
-                  gradient: Gradients.defaultGradientBackground,
+            IgnorePointer(
+              ignoring: confirmDisabled,
+              child: Opacity(
+                opacity: confirmDisabled ? 0.5 : 1.0,
+                child: InkWell(
+                  onTap: _onConfirm,
                   borderRadius: BorderRadius.circular(50),
-                  boxShadow: [
-                    BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 6,
-                        offset: const Offset(0, 3))
-                  ],
-                ),
-                child: const Text(
-                  'Xác nhận',
-                  style:
-                      TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  child: Container(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 8.w, vertical: 1.5.h),
+                    decoration: BoxDecoration(
+                      gradient: Gradients.defaultGradientBackground,
+                      borderRadius: BorderRadius.circular(50),
+                      boxShadow: [
+                        BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 6,
+                            offset: const Offset(0, 3))
+                      ],
+                    ),
+                    child: const Text(
+                      'Xác nhận',
+                      style: TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                  ),
                 ),
               ),
             )

@@ -1,8 +1,11 @@
+// lib/representation/craft_village/screens/craft_village_detail_screen.dart
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:sizer/sizer.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_html/flutter_html.dart';
+
 import 'package:travelogue_mobile/core/constants/color_constants.dart';
 import 'package:travelogue_mobile/core/blocs/location/location_bloc.dart';
 import 'package:travelogue_mobile/core/blocs/location/location_event.dart';
@@ -43,6 +46,11 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
     final args = ModalRoute.of(context)?.settings.arguments;
     if (args is LocationModel) {
       _initial = args;
+      final cover =
+          _initial!.listImages.isNotEmpty ? _initial!.listImages.first : null;
+      if (cover != null) {
+        precacheImage(CachedNetworkImageProvider(cover), context);
+      }
     } else if (args is String) {
       _id = args;
       context.read<LocationBloc>().add(LocationDetailRequested(_id!));
@@ -81,10 +89,12 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
       ],
       flexibleSpace: LayoutBuilder(
         builder: (_, c) {
-          final t = ((c.biggest.height - kToolbarHeight) / (32.h - kToolbarHeight))
-              .clamp(0.0, 1.0);
+          final t =
+              ((c.biggest.height - kToolbarHeight) / (32.h - kToolbarHeight))
+                  .clamp(0.0, 1.0);
           return FlexibleSpaceBar(
-            titlePadding: const EdgeInsetsDirectional.only(start: 16, bottom: 12, end: 16),
+            titlePadding: const EdgeInsetsDirectional.only(
+                start: 16, bottom: 12, end: 16),
             title: AnimatedOpacity(
               duration: const Duration(milliseconds: 200),
               opacity: t < 0.35 ? 1 : 0,
@@ -101,11 +111,27 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
                 if (cover != null)
                   Hero(
                     tag: 'cover-$title',
-                    child: Image.network(cover, fit: BoxFit.cover),
+                    child: LayoutBuilder(
+                      builder: (ctx, _) {
+                        final mq = MediaQuery.of(ctx);
+                        final targetW =
+                            (mq.size.width * mq.devicePixelRatio).round();
+                        return CachedNetworkImage(
+                          imageUrl: cover,
+                          fit: BoxFit.cover,
+                          memCacheWidth: targetW,
+                          placeholder: (_, __) => const Center(
+                              child: CircularProgressIndicator(strokeWidth: 2)),
+                          errorWidget: (_, __, ___) =>
+                              Container(color: Colors.grey.shade300),
+                          fadeInDuration: const Duration(milliseconds: 120),
+                          fadeOutDuration: const Duration(milliseconds: 80),
+                        );
+                      },
+                    ),
                   )
                 else
                   Container(color: Colors.grey.shade300),
-               
                 Container(
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
@@ -115,7 +141,6 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
                     ),
                   ),
                 ),
-               
                 Positioned(
                   left: 16,
                   right: 16,
@@ -156,7 +181,6 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
     );
   }
 
- 
   Widget _introTab(LocationModel loc) {
     return CustomScrollView(
       slivers: [
@@ -168,31 +192,42 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  if (loc.minPrice != null || loc.maxPrice != null)
-                    _infoPill(Icons.price_change_outlined, _priceRange(loc)),
-                  if ((loc.openTime ?? '').isNotEmpty || (loc.closeTime ?? '').isNotEmpty)
-                    _infoPill(Icons.schedule_rounded, '${loc.openTime ?? '—'} – ${loc.closeTime ?? '—'}'),
+                  // if (loc.minPrice != null || loc.maxPrice != null)
+                  //   _infoPill(Icons.price_change_outlined, _priceRange(loc)),
+                  if ((loc.openTime ?? '').isNotEmpty ||
+                      (loc.closeTime ?? '').isNotEmpty)
+                    _infoPill(Icons.schedule_rounded,
+                        '${loc.openTime ?? '—'} – ${loc.closeTime ?? '—'}'),
                   if ((loc.address ?? '').isNotEmpty)
                     _infoPill(Icons.place_outlined, loc.address!),
                 ],
               ),
               SizedBox(height: 1.6.h),
-
               if ((loc.content ?? '').isNotEmpty)
                 _sectionCard(
                   title: 'Giới thiệu',
-                  child: MarkdownBody(
+                  child: Html(
                     data: loc.content!,
-                    styleSheet: MarkdownStyleSheet(
-                      p: TextStyle(fontSize: 11.5.sp, height: 1.45),
-                      h1: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w800),
-                      h2: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w800),
-                      strong: const TextStyle(fontWeight: FontWeight.w800),
-                      blockquote: TextStyle(color: Colors.black87.withOpacity(.8)),
-                    ),
+                    style: {
+                      "body": Style(
+                        margin: Margins.zero,
+                        padding: HtmlPaddings.zero,
+                        fontSize: FontSize(13.sp),
+                        color: Colors.black87,
+                        lineHeight: const LineHeight(1.45),
+                        textAlign: TextAlign.justify,
+                      ),
+                      "p": Style(margin: Margins.only(bottom: 10)),
+                      "h1": Style(
+                          fontSize: FontSize(16.sp),
+                          fontWeight: FontWeight.w800),
+                      "h2": Style(
+                          fontSize: FontSize(14.sp),
+                          fontWeight: FontWeight.w800),
+                      "img": Style(margin: Margins.only(bottom: 8)),
+                    },
                   ),
                 ),
-
               if (loc.listImages.isNotEmpty) ...[
                 _sectionHeader('Hình ảnh', icon: Icons.photo_library_outlined),
                 SizedBox(height: .8.h),
@@ -201,7 +236,6 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
                   child: ImageGridPreview(images: loc.listImages, maxImages: 6),
                 ),
               ],
-
               SizedBox(height: 3.h),
             ],
           ),
@@ -210,7 +244,6 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
     );
   }
 
-  
   Widget _craftVillageTab(LocationModel loc) {
     final CraftVillageModel? cv = loc.craftVillage;
     if (cv == null) {
@@ -222,10 +255,14 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
           padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.6.h),
           sliver: SliverList.list(
             children: [
-              CraftVillageSection.fromCraftVillage(craftVillage: cv, padding: EdgeInsets.zero),
+              CraftVillageSection.fromCraftVillage(
+                craftVillage: cv,
+                padding: EdgeInsets.zero,
+              ),
               if (cv.workshop != null) ...[
                 SizedBox(height: 1.6.h),
-                _sectionHeader('Trải nghiệm làng nghề', icon: Icons.handyman_outlined),
+                _sectionHeader('Trải nghiệm làng nghề',
+                    icon: Icons.handyman_outlined),
                 SizedBox(height: .8.h),
                 WorkshopPreviewCard(workshop: cv.workshop!),
               ],
@@ -237,7 +274,6 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     if (_initial != null) {
@@ -247,7 +283,10 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
           SliverFillRemaining(
             child: TabBarView(
               controller: _tabController,
-              children: [_introTab(_initial!), _craftVillageTab(_initial!)],
+              children: [
+                Builder(builder: (_) => _introTab(_initial!)),
+                Builder(builder: (_) => _craftVillageTab(_initial!)),
+              ],
             ),
           ),
         ],
@@ -269,13 +308,21 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
           }
           if (state is LocationDetailSuccess) {
             final loc = state.location;
+            final cover =
+                loc.listImages.isNotEmpty ? loc.listImages.first : null;
+            if (cover != null) {
+              precacheImage(CachedNetworkImageProvider(cover), context);
+            }
             return _ModernScaffold(
               slivers: [
                 _sliverHeader(loc),
                 SliverFillRemaining(
                   child: TabBarView(
                     controller: _tabController,
-                    children: [_introTab(loc), _craftVillageTab(loc)],
+                    children: [
+                      Builder(builder: (_) => _introTab(loc)),
+                      Builder(builder: (_) => _craftVillageTab(loc)),
+                    ],
                   ),
                 ),
               ],
@@ -287,7 +334,6 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
     );
   }
 
-  
   Color _bgColor(BuildContext context) =>
       Theme.of(context).colorScheme.surface.withOpacity(.98);
 
@@ -298,7 +344,7 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              gradient: Gradients.defaultGradientBackground, 
+              gradient: Gradients.defaultGradientBackground,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, size: 18, color: Colors.white),
@@ -306,7 +352,11 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
         if (icon != null) const SizedBox(width: 8),
         Text(
           text,
-          style: TextStyle(fontSize: 13.5.sp, fontWeight: FontWeight.w900, color: ColorPalette.text1Color),
+          style: TextStyle(
+            fontSize: 13.5.sp,
+            fontWeight: FontWeight.w900,
+            color: ColorPalette.text1Color,
+          ),
         ),
       ],
     );
@@ -331,7 +381,8 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5.sp)),
+          Text(title,
+              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5.sp)),
           SizedBox(height: .8.h),
           child
         ],
@@ -339,7 +390,8 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
     );
   }
 
-  Widget _roundIconBtn(BuildContext ctx, {required IconData icon, double size = 42, VoidCallback? onTap}) {
+  Widget _roundIconBtn(BuildContext ctx,
+      {required IconData icon, double size = 42, VoidCallback? onTap}) {
     return Padding(
       padding: const EdgeInsets.only(left: 8),
       child: InkWell(
@@ -350,7 +402,7 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
           width: size,
           height: size,
           decoration: BoxDecoration(
-            gradient: Gradients.defaultGradientBackground, 
+            gradient: Gradients.defaultGradientBackground,
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
@@ -360,7 +412,7 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
             ],
           ),
           child: Container(
-            margin: const EdgeInsets.all(2), 
+            margin: const EdgeInsets.all(2),
             decoration: const BoxDecoration(
               color: Colors.black26,
               shape: BoxShape.circle,
@@ -376,7 +428,7 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
         child: Container(
           padding: EdgeInsets.all(3.w),
           decoration: BoxDecoration(
@@ -390,13 +442,22 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
     );
   }
 
-  Widget _glassChip({required IconData icon, required String text, bool dense = false}) {
+  Widget _glassChip({
+    required IconData icon,
+    required String text,
+    bool dense = false,
+  }) {
+    final maxW = MediaQuery.of(context).size.width * 0.55;
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(999),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: dense ? 10 : 12, vertical: dense ? 6 : 8),
+          padding: EdgeInsets.symmetric(
+            horizontal: dense ? 10 : 12,
+            vertical: dense ? 6 : 8,
+          ),
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(.18),
             borderRadius: BorderRadius.circular(999),
@@ -407,7 +468,19 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
             children: [
               Icon(icon, size: 16, color: Colors.white),
               const SizedBox(width: 6),
-              Text(text, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+              ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: maxW),
+                child: Text(
+                  text,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  softWrap: false,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -416,18 +489,33 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
   }
 
   Widget _infoPill(IconData icon, String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.grey.shade300),
+    final maxW = MediaQuery.of(context).size.width - 8.w;
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: maxW),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: Colors.grey.shade300),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: Colors.grey.shade800),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                text,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+                softWrap: false,
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        ),
       ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(icon, size: 16, color: Colors.grey.shade800),
-        const SizedBox(width: 6),
-        Text(text, style: const TextStyle(fontWeight: FontWeight.w700)),
-      ]),
     );
   }
 
@@ -454,7 +542,6 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
     return 'Đến ${money(maxP)}';
   }
 
-
   Widget _fancyTabBar(TabController controller) {
     final r = BorderRadius.circular(12);
     return Padding(
@@ -472,10 +559,11 @@ class _CraftVillageDetailScreenState extends State<CraftVillageDetailScreen>
           overlayColor: const WidgetStatePropertyAll(Colors.transparent),
           dividerColor: Colors.transparent,
           indicator: BoxDecoration(
-            gradient: Gradients.defaultGradientBackground, 
+            gradient: Gradients.defaultGradientBackground,
             borderRadius: BorderRadius.circular(8),
           ),
-          indicatorPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+          indicatorPadding:
+              const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
           indicatorSize: TabBarIndicatorSize.tab,
           labelColor: Colors.white,
           unselectedLabelColor: Colors.black87,

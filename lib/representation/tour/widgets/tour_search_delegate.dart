@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:diacritic/diacritic.dart';
 import 'package:travelogue_mobile/model/tour/tour_model.dart';
 
 class TourSearchDelegate extends SearchDelegate<TourModel?> {
@@ -26,12 +27,15 @@ class TourSearchDelegate extends SearchDelegate<TourModel?> {
     );
   }
 
+  String _norm(String s) => removeDiacritics(s).toLowerCase();
+
   List<TourModel> _filter(String q) {
-    final s = q.trim().toLowerCase();
+    final s = _norm(q.trim());
     if (s.isEmpty) return data;
+
     return data.where((t) {
-      final name = (t.name ?? '').toLowerCase();
-      final desc = (t.description ?? '').toLowerCase();
+      final name = _norm(t.name ?? '');
+      final desc = _norm(t.description ?? '');
       return name.contains(s) || desc.contains(s);
     }).toList();
   }
@@ -56,7 +60,7 @@ class TourSearchDelegate extends SearchDelegate<TourModel?> {
                 ? Image.network(img, width: 54, height: 54, fit: BoxFit.cover)
                 : Container(width: 54, height: 54, color: Colors.black12),
           ),
-          title: _highlight(tour.name ?? '', query),
+          title: _highlightAccentsAware(tour.name ?? '', query),
           subtitle: Text(
             tour.description ?? '',
             maxLines: 2,
@@ -69,19 +73,50 @@ class TourSearchDelegate extends SearchDelegate<TourModel?> {
     );
   }
 
+  Widget _highlightAccentsAware(String text, String needle) {
+    final baseStyle = const TextStyle(color: Colors.black, fontWeight: FontWeight.w700);
 
-  Widget _highlight(String text, String needle) {
-    if (needle.isEmpty) return Text(text, style: const TextStyle(fontWeight: FontWeight.w700));
-    final lower = text.toLowerCase();
-    final n = needle.toLowerCase();
-    final idx = lower.indexOf(n);
-    if (idx < 0) return Text(text, style: const TextStyle(fontWeight: FontWeight.w700));
+    if (needle.isEmpty) return Text(text, style: baseStyle);
+
+    final nText = _norm(text);
+    final nNeedle = _norm(needle);
+    final start = nText.indexOf(nNeedle);
+    if (start < 0) return Text(text, style: baseStyle);
+
+    int origStart = -1;
+    int origEnd = -1;
+    int cum = 0; 
+
+    for (int i = 0; i < text.length; i++) {
+      final normalizedChar = _norm(text[i]); 
+      final nextCum = cum + normalizedChar.length;
+
+      if (origStart == -1 && nextCum > start) {
+        origStart = i;
+      }
+      if (origEnd == -1 && nextCum >= start + nNeedle.length) {
+        origEnd = i + 1;
+        break;
+      }
+      cum = nextCum;
+    }
+
+
+    origStart = (origStart < 0) ? 0 : origStart;
+    origEnd = (origEnd < 0 || origEnd > text.length) ? text.length : origEnd;
+
     return RichText(
-      text: TextSpan(style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w700), children: [
-        TextSpan(text: text.substring(0, idx)),
-        TextSpan(text: text.substring(idx, idx + needle.length), style: const TextStyle(backgroundColor: Color(0xFFFFF59D))),
-        TextSpan(text: text.substring(idx + needle.length)),
-      ]),
+      text: TextSpan(
+        style: baseStyle,
+        children: [
+          if (origStart > 0) TextSpan(text: text.substring(0, origStart)),
+          TextSpan(
+            text: text.substring(origStart, origEnd),
+            style: const TextStyle(backgroundColor: Color(0xFFFFF59D)),
+          ),
+          if (origEnd < text.length) TextSpan(text: text.substring(origEnd)),
+        ],
+      ),
     );
   }
 

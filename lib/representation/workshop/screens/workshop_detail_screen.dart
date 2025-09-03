@@ -9,7 +9,6 @@ import 'package:travelogue_mobile/core/blocs/workshop/workshop_event.dart';
 import 'package:travelogue_mobile/core/blocs/workshop/workshop_state.dart';
 import 'package:travelogue_mobile/core/helpers/asset_helper.dart';
 
-
 import 'package:travelogue_mobile/model/workshop/workshop_detail_model.dart';
 
 import 'package:travelogue_mobile/representation/home/widgets/title_widget.dart';
@@ -25,7 +24,6 @@ class WorkshopDetailScreen extends StatefulWidget {
   final bool readOnly;
 
   final bool hideIntroTab;
-
   final bool hideScheduleTab;
 
   const WorkshopDetailScreen({
@@ -77,41 +75,40 @@ class _WorkshopDetailScreenState extends State<WorkshopDetailScreen>
     return Image.asset(AssetHelper.img_default, fit: BoxFit.cover);
   }
 
-  ({List<Tab> tabs, List<Widget> views}) _buildTabsAndViews(
-      WorkshopDetailModel w) {
-    final tabs = <Tab>[];
-    final views = <Widget>[];
+({List<Tab> tabs, List<Widget> views}) _buildTabsAndViews(WorkshopDetailModel w) {
+  final tabs = <Tab>[];
+  final views = <Widget>[];
 
-    if (!widget.hideIntroTab) {
-      tabs.add(const Tab(text: 'Giới thiệu'));
-      views.add(WorkshopIntroTab(workshop: w));
-    }
-
-    if (!widget.hideScheduleTab) {
-      tabs.add(const Tab(text: 'Lịch'));
-      views.add(
-        WorkshopScheduleTab(
-          workshop: w,
-          workshopName: w.name ?? '',
-          schedules: widget.selectedScheduleId != null
-              ? w.schedules
-                  .where((s) => s.scheduleId == widget.selectedScheduleId)
-                  .toList()
-              : w.schedules,
-          readOnly: widget.readOnly,
-        ),
-      );
-    }
-
-    tabs.add(const Tab(text: 'Hoạt động'));
-    views.add(WorkshopActivityTimeline(w.days));
-
-    return (tabs: tabs, views: views);
+  if (!widget.hideIntroTab) {
+    tabs.add(const Tab(text: 'Giới thiệu'));
+    views.add(WorkshopIntroTab(workshop: w));
   }
 
+  if (!widget.hideScheduleTab) {
+    tabs.add(const Tab(text: 'Lịch'));
+    views.add(
+      WorkshopScheduleTab(
+        workshop: w,
+        workshopName: w.name ?? '',
+        schedules: widget.selectedScheduleId != null
+            ? w.schedules.where((s) => s.scheduleId == widget.selectedScheduleId).toList()
+            : w.schedules,
+        readOnly: widget.readOnly,
+      ),
+    );
+  }
+
+  tabs.add(const Tab(text: 'Hoạt động'));
+  views.add(WorkshopActivityTimeline(days: w.days));
+  return (tabs: tabs, views: views);
+}
+
   void _ensureTabControllerLen(int len) {
-    _tabCtl = TabController(length: len, vsync: this);
-    _tabReady = true;
+    if (!_tabReady || _tabCtl.length != len) {
+      if (_tabReady) _tabCtl.dispose();
+      _tabCtl = TabController(length: len, vsync: this);
+      _tabReady = true;
+    }
   }
 
   @override
@@ -148,8 +145,6 @@ class _WorkshopDetailScreenState extends State<WorkshopDetailScreen>
                     ),
                   ),
                 ),
-
-             
                 SafeArea(
                   child: Padding(
                     padding: EdgeInsets.only(left: 4.w),
@@ -161,14 +156,13 @@ class _WorkshopDetailScreenState extends State<WorkshopDetailScreen>
                           color: Colors.white.withOpacity(.85),
                           borderRadius: BorderRadius.circular(4.w),
                         ),
-                        child: Icon(Icons.arrow_back_ios_new_rounded,
-                            size: 16.sp),
+                        child:
+                            Icon(Icons.arrow_back_ios_new_rounded, size: 16.sp),
                       ),
                     ),
                   ),
                 ),
 
-                
                 _buildDetailContent(w, parts, tv.tabs, tv.views),
               ],
             );
@@ -213,7 +207,6 @@ class _WorkshopDetailScreenState extends State<WorkshopDetailScreen>
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                
                   Padding(
                     padding: EdgeInsets.symmetric(vertical: 1.h),
                     child: TitleWithCustoneUnderline(
@@ -221,21 +214,18 @@ class _WorkshopDetailScreenState extends State<WorkshopDetailScreen>
                       text2: parts[1],
                     ),
                   ),
-              
                   TabBar(
                     controller: _tabCtl,
                     indicatorColor: Colors.transparent,
                     labelColor: ColorPalette.primaryColor,
                     unselectedLabelColor: Colors.grey.shade600,
-                    labelStyle: TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 15.sp),
+                    labelStyle:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 15.sp),
                     tabs: tabs,
                   ),
                 ],
               ),
             ),
-
-           
             SliverFillRemaining(
               hasScrollBody: true,
               child: TabBarView(

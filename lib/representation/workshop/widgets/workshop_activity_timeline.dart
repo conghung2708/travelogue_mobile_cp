@@ -7,8 +7,15 @@ import 'package:travelogue_mobile/model/workshop/day_model.dart';
 import 'package:travelogue_mobile/model/workshop/activity_model.dart';
 
 class WorkshopActivityTimeline extends StatefulWidget {
-  final List<DayModel> days;
-  const WorkshopActivityTimeline(this.days, {super.key});
+  final List<DayModel>? days;
+  final List<ActivityModel>? activities;
+
+  const WorkshopActivityTimeline({
+    super.key,
+    this.days,
+    this.activities,
+  }) : assert(days != null || activities != null,
+            'Phải truyền days hoặc activities');
 
   @override
   State<WorkshopActivityTimeline> createState() => _TimelineState();
@@ -21,7 +28,22 @@ class _TimelineState extends State<WorkshopActivityTimeline> {
   @override
   void initState() {
     super.initState();
-    _acts = widget.days.expand((d) => d.activities).toList();
+
+    final fromDays = (widget.days ?? const <DayModel>[])
+        .expand((d) => d.activities)
+        .toList();
+
+    final flat = (widget.activities ?? const <ActivityModel>[]).toList();
+
+    _acts = <ActivityModel>[...fromDays, ...flat]
+      ..sort((a, b) {
+        final ao = (a.activityOrder ?? 0).compareTo(b.activityOrder ?? 0);
+        if (ao != 0) return ao;
+        return (a.activity ?? '').toLowerCase().compareTo(
+              (b.activity ?? '').toLowerCase(),
+            );
+      });
+
     _revealSteps();
   }
 

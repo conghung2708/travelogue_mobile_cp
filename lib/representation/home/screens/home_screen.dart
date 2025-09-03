@@ -162,12 +162,12 @@ class _HomeScreenState extends State<HomeScreen>
                       if (userName.isNotEmpty)
                         Row(
                           children: [
-                            const Icon(
-                              FontAwesomeIcons.bell,
-                              size: kDefaultIconSize,
-                              color: Colors.white,
-                            ),
-                            const SizedBox(width: 20),
+                            // const Icon(
+                            //   FontAwesomeIcons.bell,
+                            //   size: kDefaultIconSize,
+                            //   color: Colors.white,
+                            // ),
+                            // const SizedBox(width: 20),
                             Container(
                               width: 40,
                               height: 40,

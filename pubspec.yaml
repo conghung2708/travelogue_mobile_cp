@@ -44,7 +44,7 @@ dependencies:
   lottie:
   animated_splash_screen:
   carousel_slider: ^5.0.0
-  intl: ^0.19.0
+  intl: 0.20.2
   photo_view: ^0.15.0
   diacritic: ^0.1.6
   iconsax: ^0.0.8

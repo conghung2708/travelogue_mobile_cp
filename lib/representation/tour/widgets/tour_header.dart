@@ -41,14 +41,14 @@ class TourHeader extends StatelessWidget {
                         height: 10.w,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => Image.asset(
-                          AssetHelper.img_avatar, 
+                          AssetHelper.img_avatar,
                           width: 10.w,
                           height: 10.w,
                           fit: BoxFit.cover,
                         ),
                       )
                     : Image.asset(
-                        AssetHelper.img_avatar, 
+                        AssetHelper.img_avatar,
                         width: 10.w,
                         height: 10.w,
                         fit: BoxFit.cover,
@@ -74,8 +74,8 @@ class TourHeader extends StatelessWidget {
               ],
             ),
             const Spacer(),
-            if (rawName.isNotEmpty)
-              Icon(Icons.notifications_none, size: 6.w, color: Colors.black87),
+            // if (rawName.isNotEmpty)
+            //   Icon(Icons.notifications_none, size: 6.w, color: Colors.black87),
           ],
         );
       },

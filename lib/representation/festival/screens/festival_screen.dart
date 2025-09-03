@@ -37,12 +37,7 @@ class _FestivalScreenState extends State<FestivalScreen> {
           final List<NewsModel> allNews = state.props[0] as List<NewsModel>;
 
           final List<NewsModel> festivals = allNews.where((n) {
-            if (n.newsCategory != 2) return false;
-
-            if (monthCurrent == 0) return true; // Tất cả tháng
-
-            final start = n.createdTime;
-            return start != null && start.month == monthCurrent;
+            return n.newsCategory == 2;
           }).toList();
 
           return Stack(

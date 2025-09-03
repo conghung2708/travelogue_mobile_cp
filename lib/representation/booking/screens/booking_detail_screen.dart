@@ -620,11 +620,11 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                             icon: Icons.arrow_back_ios_new_rounded,
                             onTap: () => Navigator.pop(context),
                           ),
-                          _roundIcon(
-                            context,
-                            icon: Icons.more_horiz_rounded,
-                            onTap: () {},
-                          ),
+                          // _roundIcon(
+                          //   context,
+                          //   icon: Icons.more_horiz_rounded,
+                          //   onTap: () {},
+                          // ),
                         ],
                       ),
                     ),

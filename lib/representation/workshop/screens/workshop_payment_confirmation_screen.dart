@@ -24,8 +24,13 @@ class WorkshopPaymentConfirmationScreen extends StatefulWidget {
   final int adults;
   final int children;
 
-  /// Danh sách hành khách từ màn selector (bắt buộc để gửi API)
+  
   final List<BookingParticipantModel>? participants;
+
+ 
+  final String? ticketTypeId;
+  final String? ticketTypeName; 
+  final num? ticketPrice;     
 
   const WorkshopPaymentConfirmationScreen({
     super.key,
@@ -34,6 +39,9 @@ class WorkshopPaymentConfirmationScreen extends StatefulWidget {
     this.adults = 1,
     this.children = 0,
     this.participants,
+    this.ticketTypeId,
+    this.ticketTypeName,
+    this.ticketPrice,
   });
 
   @override
@@ -45,17 +53,30 @@ class _WorkshopPaymentConfirmationScreenState
     extends State<WorkshopPaymentConfirmationScreen> {
   bool _agreed = false;
 
-  // Contact controllers
+
   final _nameCtl = TextEditingController();
   final _emailCtl = TextEditingController();
   final _phoneCtl = TextEditingController();
   final _addrCtl = TextEditingController();
 
-  // 🔥 Form key + autovalidate realtime
+
   final _formKey = GlobalKey<FormState>();
 
   bool _loadingUser = true;
   String? _loadError;
+
+
+  NumberFormat get _fmt => NumberFormat('#,###');
+  bool get _usingTicketType => widget.ticketPrice != null;
+
+  int get _peopleCount => (widget.participants?.length ?? 0);
+
+  double get _adultPrice => widget.schedule.adultPrice?.toDouble() ?? 0;
+  double get _childPrice => widget.schedule.childrenPrice?.toDouble() ?? 0;
+
+  double get _totalPrice => _usingTicketType
+      ? (_peopleCount * (widget.ticketPrice?.toDouble() ?? 0))
+      : (widget.adults * _adultPrice + widget.children * _childPrice);
 
   @override
   void initState() {
@@ -95,9 +116,8 @@ class _WorkshopPaymentConfirmationScreenState
     super.dispose();
   }
 
-  // ===== Validators =====
+
   bool _isValidVietnamPhone(String phone) {
-    // Hợp lệ: +84xxxxxxxxx (9 số sau +84) hoặc 0xxxxxxxxx (9 số sau 0) => tổng 10 số nội địa
     final pattern = r'^(?:\+84|0)\d{9}$';
     return RegExp(pattern).hasMatch(phone);
   }
@@ -107,7 +127,7 @@ class _WorkshopPaymentConfirmationScreenState
     return re.hasMatch(email);
   }
 
-  /// Trả về (model, error). KHÔNG show SnackBar ở đây.
+
   ({CreateBookingWorkshopModel? model, String? error}) _buildPayload() {
     final participants = widget.participants ?? [];
 
@@ -119,7 +139,7 @@ class _WorkshopPaymentConfirmationScreenState
       );
     }
 
-    // validate form một lần nữa khi submit
+
     if (!(_formKey.currentState?.validate() ?? false)) {
       return (model: null, error: 'Vui lòng nhập đúng và đầy đủ thông tin liên hệ.');
     }
@@ -127,24 +147,29 @@ class _WorkshopPaymentConfirmationScreenState
     final model = CreateBookingWorkshopModel(
       workshopId: widget.workshop.workshopId ?? '',
       workshopScheduleId: widget.schedule.scheduleId ?? '',
-      promotionCode: null, // không dùng mã khuyến mãi ở màn này
+      promotionCode: null,
       contactName: _nameCtl.text.trim(),
       contactEmail: _emailCtl.text.trim(),
       contactPhone: _phoneCtl.text.trim(),
       contactAddress: _addrCtl.text.trim(),
       participants: participants,
+
+
+      // ticketTypeId: widget.ticketTypeId,
+      // ticketUnitPrice: widget.ticketPrice, // hoặc để BE tự tính từ ticketTypeId
     );
+
     return (model: model, error: null);
   }
 
   @override
   Widget build(BuildContext context) {
-    final formatter = NumberFormat('#,###');
-    final double adultPrice = widget.schedule.adultPrice ?? 0;
-    final double childrenPrice = widget.schedule.childrenPrice ?? 0;
-    final double adultTotal = widget.adults * adultPrice;
-    final double childrenTotal = widget.children * childrenPrice;
-    final double totalPrice = adultTotal + childrenTotal;
+    final formatter = _fmt;
+    final totalPrice = _totalPrice;
+
+
+    final double adultTotal = widget.adults * _adultPrice;
+    final double childrenTotal = widget.children * _childPrice;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -161,12 +186,16 @@ class _WorkshopPaymentConfirmationScreenState
                   children: [
                     Divider(color: ColorPalette.dividerColor, thickness: 6.sp),
 
-                    // Tóm tắt thanh toán
+                   
                     _buildPaymentSummary(
-                        formatter, totalPrice, adultTotal, childrenTotal),
+                      formatter: formatter,
+                      totalPrice: totalPrice,
+                      adultTotal: adultTotal,
+                      childrenTotal: childrenTotal,
+                    ),
                     SizedBox(height: 2.h),
 
-                    // Thông tin liên hệ (prefill user)
+          
                     Text(
                       '👤 Thông tin liên hệ',
                       style: TextStyle(
@@ -175,8 +204,6 @@ class _WorkshopPaymentConfirmationScreenState
                       ),
                     ),
                     SizedBox(height: 1.h),
-
-                    // 🔥 Bọc trong Form để autovalidate realtime
                     Form(
                       key: _formKey,
                       autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -187,7 +214,6 @@ class _WorkshopPaymentConfirmationScreenState
                         addrCtl: _addrCtl,
                         loading: _loadingUser,
                         error: _loadError,
-                        // truyền validators
                         validatorName: (v) =>
                             (v == null || v.trim().isEmpty)
                                 ? 'Vui lòng nhập họ tên'
@@ -215,7 +241,7 @@ class _WorkshopPaymentConfirmationScreenState
 
                     SizedBox(height: 2.h),
 
-                    // Điều khoản
+
                     const Text(
                       '📘 Điều khoản & Trách nhiệm dịch vụ',
                       style: TextStyle(
@@ -226,8 +252,6 @@ class _WorkshopPaymentConfirmationScreenState
                     SizedBox(height: 1.h),
                     const _PolicyMarkdownBox(),
                     SizedBox(height: 1.5.h),
-
-                    // Đồng ý điều khoản
                     Row(
                       children: [
                         Checkbox(
@@ -244,11 +268,9 @@ class _WorkshopPaymentConfirmationScreenState
                       ],
                     ),
 
-                    // Hỗ trợ
                     const _SupportButton(),
                     SizedBox(height: 2.h),
 
-                    // Xác nhận
                     _buildConfirmButton(totalPrice),
                     SizedBox(height: 2.h),
                   ],
@@ -301,8 +323,8 @@ class _WorkshopPaymentConfirmationScreenState
 
   Widget _buildWorkshopInfoCard() {
     final img = widget.schedule.imageUrl ??
-        (widget.workshop.imageList?.isNotEmpty == true
-            ? widget.workshop.imageList!.first
+        (widget.workshop.imageList.isNotEmpty
+            ? widget.workshop.imageList.first
             : AssetHelper.img_default);
 
     return Container(
@@ -371,8 +393,12 @@ class _WorkshopPaymentConfirmationScreenState
     );
   }
 
-  Widget _buildPaymentSummary(
-      NumberFormat formatter, double totalPrice, double adultTotal, double childrenTotal) {
+  Widget _buildPaymentSummary({
+    required NumberFormat formatter,
+    required double totalPrice,
+    required double adultTotal,
+    required double childrenTotal,
+  }) {
     return Container(
       padding: EdgeInsets.all(3.w),
       decoration: BoxDecoration(
@@ -395,11 +421,18 @@ class _WorkshopPaymentConfirmationScreenState
             ],
           ),
           SizedBox(height: 1.5.h),
-          _buildPriceRow(
-              '👨 Người lớn', widget.adults, widget.schedule.adultPrice ?? 0),
-          SizedBox(height: 0.6.h),
-          _buildPriceRow(
-              '🧒 Trẻ em', widget.children, widget.schedule.childrenPrice ?? 0),
+          if (_usingTicketType) ...[
+            _buildPriceRow(
+              '🎟️ ${widget.ticketTypeName ?? 'Loại vé'}',
+              _peopleCount,
+              widget.ticketPrice?.toDouble() ?? 0,
+            ),
+          ] else ...[
+            _buildPriceRow('👨 Người lớn', widget.adults, _adultPrice),
+            SizedBox(height: 0.6.h),
+            _buildPriceRow('🧒 Trẻ em', widget.children, _childPrice),
+          ],
+
           Divider(height: 2.5.h, color: Colors.grey.shade400),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -422,13 +455,12 @@ class _WorkshopPaymentConfirmationScreenState
   }
 
   Widget _buildPriceRow(String label, int quantity, double price) {
-    final formatter = NumberFormat('#,###');
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text('$label x$quantity',
             style: TextStyle(fontSize: 13.5.sp, color: Colors.brown.shade800)),
-        Text('${formatter.format(quantity * price)}đ',
+        Text('${_fmt.format(quantity * price)}đ',
             style: TextStyle(
                 fontSize: 13.5.sp,
                 fontWeight: FontWeight.w600,
@@ -479,6 +511,11 @@ class _WorkshopPaymentConfirmationScreenState
                         totalPrice: totalPrice,
                         startTime: DateTime.now(),
                         checkoutUrl: paymentUrl,
+
+                        // NEW: truyền sang QR screen nếu bạn muốn hiển thị
+                        // ticketTypeId: widget.ticketTypeId,
+                        // ticketTypeName: widget.ticketTypeName,
+                        // ticketPrice: widget.ticketPrice,
                       ),
                     ),
                   );
@@ -508,8 +545,6 @@ class _WorkshopPaymentConfirmationScreenState
     );
   }
 }
-
-/* =================== Small UI pieces =================== */
 
 class _PolicyMarkdownBox extends StatelessWidget {
   const _PolicyMarkdownBox();
@@ -672,8 +707,6 @@ class _ContactCard extends StatelessWidget {
   final TextEditingController addrCtl;
   final bool loading;
   final String? error;
-
-  // nhận validators từ trên
   final String? Function(String?)? validatorName;
   final String? Function(String?)? validatorEmail;
   final String? Function(String?)? validatorPhone;

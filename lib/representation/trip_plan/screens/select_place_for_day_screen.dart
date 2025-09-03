@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:intl/intl.dart';
 import 'package:sizer/sizer.dart';
+import 'package:travelogue_mobile/core/config/app_env.dart';
 
 import 'package:travelogue_mobile/core/services/vietmap_route_service.dart';
 import 'package:travelogue_mobile/core/blocs/home/home_bloc.dart';
@@ -75,7 +76,7 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
     final base = Theme.of(context);
     return Theme(
       data: base.copyWith(
-        dialogTheme: DialogTheme(
+        dialogTheme: DialogThemeData(
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
           backgroundColor: Colors.white,
@@ -208,9 +209,8 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
   late DateTime _dayDate;
 
   late final VietmapRouteService _vietmap = VietmapRouteService(
-    apiKey: '840f8a8247cb32578fc81fec50af42b8ede321173a31804b',
+    apiKey: AppEnv.vietmapKey,
   );
-
   Future<void> _recomputeLinkAndTimesAfterRemove(int removedIdx) async {
     final currIdx = removedIdx;
     final prevIdx = removedIdx - 1;
@@ -417,10 +417,10 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
         : 90;
 
     if (_forceFoodMode) {
-      selectedFilterIndex.value = 2; 
+      selectedFilterIndex.value = 2;
     }
     if (_foodOnly) {
-      selectedFilterIndex.value = 2; 
+      selectedFilterIndex.value = 2;
     }
   }
 
@@ -1414,7 +1414,6 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
           .clamp(5, 24 * 60);
 
       if (i == 0) {
-        // giữ cursor
       } else {
         final legTravelSecs = _itinerary[i].travelSeconds;
         cursor = _itinerary[i - 1].depart.add(Duration(seconds: legTravelSecs));
@@ -1515,7 +1514,7 @@ class _SelectPlaceForDayScreenState extends State<SelectPlaceForDayScreen> {
         return src
             .where((e) => _mapCategoryToType(e.category) == 'craft')
             .toList();
-      case 4: 
+      case 4:
         return src
             .where((e) => _mapCategoryToType(e.category) == 'scenic')
             .toList();

@@ -74,23 +74,22 @@ class _TourScheduleCalendarScreenState
     });
   }
 
-void _openConfirm(TourScheduleModel matched) {
-  final media = (tour.medias.isNotEmpty &&
-          tour.medias.first.mediaUrl?.isNotEmpty == true)
-      ? tour.medias.first.mediaUrl!
-      : AssetHelper.img_tay_ninh_login;
+  void _openConfirm(TourScheduleModel matched) {
+    final media = (tour.medias.isNotEmpty &&
+            tour.medias.first.mediaUrl?.isNotEmpty == true)
+        ? tour.medias.first.mediaUrl!
+        : AssetHelper.img_tay_ninh_login;
 
-  ScheduleConfirmDialog.show(
-    context,
-    tour: tour,
-    schedule: matched,
-    isGroupTour: isGroupTour,
-    media: media,
-    formatter: formatter,
-    pickupAddress: pickupAddress, 
-  );
-}
-
+    ScheduleConfirmDialog.show(
+      context,
+      tour: tour,
+      schedule: matched,
+      isGroupTour: isGroupTour,
+      media: media,
+      formatter: formatter,
+      pickupAddress: pickupAddress,
+    );
+  }
 
   Future<void> _jumpToMonth() async {
     final picked = await showModalBottomSheet<DateTime>(
@@ -306,28 +305,47 @@ void _openConfirm(TourScheduleModel matched) {
                   SizedBox(height: 1.2.h),
                   if (_mode == _ViewMode.calendar) ...[
                     _CalendarShell(
-                      child: TourCalendarSelector(
-                        focusedDay: focusedDay,
-                        selectedDay: selectedDay,
-                        getScheduleForDay: getScheduleForDay,
-                        onDaySelected: (selected, focused) {
-                          if (_isPastOrToday(selected)) {
-                            _showEmptyDayHint(context);
-                            return;
-                          }
+                      child: AspectRatio(
+                        aspectRatio: 1.08,
+                        child: LayoutBuilder(
+                          builder: (context, c) {
+                            const headerH = 52.0;
+                            const dowH = 24.0;
+                            const gaps = 12.0;
 
-                          final matched = getScheduleForDay(selected);
-                          if (matched != null) {
-                            _openConfirm(matched);
-                          } else {
-                            _showEmptyDayHint(context);
-                          }
+                            final rowH =
+                                ((c.maxHeight - headerH - dowH - gaps) / 6)
+                                    .clamp(34.0, 48.0);
 
-                          setState(() {
-                            selectedDay = selected;
-                            focusedDay = focused;
-                          });
-                        },
+                            return ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: TourCalendarSelector(
+                                focusedDay: focusedDay,
+                                selectedDay: selectedDay,
+                                getScheduleForDay: getScheduleForDay,
+                                onDaySelected: (selected, focused) {
+                                  if (_isPastOrToday(selected)) {
+                                    _showEmptyDayHint(context);
+                                    return;
+                                  }
+                                  final m = getScheduleForDay(selected);
+                                  if (m != null)
+                                    _openConfirm(m);
+                                  else
+                                    _showEmptyDayHint(context);
+                                  setState(() {
+                                    selectedDay = selected;
+                                    focusedDay = focused;
+                                  });
+                                },
+                                rowHeight: rowH,
+                                daysOfWeekHeight: dowH,
+                                headerPadding: const EdgeInsets.only(bottom: 8),
+                                tableTopPadding: 6.0,
+                              ),
+                            );
+                          },
+                        ),
                       ),
                     ),
                     SizedBox(height: 1.6.h),
@@ -448,6 +466,7 @@ class _CalendarShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      clipBehavior: Clip.hardEdge,
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.05),
         borderRadius: BorderRadius.circular(20),
